@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+option csharp_namespace = "Application.Messaging.Proto.Messages";
+
+message ConnectionRequest {
+  string optional_connection_id = 1;
+  string message_id = 2;
+  string access_token = 3;
+  string hash = 4;
+}

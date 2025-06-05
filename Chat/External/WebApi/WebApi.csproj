@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
+    </ItemGroup>
+
+
+    <PropertyGroup Condition="'$(Configuration)' == 'WebApp'">
+        <StartupObject>Presentation.ProgramWebApp</StartupObject>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'BackgroundService'">
+        <StartupObject>Presentation.Messanger</StartupObject>
+    </PropertyGroup>
+</Project>

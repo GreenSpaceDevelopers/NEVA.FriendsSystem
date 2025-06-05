@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package messaging; 
+
+option csharp_namespace = "Application.Messaging.Proto.Messages";
+
+message ConfirmMessage {
+  string id = 1;
+  bool is_authorized = 2;
+  bool is_valid = 3;
+  string optional_error_message = 4;
+  string hash = 5;
+}

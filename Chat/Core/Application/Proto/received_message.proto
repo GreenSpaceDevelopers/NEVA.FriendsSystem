@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option csharp_namespace = "Application.Messaging.Proto.Messages";
+
+message ReceivedMessage {
+  string optional_connection_id = 1;
+  string message_id = 2;
+  string chat_id = 3;
+  string access_token = 4;
+  string optional_message = 5;
+  string optional_sticker_id = 6;
+  string optional_reaction_id = 7;
+  string hash = 8; 
+  Type type = 9;
+}
+
+enum Type {
+  TextMessage = 0;
+  Reaction = 1;
+  StickerMessage = 2;
+  Delete = 3;
+  CloseConnection = 4;
+}
