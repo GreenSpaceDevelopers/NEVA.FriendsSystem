@@ -1,6 +1,7 @@
 using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
+using FluentValidation;
 
 namespace Application.Requests.Commands.Friends;
 
@@ -44,5 +45,21 @@ public class AddFriendRequestHandler(IChatUsersRepository chatUsersRepository) :
         await chatUsersRepository.SaveChangesAsync(cancellationToken);
         
         return ResultsHelper.NoContent();
+    }
+}
+
+public class AddFriendRequestValidator : AbstractValidator<AddFriendRequest>
+{
+    public AddFriendRequestValidator()
+    {
+        RuleFor(x => x.UserId)
+            .NotEmpty().WithMessage("UserId is required.");
+
+        RuleFor(x => x.FriendId)
+            .NotEmpty().WithMessage("FriendId is required.");
+
+        RuleFor(x => x)
+            .Must(x => x.UserId != x.FriendId)
+            .WithMessage("UserId and FriendId must be different.");
     }
 }

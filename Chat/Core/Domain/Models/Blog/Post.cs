@@ -1,5 +1,6 @@
 using Domain.Abstractions;
 using Domain.Models.Messaging;
+using Domain.Models.Users;
 
 namespace Domain.Models.Blog;
 

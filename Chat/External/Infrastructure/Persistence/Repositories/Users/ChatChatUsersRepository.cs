@@ -1,6 +1,6 @@
 using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Dtos.Requests.Shared;
-using Domain.Models;
+using Domain.Models.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories.Users;
@@ -31,5 +31,21 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
         return _dbContext.Set<ChatUser>()
             .Include(user => user.BlockedUsers)
             .SingleOrDefaultAsync(user => user.Id == requestUserId, cancellationToken: cancellationToken);
+    }
+
+    public Task<List<ChatUser>> GetBlockedUsersAsync(
+        Guid requestUserId,
+        string queryString,
+        PageSettings requestPageSettings,
+        CancellationToken cancellationToken)
+    {
+        return _dbContext.Set<ChatUser>()
+            .Where(u => u.BlockedUsers.Any(b => b.Id == requestUserId) &&
+                        u.Username.Contains(queryString))
+            .Include(u => u.AspNetUser)
+            .OrderBy(u => u.Username)
+            .Skip((requestPageSettings.PageNumber - 1) * requestPageSettings.PageSize)
+            .Take(requestPageSettings.PageSize)
+            .ToListAsync(cancellationToken);
     }
 }

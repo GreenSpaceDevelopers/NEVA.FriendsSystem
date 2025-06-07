@@ -1,4 +1,5 @@
 using Domain.Abstractions;
+using Domain.Models.Users;
 
 namespace Domain.Models.Messaging;
 

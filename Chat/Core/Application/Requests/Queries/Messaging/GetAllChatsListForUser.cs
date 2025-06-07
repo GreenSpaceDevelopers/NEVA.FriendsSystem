@@ -14,7 +14,6 @@ public class GetAllChatsForUserQueryHandler(IChatUsersRepository chatUsersReposi
     public async Task<IOperationResult> HandleAsync(GetAllChatsForUserQuery request, CancellationToken cancellationToken = default)
     {
         var user = await chatUsersRepository.GetByIdAsync(request.UserId, cancellationToken);
-
         if (user is null)
         {
             return ResultsHelper.NotFound("User not found");

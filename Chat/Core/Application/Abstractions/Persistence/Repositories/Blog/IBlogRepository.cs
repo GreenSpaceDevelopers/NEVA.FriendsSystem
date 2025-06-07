@@ -1,5 +1,5 @@
-using Domain.Models;
 using Domain.Models.Blog;
+using Domain.Models.Users;
 
 namespace Application.Abstractions.Persistence.Repositories.Blog;
 
