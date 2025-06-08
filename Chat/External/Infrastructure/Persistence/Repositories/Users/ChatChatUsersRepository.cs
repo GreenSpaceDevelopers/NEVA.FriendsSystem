@@ -39,13 +39,18 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
         PageSettings requestPageSettings,
         CancellationToken cancellationToken)
     {
-        return _dbContext.Set<ChatUser>()
-            .Where(u => u.BlockedUsers.Any(b => b.Id == requestUserId) &&
-                        u.Username.Contains(queryString))
+        var query = _dbContext.Set<ChatUser>()
+            .Where(u => u.BlockedUsers.Any(b => b.Id == requestUserId))
             .Include(u => u.AspNetUser)
             .OrderBy(u => u.Username)
             .Skip((requestPageSettings.PageNumber - 1) * requestPageSettings.PageSize)
-            .Take(requestPageSettings.PageSize)
-            .ToListAsync(cancellationToken);
+            .Take(requestPageSettings.PageSize);
+
+        if (!string.IsNullOrEmpty(queryString))
+        {
+            query = query.Where(u => u.Username.Contains(queryString));
+        }
+        
+        return query.ToListAsync(cancellationToken);
     }
 }
