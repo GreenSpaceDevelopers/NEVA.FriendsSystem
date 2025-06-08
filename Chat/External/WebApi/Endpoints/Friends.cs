@@ -49,14 +49,13 @@ public static class Friends
                 return result.ToResult();
             });
         
-        // app.MapPut("/friends/blacklist/",
-        //     async ([FromBody] RemoveFromBlockList
-        //         [FromServices]ISender sender, HttpContext context, CancellationToken cancellationToken) =>
-        //     {
-        //         var request = new DeleteStickerRequest(id);
-        //         var result = await sender.SendAsync(request, cancellationToken);
-        //         
-        //         return result.ToResult();
-        //     });
+        app.MapDelete("/friends/blacklist/",
+            async ([FromBody] RemoveFromBlockList request,
+                [FromServices]ISender sender, CancellationToken cancellationToken) =>
+            {
+                var result = await sender.SendAsync(request, cancellationToken);
+                
+                return result.ToResult();
+            });
     }
 }
