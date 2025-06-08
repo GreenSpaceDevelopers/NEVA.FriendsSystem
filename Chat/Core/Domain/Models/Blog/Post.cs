@@ -16,4 +16,8 @@ public class Post : Entity<Post>
     public ChatUser Author { get; set; } = null!;
     public Post? OriginalPost { get; set; }
     public Attachment? Attachment { get; set; }
+    
+    public List<PostReaction> Reactions { get; set; } = [];
+    public List<Comment> Comments { get; set; } = [];
 }
+

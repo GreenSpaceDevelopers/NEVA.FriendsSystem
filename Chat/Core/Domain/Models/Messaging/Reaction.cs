@@ -1,4 +1,5 @@
 using Domain.Abstractions;
+using Domain.Models.Blog;
 
 namespace Domain.Models.Messaging;
 
@@ -21,8 +22,19 @@ public class ReactionType : IEntity
     public Attachment Attachment { get; set; } = null!;
 }
 
+public class PostReaction : Entity<PostReaction>
+{
+    public Guid PostId { get; set; }
+    public Guid UserId { get; set; }
+    public Guid ReactionTypeId { get; set; }
+    public ReactionType ReactionType { get; set; } = null!;
+    public ChatUser Reactor { get; set; } = null!;
+    public Post Post { get; set; } = null!;
+}
+
 public enum Reactions
 {
     None,
-    Sticker
+    Sticker,
+    PostReaction
 }

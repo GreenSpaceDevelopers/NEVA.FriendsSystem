@@ -24,10 +24,12 @@
       <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="5.0.17" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.4" />
+      <PackageReference Include="NEVA.CommonLibrary" Version="2.2.0" />
+      <PackageReference Include="Quartz" Version="3.14.0" />
+      <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.14.0" />
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Jobs\" />
       <Folder Include="Notifications\Messaging\" />
       <Folder Include="Requests\Queries\Friends\" />
     </ItemGroup>

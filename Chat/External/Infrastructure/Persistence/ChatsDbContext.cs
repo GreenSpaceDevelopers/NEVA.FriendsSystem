@@ -1,4 +1,5 @@
 using Domain.Models;
+using Domain.Models.Blog;
 using Domain.Models.Media;
 using Domain.Models.Messaging;
 using Domain.Models.Service;
@@ -44,13 +45,21 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
             .HasMany(c => c.Users)
             .WithMany(u => u.Chats)
             .UsingEntity(j => j.ToTable("ChatUserChats"));
-
-        // 👤 Один-ко-многим: Chat.Admin ↔ ChatUser
+        
         modelBuilder.Entity<Chat>()
             .HasOne(c => c.Admin)
-            .WithMany() // без навигации обратно!
+            .WithMany() 
             .HasForeignKey(c => c.AdminId)
             .OnDelete(DeleteBehavior.Restrict);
+        
+        modelBuilder.Entity<ChatUser>().Navigation(ch => ch.AspNetUser).AutoInclude();
+        modelBuilder.Entity<Post>().Navigation(p => p.Author).AutoInclude();
+        modelBuilder.Entity<Post>().Navigation(p => p.Comments).AutoInclude();
+        modelBuilder.Entity<Comment>().Navigation(c => c.Author).AutoInclude();
+        modelBuilder.Entity<Comment>().Navigation(c => c.Post).AutoInclude();
+        modelBuilder.Entity<Comment>().Navigation(m => m.Parent).AutoInclude();
+        modelBuilder.Entity<Comment>().Navigation(a => a.Attachment).AutoInclude();
+        modelBuilder.Entity<Post>().Navigation(a => a.Reactions).AutoInclude();
         
         
         base.OnModelCreating(modelBuilder);
