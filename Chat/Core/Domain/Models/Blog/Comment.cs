@@ -17,5 +17,4 @@ public class Comment : Entity<Comment>
     public Post Post { get; set; } = null!;
     public Attachment? Attachment { get; set; }
     public ChatUser Author { get; set; } = null!;
-    
 }

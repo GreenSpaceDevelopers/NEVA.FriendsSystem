@@ -11,5 +11,5 @@ public abstract class Entity<T> : IEntity where T : Entity<T>
 
 public interface IEntity
 {
-    Guid Id { get; set; }
+    public Guid Id { get; set; }
 }
