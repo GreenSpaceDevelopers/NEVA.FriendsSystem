@@ -1,6 +1,7 @@
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Requests.Commands.Profile;
 using Domain.Models;
+using Domain.Models.Users;
 using GS.CommonLibrary.Dtos;
 using GS.CommonLibrary.Services;
 using Quartz;
