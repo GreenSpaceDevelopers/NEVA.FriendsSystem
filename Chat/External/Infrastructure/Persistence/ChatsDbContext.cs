@@ -3,6 +3,7 @@ using Domain.Models.Blog;
 using Domain.Models.Media;
 using Domain.Models.Messaging;
 using Domain.Models.Service;
+using Domain.Models.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence;

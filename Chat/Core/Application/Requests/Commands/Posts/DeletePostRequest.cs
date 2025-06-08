@@ -1,6 +1,7 @@
 using Application.Abstractions.Persistence.Repositories.Blog;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
+using FluentValidation;
 
 namespace Application.Requests.Commands.Posts;
 
@@ -29,5 +30,17 @@ public class DeletePostRequestHandler(IBlogRepository blogRepository) : IRequest
         await blogRepository.SaveChangesAsync(cancellationToken);
         
         return ResultsHelper.NoContent();
+    }
+}
+
+public class DeletePostRequestValidator : AbstractValidator<DeletePostRequest>
+{
+    public DeletePostRequestValidator()
+    {
+        RuleFor(x => x.Id)
+            .NotEmpty().WithMessage("Post Id is required.");
+
+        RuleFor(x => x.UserId)
+            .NotEmpty().WithMessage("UserId is required.");
     }
 }

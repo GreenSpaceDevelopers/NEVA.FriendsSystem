@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Application.Requests.Commands;
 
-public record CreateStickerRequest(IFormFile stickerImage, string name) : IRequest;
+public record CreateStickerRequest(IFormFile StickerImage, string Name) : IRequest;
 
 public class CreateStickerRequestHandler(
     IFilesStorage filesStorage,
@@ -18,7 +18,7 @@ public class CreateStickerRequestHandler(
     public async Task<IOperationResult> HandleAsync(CreateStickerRequest request, CancellationToken cancellationToken = default)
     {
         using var memoryStream = new MemoryStream();
-        await request.stickerImage.CopyToAsync(memoryStream, cancellationToken);
+        await request.StickerImage.CopyToAsync(memoryStream, cancellationToken);
 
         if (filesValidator.ValidateFile(memoryStream, "sticker") is not true)
         {
@@ -53,6 +53,6 @@ public class CreateStickerRequestValidator : AbstractValidator<CreateStickerRequ
 {
     public CreateStickerRequestValidator()
     {
-        RuleFor(x => x.stickerImage).NotEmpty();
+        RuleFor(x => x.StickerImage).NotEmpty();
     }
 }

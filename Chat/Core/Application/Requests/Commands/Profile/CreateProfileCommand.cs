@@ -1,7 +1,7 @@
 using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
-using Domain.Models;
+using Domain.Models.Users;
 
 namespace Application.Requests.Commands.Profile;
 

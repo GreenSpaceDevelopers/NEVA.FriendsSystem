@@ -1,6 +1,7 @@
 using Domain.Abstractions;
 using Domain.Models.Media;
 using Domain.Models.Service;
+using Domain.Models.Users;
 
 namespace Domain.Models.Messaging;
 

@@ -2,7 +2,7 @@ using Domain.Abstractions;
 using Domain.Models.Blog;
 using Domain.Models.Messaging;
 
-namespace Domain.Models;
+namespace Domain.Models.Users;
 
 public class ChatUser(AspNetUser requestAspNetUser) : IEntity
 {
