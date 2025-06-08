@@ -35,5 +35,14 @@ public static class Blog
 
                 return result.ToResult();
             });
+
+        app.MapPatch("/blog/pin/toggle/",
+            async ([FromBody] TogglePinPostRequest request,
+                [FromServices] ISender sender, CancellationToken cancellationToken) =>
+            {
+                var result = await sender.SendAsync(request, cancellationToken);
+
+                return result.ToResult();
+            });
     }
 }
