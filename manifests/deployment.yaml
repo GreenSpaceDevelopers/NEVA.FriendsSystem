@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-webapi
+  namespace: neva-friends
+  labels:
+    app: chat-webapi
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chat-webapi
+  template:
+    metadata:
+      labels:
+        app: chat-webapi
+    spec:
+      containers:
+        - name: chat-webapi
+          image: cr.yandex/chat-webapi:latest  
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 11000
+              name: http
+            - containerPort: 11001
+              name: https
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:11000;https://+:11001"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-webapi
+  namespace: neva-friends
+  labels:
+    app: chat-webapi
+spec:
+  type: ClusterIP
+  ports:
+    - port: 11000
+      targetPort: 11000
+      name: http
+      protocol: TCP
+    - port: 11001
+      targetPort: 11001
+      name: https
+      protocol: TCP
+  selector:
+    app: chat-webapi
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: chat-webapi
+  namespace: neva-friends
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+    - hosts:
+        - greenspacegg.ru 
+      secretName: chat-webapi-tls
+  rules:
+    - host: greenspacegg.ru  
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: chat-webapi
+                port:
+                  number: 11000

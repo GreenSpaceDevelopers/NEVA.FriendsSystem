@@ -1,0 +1,59 @@
+name: Build and Deploy to Dev
+
+on:
+  push:
+    branches: [ stage ]
+  workflow_dispatch:
+
+env:
+  DOCKER_REGISTRY: cr.yandex
+  DOCKER_REPOSITORY: crp0ua90hrat22e231l5
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  SSH_HOST: greenspacegg.ru
+  SSH_PORT: 228
+  SSH_USER: gsdev
+  SSH_PASSWORD: 123321q123321qQ
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and push Backend
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Chat/External/src/WebApi/Dockerfile
+          push: true
+          tags: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_REPOSITORY }}/neva-backend:latest
+
+      - name: Deploy to Dev Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.SSH_HOST }}
+          port: ${{ env.SSH_PORT }}
+          username: ${{ env.SSH_USER }}
+          password: ${{ env.SSH_PASSWORD }}
+          script: |
+            # Login to Docker registry
+            echo ${{ secrets.DOCKER_PASSWORD }} | docker login ${{ env.DOCKER_REGISTRY }} -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+            
+            # Pull latest images
+            docker pull ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_REPOSITORY }}/neva-chat:latest
+            
+            # Restart deployments to pick up new images
+            kubectl rollout restart deployment -n neva-dev chat 
