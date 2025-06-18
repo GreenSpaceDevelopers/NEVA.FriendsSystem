@@ -23,6 +23,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Get IAM token from SA key
+          id: get-token
+          run: |
+            IAM_TOKEN=$(curl -s -X POST \
+              -H "Content-Type: application/json" \
+              -d '{
+                "yandexPassportOauthToken": "YCMvcqCU-Ei0w_vp81o95o8vAj0W2NKE3SSCoqTZ"
+              }' \
+              https://iam.api.cloud.yandex.net/iam/v1/tokens | jq -r .iamToken)
+            
+            echo "::add-mask::$IAM_TOKEN"
+            echo "IAM_TOKEN=$IAM_TOKEN" >> $GITHUB_ENV
+
+      - name: Docker login to YCR
+          run: |
+            echo "$IAM_TOKEN" | docker login --username oauth --password-stdin cr.yandex
+
       - name: Login to Docker Registry
         uses: docker/login-action@v2
         with:
@@ -50,7 +67,7 @@ jobs:
           password: ${{ env.SSH_PASSWORD }}
           script: |
             # Login to Docker registry
-            echo ${{ env.DOCKER_PASSWORD }} | docker login ${{ env.DOCKER_REGISTRY }} -u ${{ env.DOCKER_USERNAME }} --password-stdin
+            echo "$IAM_TOKEN" | docker login --username oauth --password-stdin cr.yandex
             
             # Pull latest images
             docker pull ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_REPOSITORY }}/neva-chat:latest
