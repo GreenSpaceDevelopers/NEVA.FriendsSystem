@@ -1,75 +1,38 @@
-name: Build and Deploy to Dev
+name: YCR Login Test
 
 on:
-  push:
-    branches: [ stage ]
   workflow_dispatch:
 
 env:
   DOCKER_REGISTRY: cr.yandex
-  DOCKER_REPOSITORY: crp0ua90hrat22e231l5
   DOCKER_USERNAME: oauth
   DOCKER_PASSWORD: YCMvcqCU-Ei0w_vp81o95o8vAj0W2NKE3SSCoqTZ
-  SSH_HOST: greenspacegg.ru
-  SSH_PORT: 228
-  SSH_USER: gsdev
-  SSH_PASSWORD: 123321q123321qQ
 
 jobs:
-  build-and-deploy:
+  test-login:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Get IAM token from OAuth token
+      - name: Get IAM token
         id: get-token
         run: |
+          echo "Getting IAM token from Yandex Cloud..."
           TOKEN=$(curl -s -X POST \
             -H "Content-Type: application/json" \
             -d "{\"yandexPassportOauthToken\": \"${{ env.DOCKER_PASSWORD }}\"}" \
             https://iam.api.cloud.yandex.net/iam/v1/tokens | jq -r .iamToken)
 
           echo "::add-mask::$TOKEN"
+          echo "IAM_TOKEN=$TOKEN" >> $GITHUB_ENV
           echo "iam_token=$TOKEN" >> $GITHUB_OUTPUT
 
-      - name: Docker login to Yandex Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.DOCKER_REGISTRY }}
-          username: ${{ env.DOCKER_USERNAME }}
-          password: ${{ steps.get-token.outputs.iam_token }}
+      - name: Print Show IAM token
+        run: |
+          echo "TOKEN: ${{ steps.get-token.outputs.iam_token }}"
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+      - name: Docker login to YCR
+        run: |
+          echo "${{ steps.get-token.outputs.iam_token }}" | docker login --username ${{ env.DOCKER_USERNAME }} --password-stdin ${{ env.DOCKER_REGISTRY }}
 
-      - name: Build and Push Docker Image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: Chat/External/src/WebApi/Dockerfile
-          push: true
-          tags: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_REPOSITORY }}/neva-chat:dev-latest
-
-      - name: Deploy to Dev Server via SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ env.SSH_HOST }}
-          port: ${{ env.SSH_PORT }}
-          username: ${{ env.SSH_USER }}
-          password: ${{ env.SSH_PASSWORD }}
-          script: |
-            if ! command -v curl >/dev/null; then sudo apt-get update && sudo apt-get install -y curl; fi
-            if ! command -v jq >/dev/null; then sudo apt-get update && sudo apt-get install -y jq; fi
-
-            IAM_TOKEN=$(curl -s -X POST \
-              -H "Content-Type: application/json" \
-              -d '{"yandexPassportOauthToken": "${{ env.DOCKER_PASSWORD }}"}' \
-              https://iam.api.cloud.yandex.net/iam/v1/tokens | jq -r .iamToken)
-
-            echo "$IAM_TOKEN" | docker login --username oauth --password-stdin cr.yandex
-
-            docker pull ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_REPOSITORY }}/neva-backend:latest
-
-            kubectl rollout restart deployment -n neva-dev chat
