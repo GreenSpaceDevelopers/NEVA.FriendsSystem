@@ -47,7 +47,7 @@ jobs:
 
       - name: Login to Yandex Docker registry
         run: |
-          echo "${{ steps.get-token.outputs.iam_token }}" | docker login --username oauth --password-stdin ${{ env.DOCKER_REGISTRY }}
+          echo "${{ steps.get-token.outputs.iam_token }}" | docker login --username iam --password-stdin ${{ env.DOCKER_REGISTRY }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -68,6 +68,6 @@ jobs:
           username: ${{ env.SSH_USER }}
           password: ${{ env.SSH_PASSWORD }}
           script: |
-            echo "${{ env.IAM_TOKEN }}" | docker login --username oauth --password-stdin ${{ env.DOCKER_REGISTRY }}
+            echo "${{ env.IAM_TOKEN }}" | docker login --username iam --password-stdin ${{ env.DOCKER_REGISTRY }}
             docker pull ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_REPOSITORY }}/neva-backend:latest
             kubectl rollout restart deployment -n neva-dev backend
