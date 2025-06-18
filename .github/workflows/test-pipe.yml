@@ -1,0 +1,37 @@
+name: YCR Login Test
+
+on:
+  workflow_dispatch:
+
+env:
+  DOCKER_REGISTRY: cr.yandex
+  DOCKER_USERNAME: oauth
+  DOCKER_PASSWORD: YCMvcqCU-Ei0w_vp81o95o8vAj0W2NKE3SSCoqTZ  
+
+jobs:
+  test-login:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Get IAM token
+        id: get-token
+        run: |
+          echo "Getting IAM token from Yandex Cloud..."
+          TOKEN=$(curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"yandexPassportOauthToken\": \"${{ env.DOCKER_PASSWORD }}\"}" \
+            https://iam.api.cloud.yandex.net/iam/v1/tokens | jq -r .iamToken)
+
+          echo "::add-mask::$TOKEN"
+          echo "IAM_TOKEN=$TOKEN" >> $GITHUB_ENV
+          echo "iam_token=$TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Print Show IAM token
+        run: |
+          echo "TOKEN: ${{ steps.get-token.outputs.iam_token }}"
+
+      - name: Docker login to YCR
+        run: |
+          echo "${{ steps.get-token.outputs.iam_token }}" | docker login --username ${{ env.DOCKER_USERNAME }} --password-stdin ${{ env.DOCKER_REGISTRY }}
