@@ -1,10 +1,15 @@
+using Application.Abstractions.Persistence.Repositories.Blog;
 using Application.Abstractions.Persistence.Repositories.Media;
 using Application.Abstractions.Persistence.Repositories.Messaging;
 using Application.Abstractions.Persistence.Repositories.Users;
+using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Infrastructure.Configs;
 using Infrastructure.Persistence;
+using Infrastructure.Persistence.Repositories.Blog;
+using Infrastructure.Persistence.Repositories.Media;
 using Infrastructure.Persistence.Repositories.Messaging;
 using Infrastructure.Persistence.Repositories.Users;
+using Infrastructure.Services.ApplicationInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,10 +19,20 @@ namespace Infrastructure;
 
 public static class InfrastructureInjection
 {
-    public static void AddInfrastructure(this IServiceCollection services)
+    public static void AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<MinioConfig>(configuration.GetSection(MinioConfig.SectionName));
+        
         services.AddScoped<IChatsRepository, ChatsRepository>();
         services.AddScoped<IChatUsersRepository, ChatChatUsersRepository>();
+        services.AddScoped<IBlogRepository, BlogRepository>();
+        services.AddScoped<IPrivacyRepository, PrivacyRepository>();
+        services.AddScoped<IAttachmentsRepository, AttachmentsRepository>();
+        
+        services.AddScoped<IFilesStorage, FilesStorage>();
+        services.AddScoped<IFilesValidator, FilesValidator>();
+        
+        services.AddHostedService<MinioInitializer>();
         
         services.AddDbContext<ChatsDbContext>(opt =>
             opt.UseSqlite("Data Source=chats.db", o =>

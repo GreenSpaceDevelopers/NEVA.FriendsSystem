@@ -2,11 +2,12 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Dtos.Requests.Shared;
 using Application.Requests.Commands.Friends;
 using Application.Requests.Queries.BlackList;
+using Application.Requests.Queries.Friends;
 using Microsoft.AspNetCore.Mvc;
-using WebApi.Common.Helpers;
+using External.WebApi.Common.Helpers;
 using WebApi.Common.Mappers;
 
-namespace WebApi.Endpoints;
+namespace External.WebApi.Endpoints;
 
 public static class Friends
 {
@@ -57,5 +58,17 @@ public static class Friends
                 
                 return result.ToResult();
             });
+
+        app.MapGet("/friends/", async (
+            [FromQuery] Guid userId,
+            [FromQuery] ushort pageNumber,
+            [FromQuery] ushort pageSize,
+            [FromServices] ISender sender,
+            CancellationToken cancellationToken) =>
+        {
+            var query = new GetFriendsListQuery(userId, new PageSettings(pageNumber, pageSize));
+            var result = await sender.SendAsync(query, cancellationToken);
+            return result.ToApiResult();
+        });
     }
 }

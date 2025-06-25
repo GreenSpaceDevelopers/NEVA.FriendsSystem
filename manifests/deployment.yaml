@@ -45,7 +45,7 @@ spec:
             periodSeconds: 20
           env:
             - name: ASPNETCORE_ENVIRONMENT
-              value: "Production"
+              value: "Release"
             - name: ASPNETCORE_URLS
               value: "http://+:11000;https://+:11001"
 ---

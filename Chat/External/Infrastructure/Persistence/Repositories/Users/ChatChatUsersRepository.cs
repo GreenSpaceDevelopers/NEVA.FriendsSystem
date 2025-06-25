@@ -53,4 +53,11 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
         
         return query.ToListAsync(cancellationToken);
     }
+
+    public Task<bool> IsUsernameUniqueAsync(string username, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Set<ChatUser>()
+            .AnyAsync(user => user.Username == username, cancellationToken)
+            .ContinueWith(task => !task.Result, cancellationToken);
+    }
 }

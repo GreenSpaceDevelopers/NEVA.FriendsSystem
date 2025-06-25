@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace WebApi.Common.Helpers;
+namespace External.WebApi.Common.Helpers;
 
 public static class HttpContextHelper
 {

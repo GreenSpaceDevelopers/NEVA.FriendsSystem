@@ -16,10 +16,12 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
     public DbSet<Reaction> Reactions { get; set; }
     public DbSet<ReactionType> ReactionTypes { get; set; }
     public DbSet<Attachment> Attachments { get; set; }
+    public DbSet<AttachmentType> AttachmentTypes { get; set; }
     
     // Users
     public DbSet<ChatUser> ChatUsers { get; set; }
     public DbSet<ChatRole> ChatRoles { get; set; }
+    public DbSet<PrivacySetting> PrivacySettings { get; set; }
     
     // MediaDto
     public DbSet<Picture> Services { get; set; }

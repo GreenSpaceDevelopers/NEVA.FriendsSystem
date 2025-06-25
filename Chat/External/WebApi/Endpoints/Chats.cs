@@ -2,7 +2,7 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Dtos.Requests.Shared;
 using Application.Requests.Queries.Messaging;
 using Microsoft.AspNetCore.Mvc;
-using WebApi.Common.Helpers;
+using External.WebApi.Common.Helpers;
 using WebApi.Common.Mappers;
 
 namespace WebApi.Endpoints;

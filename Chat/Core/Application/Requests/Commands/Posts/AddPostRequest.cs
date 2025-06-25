@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Application.Requests.Commands.Posts;
 
-public record AddPostRequest(IFormFile File, Guid UserId, string Content, string Title) : IRequest;
+public record AddPostRequest(IFormFile File, Guid UserId, string Content, string Title, bool IsCommentsEnabled) : IRequest;
 
 public class AddPostRequestHandler
     (IBlogRepository blogRepository,
@@ -61,7 +61,8 @@ public class AddPostRequestHandler
             AuthorId = user.Id,
             Content = request.Content,
             Title = request.Title,
-            AttachmentId = attachment.Id
+            AttachmentId = attachment.Id,
+            IsCommentsEnabled = request.IsCommentsEnabled
         };
         
         await blogRepository.AddAsync(post, cancellationToken);

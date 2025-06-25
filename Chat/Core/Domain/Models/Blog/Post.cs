@@ -21,5 +21,6 @@ public class Post : Entity<Post>
     
     public List<PostReaction> Reactions { get; set; } = [];
     public List<Comment> Comments { get; set; } = [];
+    public bool IsCommentsEnabled { get; set; } = true;
 }
 
