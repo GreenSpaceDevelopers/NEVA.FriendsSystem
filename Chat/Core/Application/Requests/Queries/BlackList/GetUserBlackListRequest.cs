@@ -9,7 +9,7 @@ namespace Application.Requests.Queries.BlackList;
 
 public record GetUserBlackListQuery(Guid UserId, string Query, PageSettings PageSettings) : IRequest;
 
-public class GetUserBlackListRequest(IChatUsersRepository chatUsersRepository, IChatsRepository chatsRepository)
+public class GetUserBlackListRequest(IChatUsersRepository chatUsersRepository)
     : IRequestHandler<GetUserBlackListQuery>
 {
     public async Task<IOperationResult> HandleAsync(GetUserBlackListQuery request,

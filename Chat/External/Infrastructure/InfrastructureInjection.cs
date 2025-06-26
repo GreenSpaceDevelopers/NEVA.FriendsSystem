@@ -28,14 +28,16 @@ public static class InfrastructureInjection
         services.AddScoped<IBlogRepository, BlogRepository>();
         services.AddScoped<IPrivacyRepository, PrivacyRepository>();
         services.AddScoped<IAttachmentsRepository, AttachmentsRepository>();
+        services.AddScoped<IReactionsTypesRepository, ReactionsTypesRepository>();
         
         services.AddScoped<IFilesStorage, FilesStorage>();
         services.AddScoped<IFilesValidator, FilesValidator>();
+        services.AddScoped<IFilesSigningService, FilesSigningService>();
         
         services.AddHostedService<MinioInitializer>();
         
         services.AddDbContext<ChatsDbContext>(opt =>
-            opt.UseSqlite("Data Source=chats.db", o =>
+            opt.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), o =>
             {
                 o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
             }));

@@ -4,11 +4,18 @@ using Domain.Models.Messaging;
 
 namespace Domain.Models.Users;
 
-public class ChatUser(AspNetUser requestAspNetUser) : IEntity
+public class ChatUser : IEntity
 {
-    public Guid Id { get; set; } = requestAspNetUser.Id;
-    public AspNetUser AspNetUser { get; set; } = requestAspNetUser;
-    public string Username { get; set; } = requestAspNetUser.UserName;
+    public ChatUser(AspNetUser requestAspNetUser)
+    {
+        Id = requestAspNetUser.Id;
+        Username = requestAspNetUser.UserName;
+        AspNetUser = requestAspNetUser;
+    }
+    public ChatUser() { }
+    public Guid Id { get; set; }
+    public AspNetUser AspNetUser { get; set; }
+    public string Username { get; set; }
     public DateTime LastSeen { get; set; } = DateTime.UtcNow;
     public List<Chat> Chats { get; set; } = [];
     public Attachment? Avatar { get; set; }

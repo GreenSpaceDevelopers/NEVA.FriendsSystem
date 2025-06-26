@@ -20,7 +20,7 @@ public class WebSocketStore : IWebSocketStore
     {
         _sockets.TryGetValue(id, out var socket);
         
-        return socket!;
+        return socket;
     }
 
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]

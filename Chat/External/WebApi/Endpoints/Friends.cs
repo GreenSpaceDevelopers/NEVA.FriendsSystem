@@ -20,7 +20,8 @@ public static class Friends
                 var result = await sender.SendAsync(request, cancellationToken);
                 
                 return result.ToResult();
-            });
+            })
+            .WithName("AddFriend");
         
         app.MapDelete("/friends/",
             async ([FromBody] DeleteFriendRequest request, 
@@ -29,7 +30,8 @@ public static class Friends
                 var result = await sender.SendAsync(request, cancellationToken);
                 
                 return result.ToResult();
-            });
+            })
+            .WithName("DeleteFriend");
         
         app.MapGet("/friends/blacklist/page={page:int}/size={size:int}",
             async ([FromRoute]ushort page, [FromRoute]ushort size, [FromQuery] string searchQuery, 
@@ -39,7 +41,8 @@ public static class Friends
                 var result = await sender.SendAsync(query, cancellationToken);
                 
                 return result.ToResult();
-            });
+            })
+            .WithName("GetUserBlackList");
         
         app.MapPost("/friends/blacklist/",
             async ([FromBody] BlockUserRequest request, 
@@ -48,7 +51,8 @@ public static class Friends
                 var result = await sender.SendAsync(request, cancellationToken);
                 
                 return result.ToResult();
-            });
+            })
+            .WithName("BlockUser");
         
         app.MapDelete("/friends/blacklist/",
             async ([FromBody] RemoveFromBlockList request,
@@ -57,7 +61,8 @@ public static class Friends
                 var result = await sender.SendAsync(request, cancellationToken);
                 
                 return result.ToResult();
-            });
+            })
+            .WithName("RemoveFromBlockList");
 
         app.MapGet("/friends/", async (
             [FromQuery] Guid userId,
@@ -69,6 +74,7 @@ public static class Friends
             var query = new GetFriendsListQuery(userId, new PageSettings(pageNumber, pageSize));
             var result = await sender.SendAsync(query, cancellationToken);
             return result.ToApiResult();
-        });
+        })
+        .WithName("GetFriendsList");
     }
 }

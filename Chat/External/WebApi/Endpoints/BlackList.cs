@@ -22,6 +22,7 @@ public static class BlackList
             var searchQuery = new SearchUsersQuery(currentUserId, query, new PageSettings(pageNumber, pageSize));
             var result = await sender.SendAsync(searchQuery, cancellationToken);
             return result.ToApiResult();
-        });
+        })
+        .WithName("SearchUsers");
     }
 } 

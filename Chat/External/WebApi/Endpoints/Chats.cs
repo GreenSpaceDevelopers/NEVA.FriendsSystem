@@ -19,6 +19,7 @@ public static class Chats
                 var result = await sender.SendAsync(query, cancellationToken);
                 
                 return result.ToResult();
-            });
+            })
+            .WithName("GetUserChats");
     }
 }

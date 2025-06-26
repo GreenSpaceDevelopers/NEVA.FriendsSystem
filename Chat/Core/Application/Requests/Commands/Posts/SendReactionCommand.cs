@@ -9,7 +9,7 @@ namespace Application.Requests.Commands.Posts;
 
 public record SendReactionCommand(Guid PostId, Guid ReactionTypeId, Guid UserId) : IRequest;
 
-public class SendReactionAsyncHandler(IBlogRepository blogRepository, IReactionsTypesRepository reactionsTypesRepository, IReactionsRepository reactionsRepository, IChatUsersRepository chatUsersRepository) : IRequestHandler<SendReactionCommand>
+public class SendReactionAsyncHandler(IBlogRepository blogRepository, IReactionsTypesRepository reactionsTypesRepository, IChatUsersRepository chatUsersRepository) : IRequestHandler<SendReactionCommand>
 {
     public async Task<IOperationResult> HandleAsync(SendReactionCommand request, CancellationToken cancellationToken = default)
     {

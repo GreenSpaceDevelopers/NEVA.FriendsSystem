@@ -19,7 +19,8 @@ public static class Media
                 var result = await sender.SendAsync(query, cancellationToken);
                 
                 return result.ToResult();
-            });
+            })
+            .WithName("GetAllStickers");
         
         app.MapGet("/media/reactions/page={page:int}/size={size:int}",
             async ([FromRoute]ushort page, [FromRoute]ushort size, 
@@ -29,25 +30,30 @@ public static class Media
                 var result = await sender.SendAsync(query, cancellationToken);
                 
                 return result.ToResult();
-            });
+            })
+            .WithName("GetAllReactions");
         
         app.MapPost("/media/stickers/",
-            async ([FromForm] CreateStickerRequest request, 
+            async ([FromForm] CreateStickerForm form, 
                 [FromServices]ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
+                var request = new CreateStickerRequest(form.StickerImage, form.Name);
                 var result = await sender.SendAsync(request, cancellationToken);
-                
                 return result.ToResult();
-            });
+            })
+            .DisableAntiforgery()
+            .WithName("CreateSticker");
         
         app.MapPost("/media/reactions/",
-            async ([FromForm] CreateReactionRequest request, 
+            async ([FromForm] CreateReactionForm form, 
                 [FromServices]ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
+                var request = new CreateReactionRequest(form.ReactionImage, form.Name, form.Description);
                 var result = await sender.SendAsync(request, cancellationToken);
-                
                 return result.ToResult();
-            });
+            })
+            .DisableAntiforgery()
+            .WithName("CreateReaction");
         
         app.MapDelete("/media/reactions/{id:guid}",
             async ([FromRoute] Guid id,
@@ -57,7 +63,8 @@ public static class Media
                 var result = await sender.SendAsync(request, cancellationToken);
                 
                 return result.ToResult();
-            });
+            })
+            .WithName("DeleteReaction");
         
         app.MapDelete("/media/stickers/{id:guid}",
             async ([FromRoute] Guid id,
@@ -67,6 +74,20 @@ public static class Media
                 var result = await sender.SendAsync(request, cancellationToken);
                 
                 return result.ToResult();
-            });
+            })
+            .WithName("DeleteSticker");
+    }
+
+    public class CreateStickerForm
+    {
+        public string Name { get; set; } = string.Empty;
+        public IFormFile StickerImage { get; set; } = null!;
+    }
+
+    public class CreateReactionForm
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public IFormFile ReactionImage { get; set; } = null!;
     }
 }

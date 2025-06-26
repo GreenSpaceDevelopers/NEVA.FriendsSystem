@@ -23,7 +23,7 @@ public class TogglePostLikeRequestHandler(IBlogRepository blogRepository) : IReq
         
         if (existingLike is not null)
         {
-            post.Reactions.Remove(existingLike);
+            post.Reactions!.Remove(existingLike);
             await blogRepository.SaveChangesAsync(cancellationToken);
             return ResultsHelper.Ok(new { Liked = false });
         }

@@ -23,7 +23,7 @@ public class ToggleCommentLikeRequestHandler(IBlogRepository blogRepository) : I
         
         if (existingLike is not null)
         {
-            comment.CommentReactions.Remove(existingLike);
+            comment.CommentReactions!.Remove(existingLike);
             await blogRepository.SaveChangesAsync(cancellationToken);
             return ResultsHelper.Ok(new { Liked = false });
         }
