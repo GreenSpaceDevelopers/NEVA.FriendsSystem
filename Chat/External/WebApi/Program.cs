@@ -61,9 +61,10 @@ public static class Program
             Console.WriteLine($"Error applying database migrations: {ex.Message}");
             throw;
         }
-
+        app.UseCors(CorsName);
+        
         // Configure the HTTP request pipeline
-
+        
         app.UseSwagger();
         app.UseSwaggerUI(c =>
         {
