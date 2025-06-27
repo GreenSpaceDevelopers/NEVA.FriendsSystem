@@ -78,14 +78,24 @@ jobs:
 
       - name: Deploy to Kubernetes via SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          IAM_TOKEN: ${{ env.IAM_TOKEN }}
         with:
           host: ${{ env.SSH_HOST }}
           port: ${{ env.SSH_PORT }}
           username: ${{ env.SSH_USER }}
           password: ${{ env.SSH_PASSWORD }}
           script: |
+            # Debug: Check if IAM token is available
+            if [ -z "$IAM_TOKEN" ]; then
+              echo "ERROR: IAM_TOKEN is not set"
+              exit 1
+            else
+              echo "IAM_TOKEN is available (length: ${#IAM_TOKEN})"
+            fi
+            
             # Login to Yandex Container Registry
-            echo "${{ env.IAM_TOKEN }}" | docker login --username iam --password-stdin ${{ env.DOCKER_REGISTRY }}
+            echo "$IAM_TOKEN" | docker login --username iam --password-stdin ${{ env.DOCKER_REGISTRY }}
             
             # Pull latest image
             docker pull ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_REPOSITORY }}/${{ env.IMAGE_NAME }}:latest
