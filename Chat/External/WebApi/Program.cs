@@ -8,6 +8,8 @@ using WebApi.Swagger;
 
 public static class Program
 {
+    private const string CorsName = "Neva.Chat";
+    
     public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -32,6 +34,17 @@ public static class Program
             c.OperationFilter<FileUploadOperationFilter>();
         });
         
+        builder.Services.AddCors(o =>
+            o.AddPolicy(CorsName, builder =>
+            {
+                builder
+                    .WithOrigins("http://localhost:5173", "http://localhost:3000")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials()
+                    .WithExposedHeaders("set-cookie");
+            }));
+        
         var app = builder.Build();
 
         using var scope = app.Services.CreateScope();
@@ -51,12 +64,12 @@ public static class Program
 
         // Configure the HTTP request pipeline
 
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Chat API V1");
-                c.RoutePrefix = "swagger";
-            });
+        app.UseSwagger();
+        app.UseSwaggerUI(c =>
+        {
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "Chat API V1");
+            c.RoutePrefix = "swagger";
+        });
         
 
         app.UsePathBase("/api");
