@@ -2,6 +2,8 @@ using Application;
 using Infrastructure;
 using WebApi.Endpoints;
 using External.WebApi.Endpoints;
+using Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using WebApi.Swagger;
 
 public static class Program
@@ -31,6 +33,21 @@ public static class Program
         });
         
         var app = builder.Build();
+
+        using var scope = app.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ChatsDbContext>();
+        
+        await context.Database.MigrateAsync();
+        try
+        {
+            await context.Database.MigrateAsync();
+            Console.WriteLine("Database migrations applied successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error applying database migrations: {ex.Message}");
+            throw;
+        }
 
         // Configure the HTTP request pipeline
 

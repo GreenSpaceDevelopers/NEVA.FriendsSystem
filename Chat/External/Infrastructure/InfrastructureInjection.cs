@@ -39,7 +39,7 @@ public static class InfrastructureInjection
         services.AddDbContext<ChatsDbContext>(opt =>
             opt.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), o =>
             {
-                o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                // o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
             }));
     }
     
