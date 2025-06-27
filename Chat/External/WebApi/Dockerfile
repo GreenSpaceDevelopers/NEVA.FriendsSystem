@@ -7,12 +7,12 @@ EXPOSE 11001
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+COPY ["NuGet.config", "Chat/External/WebApi/"]
 COPY ["Chat/External/WebApi/WebApi.csproj", "Chat/External/WebApi/"]
 COPY ["Chat/Core/Domain/Domain.csproj", "Chat/Core/Domain/"]
 COPY ["Chat/Core/Application/Application.csproj", "Chat/Core/Application/"]
 COPY ["Chat/External/Infrastructure/Infrastructure.csproj", "Chat/External/Infrastructure/"]
-COPY ["NuGet.config", "NEVA.FriendsSystem/"]
-RUN dotnet restore "Chat/External/WebApi/WebApi.csproj"
+RUN dotnet restore "Chat/External/WebApi/WebApi.csproj" --configfile Chat/External/WebApi/NuGet.config
 COPY . .
 WORKDIR "/src/Chat/External/WebApi"
 RUN dotnet build "WebApi.csproj" -c $BUILD_CONFIGURATION -o /app/build

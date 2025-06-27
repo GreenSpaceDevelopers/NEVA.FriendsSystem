@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: chat-webapi
-          image: cr.yandex/chat-webapi:latest  
+          image: cr.yandex/crp0ua90hrat22e231l5/chat-webapi:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 11000
@@ -82,10 +82,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - greenspacegg.ru 
+        - greenspacegg.ru
       secretName: chat-webapi-tls
   rules:
-    - host: greenspacegg.ru  
+    - host: greenspacegg.ru
       http:
         paths:
           - path: /
