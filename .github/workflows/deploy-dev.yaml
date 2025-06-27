@@ -48,6 +48,10 @@ jobs:
           echo "::add-mask::$IAM_TOKEN"
           echo "IAM_TOKEN=$IAM_TOKEN" >> $GITHUB_ENV
           echo "iam_token=$IAM_TOKEN" >> $GITHUB_OUTPUT
+          
+          # Debug: Check token length
+          echo "Token length: ${#IAM_TOKEN}"
+          echo "Token starts with: ${IAM_TOKEN:0:10}..."
 
       - name: Login to Yandex Docker registry
         run: |
@@ -76,22 +80,42 @@ jobs:
           source: "manifests/"
           target: "~/"
 
+      - name: Copy service account key to remote server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ env.SSH_HOST }}
+          port: ${{ env.SSH_PORT }}
+          username: ${{ env.SSH_USER }}
+          password: ${{ env.SSH_PASSWORD }}
+          source: "key.json"
+          target: "~/"
+
       - name: Deploy to Kubernetes via SSH
         uses: appleboy/ssh-action@v1.0.3
-        env:
-          IAM_TOKEN: ${{ env.IAM_TOKEN }}
         with:
           host: ${{ env.SSH_HOST }}
           port: ${{ env.SSH_PORT }}
           username: ${{ env.SSH_USER }}
           password: ${{ env.SSH_PASSWORD }}
           script: |
+            # Install jq if not available
+            if ! command -v jq &> /dev/null; then
+              echo "Installing jq..."
+              sudo apt-get update && sudo apt-get install -y jq
+            fi
+            
+            # Get IAM token on remote server
+            IAM_TOKEN=$(curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -d @~/key.json \
+            https://iam.api.cloud.yandex.net/iam/v1/tokens | jq -r .iamToken)
+            
             # Debug: Check if IAM token is available
             if [ -z "$IAM_TOKEN" ]; then
-              echo "ERROR: IAM_TOKEN is not set"
+              echo "ERROR: Failed to get IAM_TOKEN"
               exit 1
             else
-              echo "IAM_TOKEN is available (length: ${#IAM_TOKEN})"
+              echo "IAM_TOKEN obtained successfully (length: ${#IAM_TOKEN})"
             fi
             
             # Login to Yandex Container Registry
