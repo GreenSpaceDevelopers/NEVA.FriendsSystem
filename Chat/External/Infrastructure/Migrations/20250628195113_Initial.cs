@@ -85,10 +85,10 @@ namespace Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CoverId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AvatarId = table.Column<Guid>(type: "uuid", nullable: false),
                     Username = table.Column<string>(type: "text", nullable: false),
-                    LastSeen = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    AvatarId = table.Column<Guid>(type: "uuid", nullable: true),
-                    CoverId = table.Column<Guid>(type: "uuid", nullable: true)
+                    LastSeen = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -97,12 +97,14 @@ namespace Infrastructure.Migrations
                         name: "FK_ChatUsers_Attachments_AvatarId",
                         column: x => x.AvatarId,
                         principalTable: "Attachments",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_ChatUsers_Attachments_CoverId",
                         column: x => x.CoverId,
                         principalTable: "Attachments",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -188,6 +190,30 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "FriendRequests",
+                columns: table => new
+                {
+                    FriendRequestsId = table.Column<Guid>(type: "uuid", nullable: false),
+                    WaitingFriendRequestsId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FriendRequests", x => new { x.FriendRequestsId, x.WaitingFriendRequestsId });
+                    table.ForeignKey(
+                        name: "FK_FriendRequests_ChatUsers_FriendRequestsId",
+                        column: x => x.FriendRequestsId,
+                        principalTable: "ChatUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_FriendRequests_ChatUsers_WaitingFriendRequestsId",
+                        column: x => x.WaitingFriendRequestsId,
+                        principalTable: "ChatUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Post",
                 columns: table => new
                 {
@@ -240,6 +266,54 @@ namespace Infrastructure.Migrations
                     table.ForeignKey(
                         name: "FK_PrivacySettings_ChatUsers_ChatUserId",
                         column: x => x.ChatUserId,
+                        principalTable: "ChatUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserBlockedUsers",
+                columns: table => new
+                {
+                    BlockedUsersId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ChatUser1Id = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserBlockedUsers", x => new { x.BlockedUsersId, x.ChatUser1Id });
+                    table.ForeignKey(
+                        name: "FK_UserBlockedUsers_ChatUsers_BlockedUsersId",
+                        column: x => x.BlockedUsersId,
+                        principalTable: "ChatUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserBlockedUsers_ChatUsers_ChatUser1Id",
+                        column: x => x.ChatUser1Id,
+                        principalTable: "ChatUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserFriends",
+                columns: table => new
+                {
+                    ChatUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    FriendsId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserFriends", x => new { x.ChatUserId, x.FriendsId });
+                    table.ForeignKey(
+                        name: "FK_UserFriends_ChatUsers_ChatUserId",
+                        column: x => x.ChatUserId,
+                        principalTable: "ChatUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserFriends_ChatUsers_FriendsId",
+                        column: x => x.FriendsId,
                         principalTable: "ChatUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -541,6 +615,11 @@ namespace Infrastructure.Migrations
                 column: "ReactorId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_FriendRequests_WaitingFriendRequestsId",
+                table: "FriendRequests",
+                column: "WaitingFriendRequestsId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Messages_AttachmentId",
                 table: "Messages",
                 column: "AttachmentId");
@@ -620,6 +699,16 @@ namespace Infrastructure.Migrations
                 name: "IX_ReactionTypes_AttachmentId",
                 table: "ReactionTypes",
                 column: "AttachmentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserBlockedUsers_ChatUser1Id",
+                table: "UserBlockedUsers",
+                column: "ChatUser1Id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserFriends_FriendsId",
+                table: "UserFriends",
+                column: "FriendsId");
         }
 
         /// <inheritdoc />
@@ -635,6 +724,9 @@ namespace Infrastructure.Migrations
                 name: "CommentReaction");
 
             migrationBuilder.DropTable(
+                name: "FriendRequests");
+
+            migrationBuilder.DropTable(
                 name: "PostReaction");
 
             migrationBuilder.DropTable(
@@ -642,6 +734,12 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Reactions");
+
+            migrationBuilder.DropTable(
+                name: "UserBlockedUsers");
+
+            migrationBuilder.DropTable(
+                name: "UserFriends");
 
             migrationBuilder.DropTable(
                 name: "ChatRoles");

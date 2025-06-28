@@ -9,7 +9,7 @@ public static class Messages
     public static RawMessage ToRawMessage(this ReceivedMessage receivedMessage)
     {
         return new RawMessage(
-            Guid.Parse(receivedMessage.MessageId),
+            Guid.Parse(receivedMessage.OptionalMessageId ?? string.Empty),
             RequestType.Message,
             receivedMessage.Type,
             receivedMessage.OptionalConnectionId,

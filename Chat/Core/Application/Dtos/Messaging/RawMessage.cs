@@ -1,12 +1,11 @@
 using Application.Messaging.Proto.Messages;
-using Type = Application.Messaging.Proto.Messages.Type;
 
 namespace Application.Dtos.Messaging;
 
 public record RawMessage(
     Guid MessageId,
     RequestType MessageType,
-    Type? Type,
+    MessageType? Type,
     string? ConnectionId,
     string? AccessToken,
     string? Message,

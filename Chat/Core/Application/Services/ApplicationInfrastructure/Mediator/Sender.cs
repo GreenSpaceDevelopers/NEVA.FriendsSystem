@@ -7,7 +7,7 @@ namespace Application.Services.ApplicationInfrastructure.Mediator;
 
 public class Sender(IServiceProvider serviceProvider) : ISender
 {
-    public Task<IOperationResult> SendAsync<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest : IRequest
+    public async Task<IOperationResult> SendAsync<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest : IRequest
     {
         using var scope = serviceProvider.CreateScope();
         var handler = scope.ServiceProvider.GetService<IRequestHandler<TRequest>>();
@@ -30,10 +30,10 @@ public class Sender(IServiceProvider serviceProvider) : ISender
             handlerDelegate = () => behavior.HandleAsync(request, next, cancellationToken);
         }
 
-        return handlerDelegate();
+        return await handlerDelegate();
     }
 
-    public Task NotifyAsync<TNotification>(TNotification notification, CancellationToken cancellationToken = default) where TNotification : INotification
+    public async Task NotifyAsync<TNotification>(TNotification notification, CancellationToken cancellationToken = default) where TNotification : INotification
     {
         using var scope = serviceProvider.CreateScope();
         var processor = scope.ServiceProvider.GetService<INotificationProcessor<TNotification>>();
@@ -56,6 +56,6 @@ public class Sender(IServiceProvider serviceProvider) : ISender
             handlerDelegate = () => behavior.HandleAsync(notification, next, cancellationToken);
         }
 
-        return handlerDelegate();
+        await handlerDelegate();
     }
 }

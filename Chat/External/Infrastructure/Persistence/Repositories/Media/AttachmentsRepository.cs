@@ -8,7 +8,7 @@ public class AttachmentsRepository(ChatsDbContext dbContext) : BaseRepository<At
 {
     public async Task<AttachmentType> GetAttachmentTypeAsync(AttachmentTypes attachmentType, CancellationToken cancellationToken = default)
     {
-        var type = await _dbContext.Set<AttachmentType>()
+        var type = await dbContext.Set<AttachmentType>()
             .FirstOrDefaultAsync(at => at.TypeName == attachmentType.ToString(), cancellationToken);
         
         if (type == null)

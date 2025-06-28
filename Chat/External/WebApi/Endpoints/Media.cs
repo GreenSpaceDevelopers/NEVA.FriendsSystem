@@ -26,7 +26,7 @@ public static class Media
             async ([FromRoute]ushort page, [FromRoute]ushort size, 
                 [FromServices]ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
-                var query = new GetAllStickersRequest(new PageSettings(page, size));
+                var query = new GetAllSReactionsRequest(new PageSettings(page, size));
                 var result = await sender.SendAsync(query, cancellationToken);
                 
                 return result.ToResult();

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ChatsDbContext))]
-    [Migration("20250626005438_Initial")]
+    [Migration("20250628195113_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -38,6 +38,51 @@ namespace Infrastructure.Migrations
                     b.HasIndex("UsersId");
 
                     b.ToTable("ChatUserChats", (string)null);
+                });
+
+            modelBuilder.Entity("ChatUserChatUser", b =>
+                {
+                    b.Property<Guid>("ChatUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FriendsId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ChatUserId", "FriendsId");
+
+                    b.HasIndex("FriendsId");
+
+                    b.ToTable("UserFriends", (string)null);
+                });
+
+            modelBuilder.Entity("ChatUserChatUser1", b =>
+                {
+                    b.Property<Guid>("FriendRequestsId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("WaitingFriendRequestsId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("FriendRequestsId", "WaitingFriendRequestsId");
+
+                    b.HasIndex("WaitingFriendRequestsId");
+
+                    b.ToTable("FriendRequests", (string)null);
+                });
+
+            modelBuilder.Entity("ChatUserChatUser2", b =>
+                {
+                    b.Property<Guid>("BlockedUsersId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ChatUser1Id")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("BlockedUsersId", "ChatUser1Id");
+
+                    b.HasIndex("ChatUser1Id");
+
+                    b.ToTable("UserBlockedUsers", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Blog.Comment", b =>
@@ -446,10 +491,10 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("AvatarId")
+                    b.Property<Guid>("AvatarId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("CoverId")
+                    b.Property<Guid>("CoverId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("LastSeen")
@@ -502,6 +547,51 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Models.Users.ChatUser", null)
                         .WithMany()
                         .HasForeignKey("UsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ChatUserChatUser", b =>
+                {
+                    b.HasOne("Domain.Models.Users.ChatUser", null)
+                        .WithMany()
+                        .HasForeignKey("ChatUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Models.Users.ChatUser", null)
+                        .WithMany()
+                        .HasForeignKey("FriendsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ChatUserChatUser1", b =>
+                {
+                    b.HasOne("Domain.Models.Users.ChatUser", null)
+                        .WithMany()
+                        .HasForeignKey("FriendRequestsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Models.Users.ChatUser", null)
+                        .WithMany()
+                        .HasForeignKey("WaitingFriendRequestsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ChatUserChatUser2", b =>
+                {
+                    b.HasOne("Domain.Models.Users.ChatUser", null)
+                        .WithMany()
+                        .HasForeignKey("BlockedUsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Models.Users.ChatUser", null)
+                        .WithMany()
+                        .HasForeignKey("ChatUser1Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -754,11 +844,15 @@ namespace Infrastructure.Migrations
                 {
                     b.HasOne("Domain.Models.Messaging.Attachment", "Avatar")
                         .WithMany()
-                        .HasForeignKey("AvatarId");
+                        .HasForeignKey("AvatarId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
 
                     b.HasOne("Domain.Models.Messaging.Attachment", "Cover")
                         .WithMany()
-                        .HasForeignKey("CoverId");
+                        .HasForeignKey("CoverId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
 
                     b.Navigation("Avatar");
 

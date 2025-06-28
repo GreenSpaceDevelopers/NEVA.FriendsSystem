@@ -9,7 +9,7 @@ public class BlogRepository(ChatsDbContext dbContext) : BaseRepository<Post>(dbC
 {
     public async Task<ChatUser?> GetUserByIdWithPostsAsync(Guid requestUserId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Set<ChatUser>()
+        return await dbContext.Set<ChatUser>()
             .Include(u => u.Posts)
             .ThenInclude(p => p.Reactions)
             .Include(u => u.Posts)
@@ -19,7 +19,7 @@ public class BlogRepository(ChatsDbContext dbContext) : BaseRepository<Post>(dbC
 
     public async Task<Comment?> GetCommentByIdAsync(Guid commentId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Set<Comment>()
+        return await dbContext.Set<Comment>()
             .Include(c => c.CommentReactions)
             .Include(c => c.Author)
             .Include(c => c.Post)

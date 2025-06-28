@@ -55,6 +55,35 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
             .HasForeignKey(c => c.AdminId)
             .OnDelete(DeleteBehavior.Restrict);
         
+        // Configure ChatUser many-to-many relationships
+        modelBuilder.Entity<ChatUser>()
+            .HasMany(u => u.Friends)
+            .WithMany()
+            .UsingEntity(j => j.ToTable("UserFriends"));
+        
+        modelBuilder.Entity<ChatUser>()
+            .HasMany(u => u.FriendRequests)
+            .WithMany(u => u.WaitingFriendRequests)
+            .UsingEntity(j => j.ToTable("FriendRequests"));
+        
+        modelBuilder.Entity<ChatUser>()
+            .HasMany(u => u.BlockedUsers)
+            .WithMany()
+            .UsingEntity(j => j.ToTable("UserBlockedUsers"));
+        
+        // Configure ChatUser foreign keys
+        modelBuilder.Entity<ChatUser>()
+            .HasOne(u => u.Avatar)
+            .WithMany()
+            .HasForeignKey(u => u.AvatarId)
+            .OnDelete(DeleteBehavior.SetNull);
+        
+        modelBuilder.Entity<ChatUser>()
+            .HasOne(u => u.Cover)
+            .WithMany()
+            .HasForeignKey(u => u.CoverId)
+            .OnDelete(DeleteBehavior.SetNull);
+        
         modelBuilder.Entity<ChatUser>().Navigation(ch => ch.AspNetUser).AutoInclude();
         modelBuilder.Entity<Post>().Navigation(p => p.Author).AutoInclude();
         modelBuilder.Entity<Post>().Navigation(p => p.Comments).AutoInclude();

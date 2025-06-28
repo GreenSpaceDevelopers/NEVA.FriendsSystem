@@ -9,7 +9,7 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
 {
     public Task<List<ChatUser>> GetByUsernameAsync(string username, PageSettings requestPageSettings, CancellationToken cancellationToken = default)
     {
-        return _dbContext.Set<ChatUser>()
+        return dbContext.Set<ChatUser>()
             .Where(user => user.Username.StartsWith(username))
             .Skip(requestPageSettings.PageSize * (requestPageSettings.PageNumber - 1))
             .Take(requestPageSettings.PageSize)
@@ -18,7 +18,7 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
 
     public Task<ChatUser?> GetByIdWithFriendsAsync(Guid requestUserId, CancellationToken cancellationToken)
     {
-        return _dbContext.Set<ChatUser>()
+        return dbContext.Set<ChatUser>()
             .Include(user => user.Friends)
             .Include(user => user.FriendRequests)
             .Include(user => user.BlockedUsers)
@@ -28,7 +28,7 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
 
     public Task<ChatUser?> GetByIdWithBlockerUsersAsync(Guid requestUserId, CancellationToken cancellationToken)
     {
-        return _dbContext.Set<ChatUser>()
+        return dbContext.Set<ChatUser>()
             .Include(user => user.BlockedUsers)
             .SingleOrDefaultAsync(user => user.Id == requestUserId, cancellationToken: cancellationToken);
     }
@@ -39,7 +39,7 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
         PageSettings requestPageSettings,
         CancellationToken cancellationToken)
     {
-        var query = _dbContext.Set<ChatUser>()
+        var query = dbContext.Set<ChatUser>()
             .Where(u => u.BlockedUsers.Any(b => b.Id == requestUserId))
             .Include(u => u.AspNetUser)
             .OrderBy(u => u.Username)
@@ -56,7 +56,7 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
 
     public Task<bool> IsUsernameUniqueAsync(string username, CancellationToken cancellationToken = default)
     {
-        return _dbContext.Set<ChatUser>()
+        return dbContext.Set<ChatUser>()
             .AnyAsync(user => user.Username == username, cancellationToken)
             .ContinueWith(task => !task.Result, cancellationToken);
     }
