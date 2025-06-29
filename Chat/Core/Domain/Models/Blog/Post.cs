@@ -14,11 +14,11 @@ public class Post : Entity<Post>
     public Guid OriginalPostId { get; set; }
     public Guid AuthorId { get; set; }
     public DateTime CreatedAt { get; set; }
-    
+
     public ChatUser Author { get; set; } = null!;
     public Post? OriginalPost { get; set; }
     public Attachment? Attachment { get; set; }
-    
+
     public List<PostReaction> Reactions { get; set; } = [];
     public List<Comment> Comments { get; set; } = [];
     public bool IsCommentsEnabled { get; set; } = true;

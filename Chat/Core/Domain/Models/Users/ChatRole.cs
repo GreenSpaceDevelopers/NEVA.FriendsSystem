@@ -1,6 +1,6 @@
 using Domain.Abstractions;
 
-namespace Domain.Models;
+namespace Domain.Models.Users;
 
 public class ChatRole : IEntity
 {

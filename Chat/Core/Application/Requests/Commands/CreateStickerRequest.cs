@@ -44,7 +44,7 @@ public class CreateStickerRequestHandler(
 
         await attachments.AddAsync(attachment, cancellationToken);
         await attachments.SaveChangesAsync(cancellationToken);
-        
+
         return ResultsHelper.Created(attachment.Id);
     }
 }

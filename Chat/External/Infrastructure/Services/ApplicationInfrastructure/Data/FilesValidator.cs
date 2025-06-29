@@ -17,4 +17,4 @@ public class FilesValidator : IFilesValidator
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
         return AllowedExtensions.Contains(extension);
     }
-} 
+}

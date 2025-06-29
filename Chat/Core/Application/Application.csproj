@@ -28,6 +28,7 @@
       <PackageReference Include="NEVA.CommonLibrary" Version="2.2.0" />
       <PackageReference Include="Quartz" Version="3.14.0" />
       <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.14.0" />
+      <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="9.0.1" />
     </ItemGroup>
 
     <ItemGroup>

@@ -12,15 +12,15 @@ public class DeleteStickerRequestHandler(IAttachmentsRepository attachments) : I
     public async Task<IOperationResult> HandleAsync(DeleteStickerRequest request, CancellationToken cancellationToken = default)
     {
         var sticker = await attachments.GetByIdAsync(request.StickerId, cancellationToken);
-        
+
         if (sticker is null)
         {
             return ResultsHelper.NotFound("Sticker not found");
         }
-        
+
         attachments.Delete(sticker);
         await attachments.SaveChangesAsync(cancellationToken);
-        
+
         return ResultsHelper.NoContent();
     }
 }

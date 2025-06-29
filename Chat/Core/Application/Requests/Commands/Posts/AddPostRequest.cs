@@ -21,12 +21,12 @@ public class AddPostRequestHandler
     public async Task<IOperationResult> HandleAsync(AddPostRequest request, CancellationToken cancellationToken = default)
     {
         var user = await blogRepository.GetUserByIdWithPostsAsync(request.UserId, cancellationToken);
-        
+
         if (user is null)
         {
             return ResultsHelper.NotFound("User not found");
         }
-        
+
         using var memoryStream = new MemoryStream();
         await request.File.CopyToAsync(memoryStream, cancellationToken);
 
@@ -41,9 +41,9 @@ public class AddPostRequestHandler
         {
             return ResultsHelper.BadRequest(uploadResult.GetValue<string>());
         }
-        
+
         var type = await attachments.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
-        
+
         var attachment = new Attachment
         {
             Id = Guid.NewGuid(),
@@ -53,7 +53,7 @@ public class AddPostRequestHandler
         };
 
         await attachments.AddAsync(attachment, cancellationToken);
-        
+
         var post = new Post
         {
             Id = Guid.NewGuid(),
@@ -64,10 +64,10 @@ public class AddPostRequestHandler
             AttachmentId = attachment.Id,
             IsCommentsEnabled = request.IsCommentsEnabled
         };
-        
+
         await blogRepository.AddAsync(post, cancellationToken);
         await blogRepository.SaveChangesAsync(cancellationToken);
-        
+
         return ResultsHelper.Created(post.Id);
     }
 }

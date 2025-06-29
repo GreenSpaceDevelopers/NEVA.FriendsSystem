@@ -1,6 +1,5 @@
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Requests.Commands.Profile;
-using Domain.Models;
 using Domain.Models.Users;
 using GS.CommonLibrary.Dtos;
 using GS.CommonLibrary.Services;
@@ -13,16 +12,16 @@ public class ProcessCreatedUsersJob(ISender mediator, IQueue<AspNetUserDto> queu
     public async Task Execute(IJobExecutionContext context)
     {
         var tasks = new List<Task>();
-        
+
         while (context.CancellationToken.IsCancellationRequested!)
         {
-            var dto =  await queue.ReadAsync(nameof(AspNetUserDto),nameof(AspNetUserDto), context.CancellationToken);
+            var dto = await queue.ReadAsync(nameof(AspNetUserDto), nameof(AspNetUserDto), context.CancellationToken);
 
             if (!dto.isSuccess)
             {
                 return;
             }
-            
+
             // TODO seed roles
             var aspNetUser = new AspNetUser()
             {
@@ -32,10 +31,10 @@ public class ProcessCreatedUsersJob(ISender mediator, IQueue<AspNetUserDto> queu
                 RoleId = Guid.NewGuid()
             };
             var createProfileCommand = new CreateProfileCommand(aspNetUser);
-        
+
             tasks.Add(mediator.SendAsync(createProfileCommand, context.CancellationToken));
         }
-        
+
         await Task.WhenAll(tasks);
     }
 }

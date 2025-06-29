@@ -12,12 +12,12 @@ public class DeleteReactionRequestHandler(IReactionsTypesRepository reactionsTyp
     public async Task<IOperationResult> HandleAsync(DeleteReactionRequest request, CancellationToken cancellationToken = default)
     {
         var reactionType = await reactionsTypesRepository.GetByIdAsync(request.Id, cancellationToken);
-        
+
         if (reactionType is null)
         {
             return ResultsHelper.NotFound("Reaction type not found");
         }
-        
+
         reactionsTypesRepository.Delete(reactionType);
         await reactionsTypesRepository.SaveChangesAsync(cancellationToken);
         return ResultsHelper.NoContent();

@@ -1,6 +1,5 @@
 using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
-using Infrastructure.Configs;
 using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;
@@ -29,7 +28,7 @@ public class FilesStorage : IFilesStorage
         try
         {
             var objectName = $"{Guid.NewGuid()}/{fileName}";
-            
+
             var putObjectArgs = new PutObjectArgs()
                 .WithBucket(_config.BucketName)
                 .WithObject(objectName)
@@ -60,4 +59,4 @@ public class FilesStorage : IFilesStorage
             _ => "application/octet-stream"
         };
     }
-} 
+}

@@ -19,10 +19,10 @@ public class SearchUsersQueryHandler(IChatUsersRepository chatUsersRepository) :
         }
 
         var users = await chatUsersRepository.GetByUsernameAsync(request.Query, request.PageSettings, cancellationToken);
-        
+
         var searchResults = users
             .Where(u => u.Id != request.CurrentUserId) // Исключаем текущего пользователя
-            .Where(u => !currentUser.BlockedUsers.Any(b => b.Id == u.Id)) // Исключаем уже заблокированных
+            .Where(u => currentUser.BlockedUsers.All(b => b.Id != u.Id)) // Исключаем уже заблокированных
             .Select(u => new UserSearchDto(
                 u.Id,
                 u.Username,
@@ -32,4 +32,4 @@ public class SearchUsersQueryHandler(IChatUsersRepository chatUsersRepository) :
 
         return ResultsHelper.Ok(searchResults);
     }
-} 
+}

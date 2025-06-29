@@ -8,7 +8,7 @@ public class FileUploadOperationFilter : IOperationFilter
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
         var parameters = context.ApiDescription.ParameterDescriptions;
-        
+
         foreach (var parameter in parameters)
         {
             if (parameter.ModelMetadata?.ModelType != typeof(IFormFile))
@@ -21,7 +21,7 @@ public class FileUploadOperationFilter : IOperationFilter
             {
                 operation.Parameters.Remove(existingParam);
             }
-                
+
             operation.RequestBody = new OpenApiRequestBody
             {
                 Content = new Dictionary<string, OpenApiMediaType>
@@ -45,4 +45,4 @@ public class FileUploadOperationFilter : IOperationFilter
             };
         }
     }
-} 
+}

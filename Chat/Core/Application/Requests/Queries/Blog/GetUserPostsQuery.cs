@@ -40,4 +40,4 @@ public class GetUserPostsQueryHandler(IBlogRepository blogRepository) : IRequest
 
         return ResultsHelper.Ok(paged);
     }
-} 
+}

@@ -3,9 +3,5 @@ using Domain.Models.Messaging;
 
 namespace Infrastructure.Persistence.Repositories.Media;
 
-public class ReactionsTypesRepository : BaseRepository<ReactionType>, IReactionsTypesRepository
-{
-    public ReactionsTypesRepository(ChatsDbContext context) : base(context)
-    {
-    }
-} 
+public class ReactionsTypesRepository(ChatsDbContext context)
+    : BaseRepository<ReactionType>(context), IReactionsTypesRepository;

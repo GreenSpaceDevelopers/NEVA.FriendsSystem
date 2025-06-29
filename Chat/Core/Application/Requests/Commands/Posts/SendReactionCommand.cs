@@ -19,26 +19,26 @@ public class SendReactionAsyncHandler(IBlogRepository blogRepository, IReactions
         {
             return ResultsHelper.BadRequest("Invalid reaction type");
         }
-        
+
         var post = await blogRepository.GetByIdAsync(request.PostId, cancellationToken);
-        
+
         if (post is null)
         {
             return ResultsHelper.NotFound("Post not found");
         }
-        
+
         var user = await chatUsersRepository.GetByIdAsync(request.UserId, cancellationToken);
-        
+
         if (user is null)
         {
             return ResultsHelper.NotFound("User not found");
         }
-        
+
         if (post.Reactions.Any(reaction => reaction.UserId == request.UserId))
         {
             return ResultsHelper.BadRequest("User has already reacted");
         }
-        
+
         var reaction = new PostReaction
         {
             Id = Guid.NewGuid(),
@@ -47,10 +47,10 @@ public class SendReactionAsyncHandler(IBlogRepository blogRepository, IReactions
             UserId = request.UserId,
             Reactor = user
         };
-        
+
         post.Reactions.Add(reaction);
         await blogRepository.SaveChangesAsync(cancellationToken);
-        
+
         return ResultsHelper.NoContent();
     }
 }

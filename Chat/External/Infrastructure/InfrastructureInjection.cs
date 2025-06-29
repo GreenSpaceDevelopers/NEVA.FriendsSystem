@@ -22,20 +22,20 @@ public static class InfrastructureInjection
     public static void AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<MinioConfig>(configuration.GetSection(MinioConfig.SectionName));
-        
+
         services.AddScoped<IChatsRepository, ChatsRepository>();
         services.AddScoped<IChatUsersRepository, ChatChatUsersRepository>();
         services.AddScoped<IBlogRepository, BlogRepository>();
         services.AddScoped<IPrivacyRepository, PrivacyRepository>();
         services.AddScoped<IAttachmentsRepository, AttachmentsRepository>();
         services.AddScoped<IReactionsTypesRepository, ReactionsTypesRepository>();
-        
+
         services.AddScoped<IFilesStorage, FilesStorage>();
         services.AddScoped<IFilesValidator, FilesValidator>();
         services.AddScoped<IFilesSigningService, FilesSigningService>();
-        
+
         services.AddHostedService<MinioInitializer>();
-        
+
         services.AddDbContext<ChatsDbContext>(opt =>
             opt.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), o =>
             {
@@ -46,8 +46,8 @@ public static class InfrastructureInjection
                     errorCodesToAdd: null);
             }));
     }
-    
-    
+
+
     private static void AddRedisCache(this IServiceCollection services, IConfiguration configuration)
     {
         var redisOptions = new RedisConfig();

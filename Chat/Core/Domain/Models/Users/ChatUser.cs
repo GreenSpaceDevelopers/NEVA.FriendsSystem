@@ -12,7 +12,7 @@ public class ChatUser : IEntity
         Username = requestAspNetUser.UserName;
         AspNetUser = requestAspNetUser;
     }
-    
+
     public Guid CoverId { get; set; }
     public Guid AvatarId { get; set; }
     public ChatUser() { }

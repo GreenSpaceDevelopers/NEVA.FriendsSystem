@@ -8,7 +8,7 @@ namespace Infrastructure.Services.ApplicationInfrastructure.Network;
 public class WebSocketStore : IWebSocketStore
 {
     private readonly ConcurrentDictionary<Guid, WebSocket> _sockets = new();
-    
+
     public Guid AddSocket(WebSocket socket)
     {
         var connectionId = Guid.NewGuid();
@@ -19,12 +19,12 @@ public class WebSocketStore : IWebSocketStore
     public WebSocket? GetSocketById(Guid id)
     {
         _sockets.TryGetValue(id, out var socket);
-        
+
         return socket;
     }
 
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
-    public async ValueTask RemoveSocketAsync(Guid id, string reason = "Closed by server", 
+    public async ValueTask RemoveSocketAsync(Guid id, string reason = "Closed by server",
         WebSocketCloseStatus reasonCode = WebSocketCloseStatus.InternalServerError, CancellationToken cancellationToken = default)
     {
         _sockets.TryRemove(id, out var socket);

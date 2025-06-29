@@ -48,7 +48,7 @@ file class ConnectionHolderHandler(HttpListenerContext context, IWebSocketStore 
     {
         HttpListenerWebSocketContext wsContext = null!;
         var id = Guid.Empty;
-        
+
         try
         {
             wsContext = await context.AcceptWebSocketAsync(null);
@@ -57,11 +57,11 @@ file class ConnectionHolderHandler(HttpListenerContext context, IWebSocketStore 
             var cancellationTokenSource = new CancellationTokenSource();
             cancellationTokenSource.CancelAfter(1000 * 60 * 6);
             var result = await wsContext.WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationTokenSource.Token);
-            
+
             using var stream = new MemoryStream(buffer, 0, result.Count);
             var connRequest = ConnectionRequest.Parser.ParseFrom(stream);
             connRequest.OptionalConnectionId = id.ToString();
-            
+
             if (connRequest is null)
             {
                 logger.LogError("Received invalid message {Headers}, {Uri}", wsContext.Headers, wsContext.RequestUri);

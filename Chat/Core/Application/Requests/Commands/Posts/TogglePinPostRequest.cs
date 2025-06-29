@@ -16,17 +16,17 @@ public class TogglePinPostRequestHandler(IBlogRepository blogRepository) : IRequ
         {
             return ResultsHelper.NotFound("User not found");
         }
-        
+
         var post = user.Posts.FirstOrDefault(post => post.Id == request.PostId);
         if (post is null)
         {
             return ResultsHelper.NotFound("Post not found");
         }
-        
+
         post.IsPinned = !post.IsPinned;
-        
+
         await blogRepository.SaveChangesAsync(cancellationToken);
-        
+
         return ResultsHelper.Ok(new { PostId = post.Id, IsPinned = post.IsPinned });
     }
 }
@@ -41,4 +41,4 @@ public class TogglePinPostRequestValidator : AbstractValidator<TogglePinPostRequ
         RuleFor(x => x.UserId)
             .NotEmpty().WithMessage("UserId is required.");
     }
-} 
+}

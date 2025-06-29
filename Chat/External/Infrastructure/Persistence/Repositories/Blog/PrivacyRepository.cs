@@ -10,12 +10,12 @@ public class PrivacyRepository(ChatsDbContext dbContext) : IPrivacyRepository
     {
         var setting = await dbContext.Set<PrivacySetting>()
             .FirstOrDefaultAsync(p => p.ChatUserId == userId, cancellationToken);
-        
+
         if (setting == null)
         {
             throw new InvalidOperationException($"Privacy setting not found for user {userId}");
         }
-        
+
         return setting;
     }
 
@@ -23,4 +23,4 @@ public class PrivacyRepository(ChatsDbContext dbContext) : IPrivacyRepository
     {
         return dbContext.Set<PrivacySetting>().ToListAsync(cancellationToken);
     }
-} 
+}

@@ -23,7 +23,7 @@ public class UpdateProfileRequestHandler(
     public async Task<IOperationResult> HandleAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default)
     {
         var user = await chatUsersRepository.GetByIdAsync(request.UserId, cancellationToken);
-        
+
         if (user is null)
         {
             return ResultsHelper.NotFound("User not found");
@@ -56,7 +56,7 @@ public class UpdateProfileRequestHandler(
             }
 
             var avatarType = await attachments.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
-            
+
             var avatarAttachment = new Attachment
             {
                 Id = Guid.NewGuid(),
@@ -87,7 +87,7 @@ public class UpdateProfileRequestHandler(
             }
 
             var coverType = await attachments.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
-            
+
             var coverAttachment = new Attachment
             {
                 Id = Guid.NewGuid(),
@@ -101,12 +101,12 @@ public class UpdateProfileRequestHandler(
         }
 
         user.Username = request.Username;
-        
+
         var privacySettings = await privacyRepository.GetPrivacySettingsAsync(cancellationToken);
         user.PrivacySetting = privacySettings.First(p => p.Id == (int)request.PrivacySetting);
 
         await chatUsersRepository.SaveChangesAsync(cancellationToken);
-        
+
         return ResultsHelper.NoContent();
     }
 }
@@ -130,4 +130,4 @@ public class UpdateProfileRequestValidator : AbstractValidator<UpdateProfileRequ
         RuleFor(x => x.Cover)
             .Must(file => file == null || file.Length > 0).WithMessage("Cover file must not be empty.");
     }
-} 
+}

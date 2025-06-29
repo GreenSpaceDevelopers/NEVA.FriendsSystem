@@ -1,5 +1,4 @@
-﻿using Application.Abstractions.Persistence.Repositories.Messaging;
-using Application.Abstractions.Persistence.Repositories.Users;
+﻿using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Common.Mappers;
@@ -18,7 +17,7 @@ public class GetUserBlackListRequest(IChatUsersRepository chatUsersRepository)
         var blockedUsers = await chatUsersRepository.GetBlockedUsersAsync(request.UserId, request.Query, request.PageSettings, cancellationToken);
 
         var userBlockList = blockedUsers.Select(bu => bu.ToBlackListItem()).ToList();
-        
+
         return ResultsHelper.Ok(userBlockList);
     }
 }

@@ -12,9 +12,6 @@ namespace Application.Requests.Commands.Profile;
 /// </summary>
 [SwaggerSchema(Description = "Запрос для проверки доступности имени пользователя")]
 public record ValidateUsernameRequest(
-    /// <summary>
-    /// Имя пользователя для проверки
-    /// </summary>
     [SwaggerSchema(Description = "Имя пользователя для проверки (от 3 до 50 символов)")]
     string Username) : IRequest;
 
@@ -28,7 +25,7 @@ public class ValidateUsernameRequestHandler(IChatUsersRepository chatUsersReposi
         }
 
         var isUnique = await chatUsersRepository.IsUsernameUniqueAsync(request.Username, cancellationToken);
-        
+
         if (!isUnique)
         {
             return ResultsHelper.Ok(new ProfileValidationDto(false, "Username is already taken"));
@@ -47,4 +44,4 @@ public class ValidateUsernameRequestValidator : AbstractValidator<ValidateUserna
             .MinimumLength(3).WithMessage("Username must be at least 3 characters long.")
             .MaximumLength(50).WithMessage("Username must not exceed 50 characters.");
     }
-} 
+}

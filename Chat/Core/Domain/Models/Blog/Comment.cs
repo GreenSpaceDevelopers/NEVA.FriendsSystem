@@ -14,7 +14,7 @@ public class Comment : Entity<Comment>
     public Guid PostId { get; set; }
     public Guid ParentId { get; set; }
     public Guid? ParentCommentId { get; set; }
-    
+
     public Comment? Parent { get; set; }
     public Post Post { get; set; } = null!;
     public Attachment? Attachment { get; set; }

@@ -8,7 +8,7 @@ public class MessageSenderWorker(ILogger<MessageSenderWorker> logger, IMessageRo
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         logger.LogInformation("Worker starting at: {time}", DateHelper.GetCurrentDateTime());
-        await messageRouter.StartAsync(cancellationToken); 
+        await messageRouter.StartAsync(cancellationToken);
         logger.LogInformation("Worker started at: {time}", DateHelper.GetCurrentDateTime());
     }
 

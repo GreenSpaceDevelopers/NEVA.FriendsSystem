@@ -15,4 +15,4 @@ public static class Profile
             (PrivacySettingsEnums)user.PrivacySetting.Id
         );
     }
-} 
+}

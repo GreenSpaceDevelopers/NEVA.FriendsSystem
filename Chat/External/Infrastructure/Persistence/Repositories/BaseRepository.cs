@@ -1,5 +1,3 @@
-using System.Collections.Frozen;
-using System.Runtime.CompilerServices;
 using Application.Abstractions.Persistence.Repositories;
 using Application.Dtos.Requests.Shared;
 using Domain.Abstractions;
@@ -14,7 +12,7 @@ public class BaseRepository<T>(ChatsDbContext dbContext) : IBaseRepository<T>
     {
         return await dbContext.Set<T>().FindAsync([id], cancellationToken: cancellationToken);
     }
-    
+
     public async Task AddAsync(T entity, CancellationToken cancellationToken = default)
     {
         await dbContext.Set<T>().AddAsync(entity, cancellationToken);

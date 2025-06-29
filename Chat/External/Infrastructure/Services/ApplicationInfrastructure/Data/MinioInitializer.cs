@@ -1,4 +1,3 @@
-using Infrastructure.Configs;
 using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;
@@ -28,13 +27,13 @@ public class MinioInitializer : IHostedService
         try
         {
             var bucketExists = await _minioClient.BucketExistsAsync(
-                new BucketExistsArgs().WithBucket(_config.BucketName), 
+                new BucketExistsArgs().WithBucket(_config.BucketName),
                 cancellationToken);
 
             if (!bucketExists)
             {
                 await _minioClient.MakeBucketAsync(
-                    new MakeBucketArgs().WithBucket(_config.BucketName), 
+                    new MakeBucketArgs().WithBucket(_config.BucketName),
                     cancellationToken);
             }
         }
@@ -49,4 +48,4 @@ public class MinioInitializer : IHostedService
     {
         return Task.CompletedTask;
     }
-} 
+}

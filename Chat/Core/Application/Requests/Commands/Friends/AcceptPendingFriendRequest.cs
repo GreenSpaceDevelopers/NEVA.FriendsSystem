@@ -5,11 +5,11 @@ using FluentValidation;
 
 namespace Application.Requests.Commands.Friends;
 
-public record DeleteFriendRequest(Guid UserId, Guid FriendId) : IRequest;
+public record AcceptPendingFriendRequest(Guid UserId, Guid FriendId) : IRequest;
 
-public class DeleteFriendRequestHandler(IChatUsersRepository chatUsersRepository) : IRequestHandler<DeleteFriendRequest>
+public class AcceptPendingFriendRequestHandler(IChatUsersRepository chatUsersRepository) : IRequestHandler<AcceptPendingFriendRequest>
 {
-    public async Task<IOperationResult> HandleAsync(DeleteFriendRequest request, CancellationToken cancellationToken = default)
+    public async Task<IOperationResult> HandleAsync(AcceptPendingFriendRequest request, CancellationToken cancellationToken = default)
     {
         var user = await chatUsersRepository.GetByIdWithFriendsAsync(request.UserId, cancellationToken);
 
@@ -25,13 +25,16 @@ public class DeleteFriendRequestHandler(IChatUsersRepository chatUsersRepository
             return ResultsHelper.NotFound("Friend not found");
         }
 
-        if (!user.Friends.Contains(friendUser))
+        if (!user.FriendRequests.Contains(friendUser))
         {
-            return ResultsHelper.BadRequest("User is not a friend");
+            return ResultsHelper.BadRequest("Friend request not found");
         }
 
-        user.Friends.Remove(friendUser);
-        friendUser.Friends.Remove(user);
+        user.Friends.Add(friendUser);
+        friendUser.Friends.Add(user);
+
+        user.FriendRequests.Remove(friendUser);
+        friendUser.WaitingFriendRequests.Remove(user);
 
         await chatUsersRepository.SaveChangesAsync(cancellationToken);
 
@@ -39,9 +42,9 @@ public class DeleteFriendRequestHandler(IChatUsersRepository chatUsersRepository
     }
 }
 
-public class DeleteFriendRequestValidator : AbstractValidator<DeleteFriendRequest>
+public class AcceptPendingFriendRequestValidator : AbstractValidator<AcceptPendingFriendRequest>
 {
-    public DeleteFriendRequestValidator()
+    public AcceptPendingFriendRequestValidator()
     {
         RuleFor(x => x.UserId)
             .NotEmpty().WithMessage("UserId is required.");

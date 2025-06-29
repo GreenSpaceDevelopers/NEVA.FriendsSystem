@@ -1,7 +1,6 @@
 using Application.Abstractions.Persistence.Repositories.Blog;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
-using Domain.Models.Blog;
 using Domain.Models.Messaging;
 using FluentValidation;
 
@@ -20,7 +19,7 @@ public class ToggleCommentLikeRequestHandler(IBlogRepository blogRepository) : I
         }
 
         var existingLike = comment.CommentReactions?.FirstOrDefault(r => r.UserId == request.UserId);
-        
+
         if (existingLike is not null)
         {
             comment.CommentReactions!.Remove(existingLike);
@@ -55,4 +54,4 @@ public class ToggleCommentLikeRequestValidator : AbstractValidator<ToggleComment
         RuleFor(x => x.UserId)
             .NotEmpty().WithMessage("UserId is required.");
     }
-} 
+}

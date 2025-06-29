@@ -32,4 +32,4 @@ public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository
 
         return ResultsHelper.Ok(friends);
     }
-} 
+}

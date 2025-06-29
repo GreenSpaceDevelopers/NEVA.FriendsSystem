@@ -10,12 +10,12 @@ public class AttachmentsRepository(ChatsDbContext dbContext) : BaseRepository<At
     {
         var type = await dbContext.Set<AttachmentType>()
             .FirstOrDefaultAsync(at => at.TypeName == attachmentType.ToString(), cancellationToken);
-        
+
         if (type == null)
         {
             throw new InvalidOperationException($"Attachment type {attachmentType} not found");
         }
-        
+
         return type;
     }
-} 
+}

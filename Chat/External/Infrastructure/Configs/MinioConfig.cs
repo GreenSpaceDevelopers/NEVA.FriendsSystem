@@ -8,4 +8,4 @@ public class MinioConfig
     public string SecretKey { get; set; } = string.Empty;
     public string BucketName { get; set; } = "chat-files";
     public bool UseSSL { get; set; } = false;
-} 
+}

@@ -24,17 +24,17 @@ public record GetAllSReactionsRequestHandler
         await Parallel.ForEachAsync(reactionTypes, cancellationToken, async (reactionType, token) =>
         {
             var attachment = await attachments.GetByIdAsync(reactionType.IconId, token);
-            
+
             if (attachment is null)
             {
                 return;
             }
-            
+
             var signedUrl = await filesSigningService.GetSignedUrlAsync(attachment.Url, token);
-            
+
             mappedDtos.Add(reactionType.ToDto(signedUrl));
         });
-        
+
         return ResultsHelper.Ok(mappedDtos);
     }
 }

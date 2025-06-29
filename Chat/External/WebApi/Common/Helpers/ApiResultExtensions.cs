@@ -1,8 +1,6 @@
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 
-namespace External.WebApi.Common.Helpers;
+namespace WebApi.Common.Helpers;
 
 public static class ApiResultExtensions
 {
@@ -19,4 +17,4 @@ public static class ApiResultExtensions
             _ => Results.StatusCode(result.StatusCode)
         };
     }
-} 
+}

@@ -42,6 +42,7 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
         var query = dbContext.Set<ChatUser>()
             .Where(u => u.BlockedUsers.Any(b => b.Id == requestUserId))
             .Include(u => u.AspNetUser)
+            .Include(u => u.Avatar)
             .OrderBy(u => u.Username)
             .Skip((requestPageSettings.PageNumber - 1) * requestPageSettings.PageSize)
             .Take(requestPageSettings.PageSize);
@@ -50,7 +51,7 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
         {
             query = query.Where(u => u.Username.Contains(queryString));
         }
-        
+
         return query.ToListAsync(cancellationToken);
     }
 

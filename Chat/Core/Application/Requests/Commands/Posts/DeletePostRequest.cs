@@ -12,23 +12,23 @@ public class DeletePostRequestHandler(IBlogRepository blogRepository) : IRequest
     public async Task<IOperationResult> HandleAsync(DeletePostRequest request, CancellationToken cancellationToken = default)
     {
         var user = await blogRepository.GetUserByIdWithPostsAsync(request.UserId, cancellationToken);
-        
+
         if (user is null)
         {
             return ResultsHelper.NotFound("User not found");
         }
-        
+
         var post = user.Posts.FirstOrDefault(post => post.Id == request.Id);
-        
+
         if (post is null)
         {
             return ResultsHelper.NotFound("Post not found");
         }
-        
+
         user.Posts.Remove(post);
         blogRepository.Delete(post);
         await blogRepository.SaveChangesAsync(cancellationToken);
-        
+
         return ResultsHelper.NoContent();
     }
 }

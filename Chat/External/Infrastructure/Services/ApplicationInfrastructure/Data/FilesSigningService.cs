@@ -18,4 +18,4 @@ public class FilesSigningService : IFilesSigningService
         var signedUrl = $"{_minioConfig.Endpoint}/{_minioConfig.BucketName}/{unsignedUrl}";
         return Task.FromResult(signedUrl);
     }
-} 
+}

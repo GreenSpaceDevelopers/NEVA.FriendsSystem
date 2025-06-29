@@ -16,21 +16,21 @@ public class RemoveFromBlockListHandler(IChatUsersRepository chatUsersRepository
         {
             return ResultsHelper.NotFound("User not found");
         }
-        
+
         var unblockedUser = await chatUsersRepository.GetByIdAsync(request.UnblockedUserId, cancellationToken);
         if (unblockedUser is null)
         {
             return ResultsHelper.NotFound("Unblocked user not found");
         }
-        
+
         if (!user.BlockedUsers.Contains(unblockedUser))
         {
             return ResultsHelper.BadRequest("User is not blocked");
         }
-        
+
         user.BlockedUsers.Remove(unblockedUser);
         await chatUsersRepository.SaveChangesAsync(cancellationToken);
-        
+
         return ResultsHelper.NoContent();
     }
 }

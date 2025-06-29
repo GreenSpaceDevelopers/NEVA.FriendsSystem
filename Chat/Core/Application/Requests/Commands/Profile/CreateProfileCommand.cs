@@ -15,12 +15,12 @@ public class CreateProfileCommandHandler(IChatUsersRepository chatUsersRepositor
         var chatUser = new ChatUser(request.AspNetUser);
 
         var privacySetting = await privacyRepository.GetPrivacySettingsAsync(cancellationToken);
-        
+
         chatUser.PrivacySetting = privacySetting.First(p => p.Id == (int)PrivacySettingsEnums.Public);
-        
+
         await chatUsersRepository.AddAsync(chatUser, cancellationToken);
         await chatUsersRepository.SaveChangesAsync(cancellationToken);
-        
+
         return ResultsHelper.NoContent();
     }
 }

@@ -8,7 +8,7 @@ public class Reaction : Entity<Reaction>
 {
     public Guid MessageId { get; set; }
     public Guid UserId { get; set; }
-    
+
     public ReactionType Type { get; set; } = null!;
     public Message Message { get; set; } = null!;
     public ChatUser Reactor { get; set; } = null!;

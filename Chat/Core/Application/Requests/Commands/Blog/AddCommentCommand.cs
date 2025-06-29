@@ -107,4 +107,4 @@ public class AddCommentRequestValidator : AbstractValidator<AddCommentRequest>
         RuleFor(x => x.Attachment)
             .Must(file => file == null || file.Length > 0).WithMessage("Attachment file must not be empty.");
     }
-} 
+}

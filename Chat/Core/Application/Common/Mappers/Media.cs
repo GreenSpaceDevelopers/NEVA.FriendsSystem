@@ -7,21 +7,19 @@ public static class Media
 {
     public static MediaDto ToDto(this ReactionType reaction, string url)
     {
-        return new MediaDto
-        {
-            Id = reaction.Id,
-            Url = url,
-            Type = nameof(ReactionType),
-        };
+        return new MediaDto(
+            reaction.Id,
+            nameof(ReactionType),
+            url,
+            string.Empty); // what the hell is that?
     }
-    
+
     public static MediaDto ToDto(this Attachment attachment, string url)
     {
-        return new MediaDto
-        {
-            Id = attachment.Id,
-            Url = url,
-            Type = attachment.Type.TypeName,
-        };
+        return new MediaDto(
+            attachment.Id,
+            attachment.Type.TypeName,
+            url,
+            string.Empty); // what the hell is that?
     }
 }

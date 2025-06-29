@@ -1,7 +1,6 @@
 using Application.Abstractions.Persistence.Repositories.Blog;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
-using Domain.Models.Blog;
 using FluentValidation;
 
 namespace Application.Requests.Commands.Blog;
@@ -40,4 +39,4 @@ public class TogglePostCommentsRequestValidator : AbstractValidator<TogglePostCo
         RuleFor(x => x.UserId)
             .NotEmpty().WithMessage("UserId is required.");
     }
-} 
+}
