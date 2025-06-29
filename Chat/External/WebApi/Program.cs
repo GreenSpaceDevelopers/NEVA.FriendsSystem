@@ -5,6 +5,8 @@ using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using WebApi.Swagger;
 using System.Reflection;
+using WebApi.Middlewares;
+using GS.IdentityServerApi.Extensions;
 
 public static class Program
 {
@@ -16,6 +18,9 @@ public static class Program
 
         builder.Services.AddApplication();
         builder.Services.AddInfrastructure(builder.Configuration);
+
+        var identityClientBaseUrl = builder.Configuration["IdentityClient:BaseUrl"] ?? "";
+        builder.Services.AddIdentityClient(identityClientBaseUrl);
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
@@ -80,8 +85,8 @@ public static class Program
             throw;
         }
         app.UseCors(CorsName);
-
-        // Configure the HTTP request pipeline
+        
+        app.UseMiddleware<SessionValidationMiddleware>();
 
         app.UseSwagger();
         app.UseSwaggerUI(c =>
