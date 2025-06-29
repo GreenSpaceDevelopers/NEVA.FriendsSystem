@@ -72,7 +72,7 @@ public static class Program
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ChatsDbContext>();
 
-        await context.Database.EnsureDeletedAsync();
+        // await context.Database.EnsureDeletedAsync();
         await context.Database.MigrateAsync();
         try
         {
