@@ -29,6 +29,7 @@ public static class InfrastructureInjection
         services.AddScoped<IPrivacyRepository, PrivacyRepository>();
         services.AddScoped<IAttachmentsRepository, AttachmentsRepository>();
         services.AddScoped<IReactionsTypesRepository, ReactionsTypesRepository>();
+        services.AddScoped<IMessagesRepository, MessagesRepository>();
 
         services.AddScoped<IFilesStorage, FilesStorage>();
         services.AddScoped<IFilesValidator, FilesValidator>();
