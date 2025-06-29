@@ -3,10 +3,20 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Dtos.Responses.Profile;
 using FluentValidation;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Application.Requests.Commands.Profile;
 
-public record ValidateUsernameRequest(string Username) : IRequest;
+/// <summary>
+/// Запрос на валидацию имени пользователя
+/// </summary>
+[SwaggerSchema(Description = "Запрос для проверки доступности имени пользователя")]
+public record ValidateUsernameRequest(
+    /// <summary>
+    /// Имя пользователя для проверки
+    /// </summary>
+    [SwaggerSchema(Description = "Имя пользователя для проверки (от 3 до 50 символов)")]
+    string Username) : IRequest;
 
 public class ValidateUsernameRequestHandler(IChatUsersRepository chatUsersRepository) : IRequestHandler<ValidateUsernameRequest>
 {

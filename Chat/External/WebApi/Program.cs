@@ -5,6 +5,7 @@ using External.WebApi.Endpoints;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using WebApi.Swagger;
+using System.Reflection;
 
 public static class Program
 {
@@ -24,14 +25,49 @@ public static class Program
         {
             c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
             {
-                Title = "Chat API",
-                Version = "v1",
-                Description = "API for chat application with friends, posts, comments and messaging features"
+                Title = "NEVA Chat API",
+                Version = "v1.0.0",
+                Description = "REST API для чат-приложения NEVA с функциями друзей, постов, комментариев и обмена сообщениями",
+                Contact = new Microsoft.OpenApi.Models.OpenApiContact
+                {
+                    Name = "NEVA Chat Team",
+                    Email = "support@neva-chat.com",
+                    Url = new Uri("https://neva-chat.com")
+                },
+                License = new Microsoft.OpenApi.Models.OpenApiLicense
+                {
+                    Name = "MIT License",
+                    Url = new Uri("https://opensource.org/licenses/MIT")
+                }
             });
             
             // Configure Swagger to handle file uploads properly
             c.SwaggerGeneratorOptions.DescribeAllParametersInCamelCase = true;
             c.OperationFilter<FileUploadOperationFilter>();
+            
+            // Enable annotations
+            c.EnableAnnotations();
+            
+            // Include XML comments
+            var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            if (File.Exists(xmlPath))
+            {
+                c.IncludeXmlComments(xmlPath);
+            }
+            
+            // Add security definitions
+            c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                Name = "Authorization",
+                In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
+            });
+            
+            // Add operation filters for better documentation
+            c.OperationFilter<Swashbuckle.AspNetCore.Annotations.AnnotationsOperationFilter>();
         });
         
         builder.Services.AddCors(o =>
