@@ -21,6 +21,8 @@ public static class Program
 
         var identityClientBaseUrl = builder.Configuration["IdentityClient:BaseUrl"] ?? "";
         builder.Services.AddIdentityClient(identityClientBaseUrl);
+        
+        builder.Services.AddHttpClient();
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
@@ -103,6 +105,7 @@ public static class Program
         app.MapFriendsEndpoints();
         app.MapProfileEndpoints();
         app.MapBlackListEndpoints();
+        app.MapAdminEndpoints();
 
         await app.RunAsync();
     }

@@ -13,8 +13,8 @@ public class ChatUser : IEntity
         AspNetUser = requestAspNetUser;
     }
 
-    public Guid CoverId { get; set; }
-    public Guid AvatarId { get; set; }
+    public Guid? CoverId { get; set; }
+    public Guid? AvatarId { get; set; }
     public ChatUser() { }
     public Guid Id { get; set; }
     public AspNetUser AspNetUser { get; set; }

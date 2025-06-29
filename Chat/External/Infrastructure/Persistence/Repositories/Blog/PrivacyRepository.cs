@@ -23,4 +23,10 @@ public class PrivacyRepository(ChatsDbContext dbContext) : IPrivacyRepository
     {
         return dbContext.Set<PrivacySetting>().ToListAsync(cancellationToken);
     }
+
+    public async Task AddPrivacySettingsAsync(List<PrivacySetting> settings, CancellationToken cancellationToken = default)
+    {
+        await dbContext.Set<PrivacySetting>().AddRangeAsync(settings, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
 }
