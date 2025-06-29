@@ -31,10 +31,10 @@ public static class Profile
 
         app.MapPut("/profile/", async (
             [FromForm] UpdateProfileForm form,
-            [FromServices] ISender sender,
+            [FromServices] ISender sender, HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            var request = new UpdateProfileRequest(form.UserId, form.Username, form.Name, form.Surname, form.MiddleName, form.DateOfBirth, form.Avatar, form.Cover, form.PrivacySetting);
+            var request = new UpdateProfileRequest(context.GetUserId(), form.Username, form.Name, form.Surname, form.MiddleName, form.DateOfBirth, form.Avatar, form.Cover, form.PrivacySetting);
             var result = await sender.SendAsync(request, cancellationToken);
             return result.ToApiResult();
         })

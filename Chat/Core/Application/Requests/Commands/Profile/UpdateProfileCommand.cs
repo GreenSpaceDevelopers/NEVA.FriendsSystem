@@ -144,11 +144,5 @@ public class UpdateProfileRequestValidator : AbstractValidator<UpdateProfileRequ
             .LessThan(DateTime.Today).WithMessage("Date of birth must be in the past.")
             .GreaterThan(DateTime.Today.AddYears(-150)).WithMessage("Date of birth cannot be more than 150 years ago.")
             .When(x => x.DateOfBirth.HasValue);
-
-        RuleFor(x => x.Avatar)
-            .Must(file => file == null || file.Length > 0).WithMessage("Avatar file must not be empty.");
-
-        RuleFor(x => x.Cover)
-            .Must(file => file == null || file.Length > 0).WithMessage("Cover file must not be empty.");
     }
 }
