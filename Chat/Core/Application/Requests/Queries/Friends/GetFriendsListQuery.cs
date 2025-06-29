@@ -3,12 +3,15 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Dtos.Requests.Shared;
 using Application.Dtos.Responses.Friends;
+using System.Text.Json;
+using Microsoft.Extensions.Configuration;
+using Application.Dtos.Responses.Match;
 
 namespace Application.Requests.Queries.Friends;
 
-public record GetFriendsListQuery(Guid UserId, PageSettings PageSettings) : IRequest;
+public record GetFriendsListQuery(Guid UserId, PageSettings PageSettings, Guid? DisciplineId) : IRequest;
 
-public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository) : IRequestHandler<GetFriendsListQuery>
+public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository, IConfiguration configuration, HttpClient httpClient) : IRequestHandler<GetFriendsListQuery>
 {
     public async Task<IOperationResult> HandleAsync(GetFriendsListQuery request, CancellationToken cancellationToken = default)
     {
@@ -18,8 +21,25 @@ public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository
             return ResultsHelper.NotFound("User not found");
         }
 
-        var friends = user.Friends
-            .OrderBy(f => f.Username)
+        var friends = user.Friends.OrderBy(f => f.Username).ToList();
+
+        if (request.DisciplineId.HasValue)
+        {
+            var friendsInDiscipline = new List<Domain.Models.Users.ChatUser>();
+            
+            foreach (var friend in friends)
+            {
+                var friendDisciplines = await GetUserDisciplinesFromMatchHistory(friend.Id, cancellationToken);
+                if (friendDisciplines.Contains(request.DisciplineId.Value))
+                {
+                    friendsInDiscipline.Add(friend);
+                }
+            }
+            
+            friends = friendsInDiscipline;
+        }
+
+        var pagedFriends = friends
             .Skip(request.PageSettings.Skip)
             .Take(request.PageSettings.Take)
             .Select(f => new FriendDto(
@@ -30,6 +50,33 @@ public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository
             ))
             .ToList();
 
-        return ResultsHelper.Ok(friends);
+        return ResultsHelper.Ok(pagedFriends);
+    }
+
+    private async Task<List<Guid>> GetUserDisciplinesFromMatchHistory(Guid playerId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var externalApiBaseUrl = configuration["ExternalApi:BaseUrl"] ?? "http://localhost:7198";
+            var externalApiUrl = $"{externalApiBaseUrl}/api/Players/GetMatchHistory/{playerId}";
+            var response = await httpClient.GetAsync(externalApiUrl, cancellationToken);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                return new List<Guid>();
+            }
+
+            var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            var matchHistoryResponse = JsonSerializer.Deserialize<MatchHistoryResponse>(jsonContent, new JsonSerializerOptions 
+            { 
+                PropertyNameCaseInsensitive = true 
+            });
+
+            return matchHistoryResponse?.Data?.Data?.Select(m => m.GameTypeId).Distinct().ToList() ?? new List<Guid>();
+        }
+        catch
+        {
+            return new List<Guid>();
+        }
     }
 }

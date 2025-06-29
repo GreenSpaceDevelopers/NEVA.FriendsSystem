@@ -120,10 +120,11 @@ public static class Friends
             [FromQuery] Guid userId,
             [FromQuery] int skip,
             [FromQuery] int take,
+            [FromQuery] Guid? disciplineId,
             [FromServices] ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetFriendsListQuery(userId, new PageSettings(skip, take));
+            var query = new GetFriendsListQuery(userId, new PageSettings(skip, take), disciplineId);
             var result = await sender.SendAsync(query, cancellationToken);
             return result.ToApiResult();
         })
