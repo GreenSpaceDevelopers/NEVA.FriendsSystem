@@ -133,11 +133,11 @@ public static class Friends
         .Produces<List<FriendDto>>(200)
         .Produces(404);
 
-        app.MapGet("/friends/blacklist/page={page:int}/size={size:int}",
-                async ([FromRoute] ushort page, [FromRoute] ushort size,
+        app.MapGet("/friends/requests/sent",
+                async ([FromQuery] ushort skip, [FromQuery] ushort take,
                     [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
                 {
-                    var query = new GetUserSentRequests(context.GetUserId(), new PageSettings(page, size));
+                    var query = new GetUserSentRequests(context.GetUserId(), new PageSettings(skip, take));
                     var result = await sender.SendAsync(query, cancellationToken);
 
                     return result.ToResult();
@@ -147,11 +147,11 @@ public static class Friends
             .WithTags("Friends")
             .Produces<List<FriendRequestsDto>>(200);
         
-        app.MapGet("/friends/requests/page={page:int}/size={size:int}",
-                async ([FromRoute] ushort page, [FromRoute] ushort size,
+        app.MapGet("/friends/requests/pending",
+                async ([FromQuery] ushort skip, [FromQuery] ushort take,
                     [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
                 {
-                    var query = new GetUserPendingRequests(context.GetUserId(), new PageSettings(page, size));
+                    var query = new GetUserPendingRequests(context.GetUserId(), new PageSettings(skip, take));
                     var result = await sender.SendAsync(query, cancellationToken);
 
                     return result.ToResult();

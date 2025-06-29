@@ -11,8 +11,8 @@ public static class Chats
 {
     public static void MapChatsEndpoints(this WebApplication app)
     {
-        app.MapGet("/users/chats/page={page:int}/size={size:int}",
-            async ([FromRoute] ushort page, [FromRoute] ushort size,
+        app.MapGet("/users/chats",
+            async ([FromQuery] ushort page, [FromQuery] ushort size,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
                 var query = new GetAllChatsForUserQuery(context.GetUserId(), new PageSettings(page, size));

@@ -54,11 +54,11 @@ public static class Media
 {
     public static void MapMediaEndpoints(this WebApplication app)
     {
-        app.MapGet("/media/stickers/page={page:int}/size={size:int}",
-            async ([FromRoute] ushort page, [FromRoute] ushort size,
+        app.MapGet("/media/stickers",
+            async ([FromQuery] ushort skip, [FromQuery] ushort take,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
-                var query = new GetAllStickersRequest(new PageSettings(page, size));
+                var query = new GetAllStickersRequest(new PageSettings(skip, take));
                 var result = await sender.SendAsync(query, cancellationToken);
 
                 return result.ToResult();
@@ -68,11 +68,11 @@ public static class Media
             .WithTags("Media")
             .Produces<List<Application.Dtos.MediaDto>>(200);
 
-        app.MapGet("/media/reactions/page={page:int}/size={size:int}",
-            async ([FromRoute] ushort page, [FromRoute] ushort size,
+        app.MapGet("/media/reactions",
+            async ([FromQuery] ushort skip, [FromQuery] ushort take,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
-                var query = new GetAllSReactionsRequest(new PageSettings(page, size));
+                var query = new GetAllSReactionsRequest(new PageSettings(skip, take));
                 var result = await sender.SendAsync(query, cancellationToken);
 
                 return result.ToResult();
