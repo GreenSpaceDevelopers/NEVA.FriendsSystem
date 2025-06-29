@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Application.Requests.Commands.Posts;
 
-public record AddPostRequest(IFormFile File, Guid UserId, string Content, string Title, bool IsCommentsEnabled) : IRequest;
+public record AddPostRequest(IFormFile? File, Guid UserId, string? Content, string Title, bool IsCommentsEnabled) : IRequest;
 
 public class AddPostRequestHandler (
     IBlogRepository blogRepository,
@@ -27,41 +27,47 @@ public class AddPostRequestHandler (
             return ResultsHelper.NotFound("User not found");
         }
 
-        using var memoryStream = new MemoryStream();
-        await request.File.CopyToAsync(memoryStream, cancellationToken);
+        var uploadResult = ResultsHelper.Ok("no file");
 
-        if (filesValidator.ValidateFile(memoryStream, request.File.FileName) is not true)
+        Attachment? attachment = null;
+        if (request.File is not null)
         {
-            return ResultsHelper.BadRequest("Invalid file");
+            using var memoryStream = new MemoryStream();
+            await request.File.CopyToAsync(memoryStream, cancellationToken);
+
+            if (filesValidator.ValidateFile(memoryStream, request.File.FileName) is not true)
+            {
+                return ResultsHelper.BadRequest("Invalid file");
+            }
+
+            uploadResult = await filesStorage.UploadAsync(memoryStream, request.File.FileName, cancellationToken);
+
+            if (!uploadResult.IsSuccess)
+            {
+                return ResultsHelper.BadRequest(uploadResult.GetValue<string>());
+            }
+            
+            var type = await attachments.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
+
+            attachment = new Attachment
+            {
+                Id = Guid.NewGuid(),
+                Url = uploadResult.GetValue<string>(),
+                Type = type,
+                TypeId = type.Id,
+            };
+            
+            await attachments.AddAsync(attachment, cancellationToken);
         }
-
-        var uploadResult = await filesStorage.UploadAsync(memoryStream, request.File.FileName, cancellationToken);
-
-        if (!uploadResult.IsSuccess)
-        {
-            return ResultsHelper.BadRequest(uploadResult.GetValue<string>());
-        }
-
-        var type = await attachments.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
-
-        var attachment = new Attachment
-        {
-            Id = Guid.NewGuid(),
-            Url = uploadResult.GetValue<string>(),
-            Type = type,
-            TypeId = type.Id,
-        };
-
-        await attachments.AddAsync(attachment, cancellationToken);
 
         var post = new Post
         {
             Id = Guid.NewGuid(),
             Author = user,
             AuthorId = user.Id,
-            Content = request.Content,
+            Content = request.Content ?? string.Empty,
             Title = request.Title,
-            AttachmentId = attachment.Id,
+            AttachmentId = attachment?.Id ?? Guid.Empty,
             IsCommentsEnabled = request.IsCommentsEnabled
         };
 
@@ -82,7 +88,8 @@ public class AddPostRequestValidator : AbstractValidator<AddPostRequest>
 
         RuleFor(x => x.Content)
             .NotEmpty().WithMessage("Content is required.")
-            .MinimumLength(10).WithMessage("Content must be at least 10 characters long.");
+            .MinimumLength(10).WithMessage("Content must be at least 10 characters long.")
+            .When(x => x.Content is not null);
 
         RuleFor(x => x.UserId)
             .NotEmpty().WithMessage("UserId is required.")
@@ -90,6 +97,7 @@ public class AddPostRequestValidator : AbstractValidator<AddPostRequest>
 
         RuleFor(x => x.File)
             .NotNull().WithMessage("File is required.")
-            .Must(file => file.Length > 0).WithMessage("File must not be empty.");
+            .Must(file => file?.Length > 0).WithMessage("File must not be empty.")
+            .When(x => x.File is not null);
     }
 }
