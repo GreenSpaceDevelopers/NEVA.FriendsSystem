@@ -1,11 +1,14 @@
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Dtos.Requests.Shared;
+using Application.Dtos.Responses.BlackList;
+using Application.Dtos.Responses.Friends;
 using Application.Requests.Commands.Friends;
 using Application.Requests.Queries.BlackList;
 using Application.Requests.Queries.Friends;
 using WebApi.Common.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Common.Mappers;
+using HttpContext = Microsoft.AspNetCore.Http.HttpContext;
 
 namespace WebApi.Endpoints;
 
@@ -54,7 +57,7 @@ public static class Friends
             .WithName("GetUserBlackList")
             .WithOpenApi()
             .WithTags("Friends")
-            .Produces<List<Application.Dtos.Responses.BlackList.BlackListItemDto>>(200);
+            .Produces<List<BlackListItemDto>>(200);
 
         app.MapPost("/friends/accept/",
             async ([FromBody] AcceptPendingFriendRequest request,
@@ -127,7 +130,35 @@ public static class Friends
         .WithName("GetFriendsList")
         .WithOpenApi()
         .WithTags("Friends")
-        .Produces<List<Application.Dtos.Responses.Friends.FriendDto>>(200)
+        .Produces<List<FriendDto>>(200)
         .Produces(404);
+
+        app.MapGet("/friends/blacklist/page={page:int}/size={size:int}",
+                async ([FromRoute] ushort page, [FromRoute] ushort size,
+                    [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
+                {
+                    var query = new GetUserSentRequests(context.GetUserId(), new PageSettings(page, size));
+                    var result = await sender.SendAsync(query, cancellationToken);
+
+                    return result.ToResult();
+                })
+            .WithName("GetUsersSendedRequests")
+            .WithOpenApi()
+            .WithTags("Friends")
+            .Produces<List<FriendRequestsDto>>(200);
+        
+        app.MapGet("/friends/requests/page={page:int}/size={size:int}",
+                async ([FromRoute] ushort page, [FromRoute] ushort size,
+                    [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
+                {
+                    var query = new GetUserPendingRequests(context.GetUserId(), new PageSettings(page, size));
+                    var result = await sender.SendAsync(query, cancellationToken);
+
+                    return result.ToResult();
+                })
+            .WithName("GetUsersPendingRequests")
+            .WithOpenApi()
+            .WithTags("Friends")
+            .Produces<List<FriendRequestsDto>>(200);
     }
 }
