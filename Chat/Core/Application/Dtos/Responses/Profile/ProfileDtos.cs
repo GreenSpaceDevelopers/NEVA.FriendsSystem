@@ -12,6 +12,14 @@ public record ProfileDto(
     Guid Id,
     [SwaggerSchema(Description = "Имя пользователя")]
     string Username,
+    [SwaggerSchema(Description = "Имя")]
+    string? Name,
+    [SwaggerSchema(Description = "Фамилия")]
+    string? Surname,
+    [SwaggerSchema(Description = "Отчество")]
+    string? MiddleName,
+    [SwaggerSchema(Description = "Дата рождения")]
+    DateTime? DateOfBirth,
     [SwaggerSchema(Description = "URL аватара пользователя (может быть null)")]
     string? AvatarUrl,
     [SwaggerSchema(Description = "URL обложки профиля (может быть null)")]

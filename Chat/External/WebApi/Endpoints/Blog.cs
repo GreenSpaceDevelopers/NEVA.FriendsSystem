@@ -76,6 +76,7 @@ public static class Blog
                 var result = await sender.SendAsync(request, cancellationToken);
                 return result.ToResult();
             })
+            .DisableAntiforgery()
             .WithName("AddPost")
             .WithOpenApi()
             .WithTags("Blog")
@@ -102,6 +103,7 @@ public static class Blog
                 var result = await sender.SendAsync(request, cancellationToken);
                 return result.ToResult();
             })
+            .DisableAntiforgery()
             .WithName("SendReaction")
             .WithOpenApi()
             .WithTags("Blog")

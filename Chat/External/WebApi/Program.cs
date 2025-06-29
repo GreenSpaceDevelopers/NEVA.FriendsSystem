@@ -90,7 +90,6 @@ public static class Program
             c.RoutePrefix = "swagger";
         });
 
-
         app.UsePathBase("/api");
 
         app.MapChatsEndpoints();

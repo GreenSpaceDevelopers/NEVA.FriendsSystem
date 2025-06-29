@@ -10,6 +10,10 @@ public static class Profile
         return new ProfileDto(
             user.Id,
             user.Username,
+            canViewFullProfile ? user.Name : null,
+            canViewFullProfile ? user.Surname : null,
+            canViewFullProfile ? user.MiddleName : null,
+            canViewFullProfile ? user.DateOfBirth : null,
             canViewFullProfile ? user.Avatar?.Url : null,
             canViewFullProfile ? user.Cover?.Url : null,
             (PrivacySettingsEnums)user.PrivacySetting.Id

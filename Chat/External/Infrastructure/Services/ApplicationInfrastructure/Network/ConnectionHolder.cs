@@ -11,12 +11,12 @@ namespace Infrastructure.Services.ApplicationInfrastructure.Network;
 
 public class ConnectionHolder(HttpListener listener, IWebSocketStore webSocketStore, IRawMessagesQueue messagesQueue, ILogger<ConnectionHolder> logger) : IConnectionHolder
 {
-    private bool isStopRequested;
+    private bool _isStopRequested;
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         listener.Start();
 
-        while (cancellationToken.IsCancellationRequested is false && isStopRequested is false)
+        while (cancellationToken.IsCancellationRequested is false && _isStopRequested is false)
         {
             var context = await listener.GetContextAsync();
 
@@ -35,7 +35,7 @@ public class ConnectionHolder(HttpListener listener, IWebSocketStore webSocketSt
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        isStopRequested = true;
+        _isStopRequested = true;
         listener.Stop();
         return Task.CompletedTask;
     }

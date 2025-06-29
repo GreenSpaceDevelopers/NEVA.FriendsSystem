@@ -88,7 +88,7 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
         modelBuilder.Entity<Post>().Navigation(p => p.Comments).AutoInclude();
         modelBuilder.Entity<Comment>().Navigation(c => c.Author).AutoInclude();
         modelBuilder.Entity<Comment>().Navigation(c => c.Post).AutoInclude();
-        modelBuilder.Entity<Comment>().Navigation(m => m.Parent).AutoInclude();
+        // modelBuilder.Entity<Comment>().Navigation(m => m.Parent).AutoInclude();
         modelBuilder.Entity<Comment>().Navigation(a => a.Attachment).AutoInclude();
         modelBuilder.Entity<Post>().Navigation(a => a.Reactions).AutoInclude();
 

@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Application.Requests.Commands.Profile;
 
-public record UpdateProfileRequest(Guid UserId, string Username, IFormFile? Avatar, IFormFile? Cover, PrivacySettingsEnums PrivacySetting) : IRequest;
+public record UpdateProfileRequest(Guid UserId, string Username, string? Name, string? Surname, string? MiddleName, DateTime? DateOfBirth, IFormFile? Avatar, IFormFile? Cover, PrivacySettingsEnums PrivacySetting) : IRequest;
 
 public class UpdateProfileRequestHandler(
     IChatUsersRepository chatUsersRepository,
@@ -101,6 +101,10 @@ public class UpdateProfileRequestHandler(
         }
 
         user.Username = request.Username;
+        user.Name = request.Name;
+        user.Surname = request.Surname;
+        user.MiddleName = request.MiddleName;
+        user.DateOfBirth = request.DateOfBirth;
 
         var privacySettings = await privacyRepository.GetPrivacySettingsAsync(cancellationToken);
         user.PrivacySetting = privacySettings.First(p => p.Id == (int)request.PrivacySetting);
@@ -123,6 +127,23 @@ public class UpdateProfileRequestValidator : AbstractValidator<UpdateProfileRequ
             .NotEmpty().WithMessage("Username is required.")
             .MinimumLength(3).WithMessage("Username must be at least 3 characters long.")
             .MaximumLength(50).WithMessage("Username must not exceed 50 characters.");
+
+        RuleFor(x => x.Name)
+            .MaximumLength(100).WithMessage("Name must not exceed 100 characters.")
+            .When(x => !string.IsNullOrEmpty(x.Name));
+
+        RuleFor(x => x.Surname)
+            .MaximumLength(100).WithMessage("Surname must not exceed 100 characters.")
+            .When(x => !string.IsNullOrEmpty(x.Surname));
+
+        RuleFor(x => x.MiddleName)
+            .MaximumLength(100).WithMessage("MiddleName must not exceed 100 characters.")
+            .When(x => !string.IsNullOrEmpty(x.MiddleName));
+
+        RuleFor(x => x.DateOfBirth)
+            .LessThan(DateTime.Today).WithMessage("Date of birth must be in the past.")
+            .GreaterThan(DateTime.Today.AddYears(-150)).WithMessage("Date of birth cannot be more than 150 years ago.")
+            .When(x => x.DateOfBirth.HasValue);
 
         RuleFor(x => x.Avatar)
             .Must(file => file == null || file.Length > 0).WithMessage("Avatar file must not be empty.");

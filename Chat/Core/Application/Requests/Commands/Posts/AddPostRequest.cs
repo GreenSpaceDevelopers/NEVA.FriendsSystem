@@ -12,11 +12,12 @@ namespace Application.Requests.Commands.Posts;
 
 public record AddPostRequest(IFormFile File, Guid UserId, string Content, string Title, bool IsCommentsEnabled) : IRequest;
 
-public class AddPostRequestHandler
-    (IBlogRepository blogRepository,
-        IFilesStorage filesStorage,
-        IFilesValidator filesValidator,
-        IAttachmentsRepository attachments) : IRequestHandler<AddPostRequest>
+public class AddPostRequestHandler (
+    IBlogRepository blogRepository,
+    IFilesStorage filesStorage,
+    IFilesValidator filesValidator,
+    IAttachmentsRepository attachments)
+    : IRequestHandler<AddPostRequest>
 {
     public async Task<IOperationResult> HandleAsync(AddPostRequest request, CancellationToken cancellationToken = default)
     {

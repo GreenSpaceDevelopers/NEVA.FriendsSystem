@@ -19,6 +19,10 @@ public class ChatUser : IEntity
     public Guid Id { get; set; }
     public AspNetUser AspNetUser { get; set; }
     public string Username { get; set; }
+    public string? Name { get; set; }
+    public string? Surname { get; set; }
+    public string? MiddleName { get; set; }
+    public DateTime? DateOfBirth { get; set; }
     public DateTime LastSeen { get; set; } = DateTime.UtcNow;
     public List<Chat> Chats { get; set; } = [];
     public Attachment? Avatar { get; set; }

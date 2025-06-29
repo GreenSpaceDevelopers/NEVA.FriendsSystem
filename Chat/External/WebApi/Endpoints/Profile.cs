@@ -34,7 +34,7 @@ public static class Profile
             [FromServices] ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var request = new UpdateProfileRequest(form.UserId, form.Username, form.Avatar, form.Cover, form.PrivacySetting);
+            var request = new UpdateProfileRequest(form.UserId, form.Username, form.Name, form.Surname, form.MiddleName, form.DateOfBirth, form.Avatar, form.Cover, form.PrivacySetting);
             var result = await sender.SendAsync(request, cancellationToken);
             return result.ToApiResult();
         })
@@ -77,6 +77,30 @@ public static class Profile
         /// </summary>
         [SwaggerSchema(Description = "Имя пользователя (от 3 до 50 символов)")]
         public string Username { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Имя
+        /// </summary>
+        [SwaggerSchema(Description = "Имя пользователя")]
+        public string? Name { get; set; }
+
+        /// <summary>
+        /// Фамилия
+        /// </summary>
+        [SwaggerSchema(Description = "Фамилия пользователя")]
+        public string? Surname { get; set; }
+
+        /// <summary>
+        /// Отчество
+        /// </summary>
+        [SwaggerSchema(Description = "Отчество пользователя")]
+        public string? MiddleName { get; set; }
+
+        /// <summary>
+        /// Дата рождения
+        /// </summary>
+        [SwaggerSchema(Description = "Дата рождения пользователя")]
+        public DateTime? DateOfBirth { get; set; }
 
         /// <summary>
         /// Аватар пользователя
