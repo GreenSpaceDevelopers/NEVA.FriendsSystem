@@ -2,13 +2,13 @@ using FluentValidation;
 
 namespace Application.Dtos.Requests.Shared;
 
-public record PageSettings(ushort PageNumber, ushort PageSize);
+public record PageSettings(int Skip, int Take);
 
 public class PageSettingsValidator : AbstractValidator<PageSettings>
 {
     public PageSettingsValidator()
     {
-        RuleFor(x => x.PageNumber).Must(n => n > 0);
-        RuleFor(x => x.PageSize).Must(s => s > 0);
+        RuleFor(x => x.Skip).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.Take).GreaterThan(0);
     }
 }

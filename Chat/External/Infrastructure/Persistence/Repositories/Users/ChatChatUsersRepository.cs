@@ -11,8 +11,8 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
     {
         return dbContext.Set<ChatUser>()
             .Where(user => user.Username.StartsWith(username))
-            .Skip(requestPageSettings.PageSize * (requestPageSettings.PageNumber - 1))
-            .Take(requestPageSettings.PageSize)
+            .Skip(requestPageSettings.Skip)
+            .Take(requestPageSettings.Take)
             .ToListAsync(cancellationToken: cancellationToken);
     }
 
@@ -44,8 +44,8 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
             .Include(u => u.AspNetUser)
             .Include(u => u.Avatar)
             .OrderBy(u => u.Username)
-            .Skip((requestPageSettings.PageNumber - 1) * requestPageSettings.PageSize)
-            .Take(requestPageSettings.PageSize);
+            .Skip(requestPageSettings.Skip)
+            .Take(requestPageSettings.Take);
 
         if (!string.IsNullOrEmpty(queryString))
         {

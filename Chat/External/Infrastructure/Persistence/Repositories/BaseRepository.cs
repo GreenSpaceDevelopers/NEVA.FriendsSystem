@@ -21,8 +21,8 @@ public class BaseRepository<T>(ChatsDbContext dbContext) : IBaseRepository<T>
     public async Task<List<T>> GetAllAsync(PageSettings requestPageSettings, CancellationToken cancellationToken)
     {
         return await dbContext.Set<T>()
-            .Skip(requestPageSettings.PageSize * (requestPageSettings.PageNumber - 1))
-            .Take(requestPageSettings.PageSize)
+            .Skip(requestPageSettings.Skip)
+            .Take(requestPageSettings.Take)
             .ToListAsync(cancellationToken: cancellationToken);
     }
 

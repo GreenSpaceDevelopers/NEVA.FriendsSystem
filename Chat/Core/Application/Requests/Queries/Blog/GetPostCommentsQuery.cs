@@ -26,8 +26,8 @@ public class GetPostCommentsQueryHandler(IBlogRepository blogRepository) : IRequ
         var comments = post.Comments
             .Where(c => !c.ParentCommentId.HasValue) // Только корневые комментарии
             .OrderByDescending(c => c.CreatedAt)
-            .Skip((request.PageSettings.PageNumber - 1) * request.PageSettings.PageSize)
-            .Take(request.PageSettings.PageSize)
+            .Skip(request.PageSettings.Skip)
+            .Take(request.PageSettings.Take)
             .Select(c => new CommentDto(
                 c.Id,
                 c.Content,

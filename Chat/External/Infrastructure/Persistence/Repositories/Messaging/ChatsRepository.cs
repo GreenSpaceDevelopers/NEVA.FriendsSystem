@@ -19,8 +19,8 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
             .ThenInclude(m => m.Attachment)
             .Where(c => c.Users.Any(u => u.Id == userId))
             .OrderByDescending(c => c.LastMessageDate)
-            .Skip((pageSettings.PageNumber - 1) * pageSettings.PageSize)
-            .Take(pageSettings.PageSize)
+            .Skip(pageSettings.Skip)
+            .Take(pageSettings.Take)
             .ToListAsync(cancellationToken);
     }
 

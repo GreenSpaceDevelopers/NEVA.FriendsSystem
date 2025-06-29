@@ -115,12 +115,12 @@ public static class Friends
 
         app.MapGet("/friends/", async (
             [FromQuery] Guid userId,
-            [FromQuery] ushort pageNumber,
-            [FromQuery] ushort pageSize,
+            [FromQuery] int skip,
+            [FromQuery] int take,
             [FromServices] ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetFriendsListQuery(userId, new PageSettings(pageNumber, pageSize));
+            var query = new GetFriendsListQuery(userId, new PageSettings(skip, take));
             var result = await sender.SendAsync(query, cancellationToken);
             return result.ToApiResult();
         })

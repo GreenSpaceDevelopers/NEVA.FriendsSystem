@@ -125,13 +125,13 @@ public static class Blog
 
         app.MapGet("/blog/user/{userId:guid}/posts", async (
             [FromRoute] Guid userId,
-            [FromQuery] ushort pageNumber,
-            [FromQuery] ushort pageSize,
+            [FromQuery] int skip,
+            [FromQuery] int take,
             [FromQuery] bool desc,
             [FromServices] ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetUserPostsQuery(userId, new PageSettings(pageNumber, pageSize), desc);
+            var query = new GetUserPostsQuery(userId, new PageSettings(skip, take), desc);
             var result = await sender.SendAsync(query, cancellationToken);
             return result.ToApiResult();
         })
@@ -143,12 +143,12 @@ public static class Blog
 
         app.MapGet("/blog/posts/{postId:guid}/comments", async (
             [FromRoute] Guid postId,
-            [FromQuery] ushort pageNumber,
-            [FromQuery] ushort pageSize,
+            [FromQuery] int skip,
+            [FromQuery] int take,
             [FromServices] ISender sender,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetPostCommentsQuery(postId, new PageSettings(pageNumber, pageSize));
+            var query = new GetPostCommentsQuery(postId, new PageSettings(skip, take));
             var result = await sender.SendAsync(query, cancellationToken);
             return result.ToApiResult();
         })

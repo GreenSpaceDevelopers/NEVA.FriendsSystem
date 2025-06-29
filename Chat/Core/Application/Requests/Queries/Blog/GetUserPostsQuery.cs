@@ -23,8 +23,8 @@ public class GetUserPostsQueryHandler(IBlogRepository blogRepository) : IRequest
             : user.Posts.OrderBy(p => p.CreatedAt);
 
         var paged = posts
-            .Skip((request.PageSettings.PageNumber - 1) * request.PageSettings.PageSize)
-            .Take(request.PageSettings.PageSize)
+            .Skip(request.PageSettings.Skip)
+            .Take(request.PageSettings.Take)
             .Select(p => new PostListItemDto(
                 p.Id,
                 p.Title,

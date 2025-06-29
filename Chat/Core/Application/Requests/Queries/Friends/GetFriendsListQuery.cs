@@ -20,8 +20,8 @@ public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository
 
         var friends = user.Friends
             .OrderBy(f => f.Username)
-            .Skip((request.PageSettings.PageNumber - 1) * request.PageSettings.PageSize)
-            .Take(request.PageSettings.PageSize)
+            .Skip(request.PageSettings.Skip)
+            .Take(request.PageSettings.Take)
             .Select(f => new FriendDto(
                 f.Id,
                 f.Username,
