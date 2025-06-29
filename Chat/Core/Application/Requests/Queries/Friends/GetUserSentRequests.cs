@@ -24,8 +24,8 @@ public class GetUserSentRequestsQueryHandler(IChatUsersRepository chatUsersRepos
         var count = user.WaitingFriendRequests.Count;
         var sentRequests = user.WaitingFriendRequests
             .OrderBy(f => f.Username)
-            .Skip((request.PageSettings.PageNumber - 1) * request.PageSettings.PageSize)
-            .Take(request.PageSettings.PageSize)
+            .Skip(request.PageSettings.Skip)
+            .Take(request.PageSettings.Take)
             .Select(f => new FriendRequestsDto(
                 user.Id,
                 f.Id,
@@ -51,8 +51,8 @@ public class GetUserPendingRequestsQueryHandler(IChatUsersRepository chatUsersRe
         var count = user.FriendRequests.Count;
         var sentRequests = user.FriendRequests
             .OrderBy(f => f.Username)
-            .Skip((request.PageSettings.PageNumber - 1) * request.PageSettings.PageSize)
-            .Take(request.PageSettings.PageSize)
+            .Skip(request.PageSettings.Skip)
+            .Take(request.PageSettings.Take)
             .Select(f => new FriendRequestsDto(
                 f.Id,
                 user.Id,

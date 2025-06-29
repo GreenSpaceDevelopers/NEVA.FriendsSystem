@@ -45,11 +45,11 @@ public static class Friends
             .Produces(204)
             .Produces(404);
 
-        app.MapGet("/friends/blacklist/page={page:int}/size={size:int}",
-            async ([FromRoute] ushort page, [FromRoute] ushort size, [FromQuery] string searchQuery,
+        app.MapGet("/friends/blacklist",
+            async ([FromQuery] ushort skip, [FromQuery] ushort take, [FromQuery] string searchQuery,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
-                var query = new GetUserBlackListQuery(context.GetUserId(), searchQuery, new PageSettings(page, size));
+                var query = new GetUserBlackListQuery(context.GetUserId(), searchQuery, new PageSettings(skip, take));
                 var result = await sender.SendAsync(query, cancellationToken);
 
                 return result.ToResult();
