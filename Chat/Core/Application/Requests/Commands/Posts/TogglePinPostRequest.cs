@@ -5,13 +5,13 @@ using FluentValidation;
 
 namespace Application.Requests.Commands.Posts;
 
-public record TogglePinPostRequest(Guid PostId, Guid UserId) : IRequest;
+public record TogglePinPostRequest(Guid PostId, Guid? UserId) : IRequest;
 
 public class TogglePinPostRequestHandler(IBlogRepository blogRepository) : IRequestHandler<TogglePinPostRequest>
 {
     public async Task<IOperationResult> HandleAsync(TogglePinPostRequest request, CancellationToken cancellationToken = default)
     {
-        var user = await blogRepository.GetUserByIdWithPostsAsync(request.UserId, cancellationToken);
+        var user = await blogRepository.GetUserByIdWithPostsAsync(request.UserId ?? Guid.Empty, cancellationToken);
         if (user is null)
         {
             return ResultsHelper.NotFound("User not found");

@@ -33,4 +33,19 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
             .Select(u => u.Id)
             .ToArrayAsync();
     }
+
+    public Task<List<Message>> GetMessagesByChatIdNoTrackingAsync(Guid chatId, int take, int skip, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Set<Message>()
+            .AsNoTracking()
+            .Include(m => m.Sender)
+            .Include(m => m.Attachment)
+            .Include(m => m.Replies)
+            .Include(m => m.Reactions)
+            .Where(m => m.ChatId == chatId)
+            .OrderByDescending(m => m.CreatedAt)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
 }

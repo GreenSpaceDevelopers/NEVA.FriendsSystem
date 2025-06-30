@@ -5,13 +5,13 @@ using FluentValidation;
 
 namespace Application.Requests.Commands.Posts;
 
-public record DeletePostRequest(Guid Id, Guid UserId) : IRequest;
+public record DeletePostRequest(Guid Id, Guid? UserId) : IRequest;
 
 public class DeletePostRequestHandler(IBlogRepository blogRepository) : IRequestHandler<DeletePostRequest>
 {
     public async Task<IOperationResult> HandleAsync(DeletePostRequest request, CancellationToken cancellationToken = default)
     {
-        var user = await blogRepository.GetUserByIdWithPostsAsync(request.UserId, cancellationToken);
+        var user = await blogRepository.GetUserByIdWithPostsAsync(request.UserId ?? Guid.Empty, cancellationToken);
 
         if (user is null)
         {

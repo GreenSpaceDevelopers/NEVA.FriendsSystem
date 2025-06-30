@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Application.Requests.Commands.Posts;
 
-public record AddPostRequest(IFormFile? File, Guid UserId, string? Content, string Title, bool IsCommentsEnabled) : IRequest;
+public record AddPostRequest(IFormFile? File, Guid? UserId, string? Content, string Title, bool IsCommentsEnabled) : IRequest;
 
 public class AddPostRequestHandler (
     IBlogRepository blogRepository,
@@ -21,7 +21,7 @@ public class AddPostRequestHandler (
 {
     public async Task<IOperationResult> HandleAsync(AddPostRequest request, CancellationToken cancellationToken = default)
     {
-        var user = await blogRepository.GetUserByIdWithPostsAsync(request.UserId, cancellationToken);
+        var user = await blogRepository.GetUserByIdWithPostsAsync(request.UserId ?? Guid.Empty, cancellationToken);
         if (user is null)
         {
             return ResultsHelper.NotFound("User not found");

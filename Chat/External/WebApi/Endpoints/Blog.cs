@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Requests.Commands.Posts;
 using Application.Dtos.Requests.Shared;
@@ -16,12 +17,6 @@ namespace WebApi.Endpoints;
 /// </summary>
 public class AddCommentForm
 {
-    /// <summary>
-    /// ID пользователя
-    /// </summary>
-    [SwaggerSchema(Description = "Уникальный идентификатор пользователя")]
-    public Guid UserId { get; set; }
-
     /// <summary>
     /// Содержимое комментария
     /// </summary>
@@ -47,12 +42,6 @@ public class AddCommentForm
 public class ReplyToCommentForm
 {
     /// <summary>
-    /// ID пользователя
-    /// </summary>
-    [SwaggerSchema(Description = "Уникальный идентификатор пользователя")]
-    public Guid UserId { get; set; }
-
-    /// <summary>
     /// Содержимое ответа
     /// </summary>
     [SwaggerSchema(Description = "Текст ответа (от 1 до 1000 символов)")]
@@ -73,6 +62,7 @@ public static class Blog
             async ([FromForm] AddPostRequest request,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
+                request = request with { UserId = context.GetUserId() };
                 var result = await sender.SendAsync(request, cancellationToken);
                 return result.ToResult();
             })
@@ -87,6 +77,7 @@ public static class Blog
             async ([FromBody] DeletePostRequest request,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
+                request = request with { UserId = context.GetUserId() };
                 var result = await sender.SendAsync(request, cancellationToken);
                 return result.ToResult();
             })
@@ -100,6 +91,7 @@ public static class Blog
             async ([FromForm] SendReactionCommand request,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
+                request = request with { UserId = context.GetUserId() };
                 var result = await sender.SendAsync(request, cancellationToken);
                 return result.ToResult();
             })
@@ -112,8 +104,10 @@ public static class Blog
 
         app.MapPatch("/blog/pin/toggle/",
             async ([FromBody] TogglePinPostRequest request,
-                [FromServices] ISender sender, CancellationToken cancellationToken) =>
+                [FromServices] ISender sender,
+                HttpContext context, CancellationToken cancellationToken) =>
             {
+                request = request with { UserId = context.GetUserId() };
                 var result = await sender.SendAsync(request, cancellationToken);
                 return result.ToResult();
             })
@@ -124,14 +118,13 @@ public static class Blog
             .Produces(404);
 
         app.MapGet("/blog/user/{userId:guid}/posts", async (
-            [FromRoute] Guid userId,
             [FromQuery] int skip,
             [FromQuery] int take,
             [FromQuery] bool desc,
-            [FromServices] ISender sender,
+            [FromServices] ISender sender, HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetUserPostsQuery(userId, new PageSettings(skip, take), desc);
+            var query = new GetUserPostsQuery(context.GetUserId(), new PageSettings(skip, take), desc);
             var result = await sender.SendAsync(query, cancellationToken);
             return result.ToApiResult();
         })
@@ -162,9 +155,10 @@ public static class Blog
             [FromRoute] Guid postId,
             [FromForm] AddCommentForm form,
             [FromServices] ISender sender,
+            HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            var command = new AddCommentRequest(postId, form.UserId, form.Content, form.Attachment, form.ParentCommentId);
+            var command = new AddCommentRequest(postId, context.GetUserId(), form.Content, form.Attachment, form.ParentCommentId);
             var result = await sender.SendAsync(command, cancellationToken);
             return result.ToApiResult();
         })
@@ -180,9 +174,10 @@ public static class Blog
             [FromRoute] Guid commentId,
             [FromForm] ReplyToCommentForm form,
             [FromServices] ISender sender,
+            HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            var command = new ReplyToCommentRequest(commentId, form.UserId, form.Content, form.Attachment);
+            var command = new ReplyToCommentRequest(commentId, context.GetUserId(), form.Content, form.Attachment);
             var result = await sender.SendAsync(command, cancellationToken);
             return result.ToApiResult();
         })
@@ -196,11 +191,11 @@ public static class Blog
 
         app.MapPost("/blog/posts/{postId:guid}/toggle-like", async (
             [FromRoute] Guid postId,
-            [FromBody] Guid userId,
             [FromServices] ISender sender,
+            HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            var command = new TogglePostLikeRequest(postId, userId);
+            var command = new TogglePostLikeRequest(postId, context.GetUserId());
             var result = await sender.SendAsync(command, cancellationToken);
             return result.ToApiResult();
         })
@@ -212,11 +207,11 @@ public static class Blog
 
         app.MapPost("/blog/comments/{commentId:guid}/toggle-like", async (
             [FromRoute] Guid commentId,
-            [FromBody] Guid userId,
             [FromServices] ISender sender,
+            HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            var command = new ToggleCommentLikeRequest(commentId, userId);
+            var command = new ToggleCommentLikeRequest(commentId, context.GetUserId());
             var result = await sender.SendAsync(command, cancellationToken);
             return result.ToApiResult();
         })

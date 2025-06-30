@@ -7,7 +7,7 @@ using Domain.Models.Messaging;
 
 namespace Application.Requests.Commands.Posts;
 
-public record SendReactionCommand(Guid PostId, Guid ReactionTypeId, Guid UserId) : IRequest;
+public record SendReactionCommand(Guid PostId, Guid ReactionTypeId, Guid? UserId) : IRequest;
 
 public class SendReactionAsyncHandler(IBlogRepository blogRepository, IReactionsTypesRepository reactionsTypesRepository, IChatUsersRepository chatUsersRepository) : IRequestHandler<SendReactionCommand>
 {
@@ -27,7 +27,7 @@ public class SendReactionAsyncHandler(IBlogRepository blogRepository, IReactions
             return ResultsHelper.NotFound("Post not found");
         }
 
-        var user = await chatUsersRepository.GetByIdAsync(request.UserId, cancellationToken);
+        var user = await chatUsersRepository.GetByIdAsync(request.UserId ?? Guid.Empty, cancellationToken);
 
         if (user is null)
         {
@@ -44,7 +44,7 @@ public class SendReactionAsyncHandler(IBlogRepository blogRepository, IReactions
             Id = Guid.NewGuid(),
             PostId = request.PostId,
             ReactionTypeId = request.ReactionTypeId,
-            UserId = request.UserId,
+            UserId = (Guid)request.UserId!,
             Reactor = user
         };
 

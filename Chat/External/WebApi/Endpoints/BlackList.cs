@@ -11,14 +11,13 @@ public static class BlackList
     public static void MapBlackListEndpoints(this WebApplication app)
     {
         app.MapGet("/users/search", async (
-            [FromQuery] Guid currentUserId,
             [FromQuery] string query,
             [FromQuery] int skip,
             [FromQuery] int take,
-            [FromServices] ISender sender,
+            [FromServices] ISender sender, HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            var searchQuery = new SearchUsersQuery(currentUserId, query, new PageSettings(skip, take));
+            var searchQuery = new SearchUsersQuery(context.GetUserId(), query, new PageSettings(skip, take));
             var result = await sender.SendAsync(searchQuery, cancellationToken);
             return result.ToApiResult();
         })
