@@ -1,5 +1,6 @@
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Dtos.Requests.Shared;
+using Application.Requests.Commands.Chats;
 using Application.Requests.Queries.Messaging;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Common.Helpers;
