@@ -88,6 +88,7 @@ public static class Program
         }
         app.UseCors(CorsName);
         
+        app.UseMiddleware<ExceptionHandlesMiddleware>();
         app.UseMiddleware<SessionValidationMiddleware>();
 
         app.UseSwagger();
