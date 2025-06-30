@@ -66,11 +66,6 @@ public static class Profile
     /// </summary>
     public class UpdateProfileForm
     {
-        /// <summary>
-        /// ID пользователя
-        /// </summary>
-        [SwaggerSchema(Description = "Уникальный идентификатор пользователя")]
-        public Guid UserId { get; set; }
 
         /// <summary>
         /// Имя пользователя

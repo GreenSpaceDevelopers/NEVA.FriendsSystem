@@ -38,6 +38,6 @@ public class GetUserPostsQueryHandler(IBlogRepository blogRepository) : IRequest
             ))
             .ToList();
 
-        return ResultsHelper.Ok(paged);
+        return ResultsHelper.Ok(new {paged, user.Posts.Count});
     }
 }

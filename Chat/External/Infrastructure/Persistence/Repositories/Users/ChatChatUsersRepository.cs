@@ -11,6 +11,7 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
     {
         return dbContext.Set<ChatUser>()
             .Where(user => user.Username.StartsWith(username))
+            .OrderBy(user => user.Username)
             .Skip(requestPageSettings.Skip)
             .Take(requestPageSettings.Take)
             .ToListAsync(cancellationToken: cancellationToken);

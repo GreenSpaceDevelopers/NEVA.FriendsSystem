@@ -28,12 +28,11 @@ public class GetUserSentRequestsQueryHandler(IChatUsersRepository chatUsersRepos
             .Take(request.PageSettings.Take)
             .Select(f => new FriendRequestsDto(
                 user.Id,
-                f.Id,
-                count
+                f.Id
             ))
             .ToList();
         
-        return ResultsHelper.Ok(sentRequests);
+        return ResultsHelper.Ok(new {sentRequests, count});
     }
 }
 
@@ -55,12 +54,11 @@ public class GetUserPendingRequestsQueryHandler(IChatUsersRepository chatUsersRe
             .Take(request.PageSettings.Take)
             .Select(f => new FriendRequestsDto(
                 f.Id,
-                user.Id,
-                count
+                user.Id
             ))
             .ToList();
         
-        return ResultsHelper.Ok(sentRequests);
+        return ResultsHelper.Ok(new {sentRequests, count});
     }
 }
 
