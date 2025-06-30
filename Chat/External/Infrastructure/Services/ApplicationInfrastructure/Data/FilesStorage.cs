@@ -21,6 +21,8 @@ public class FilesStorage : IFilesStorage
         {
             _minioClient = _minioClient.WithSSL();
         }
+
+        _minioClient = _minioClient.Build();
     }
 
     public async Task<IOperationResult> UploadAsync(Stream stream, string fileName, CancellationToken cancellationToken = default)

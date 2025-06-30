@@ -20,6 +20,8 @@ public class MinioInitializer : IHostedService
         {
             _minioClient = _minioClient.WithSSL();
         }
+
+        _minioClient =_minioClient.Build();
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)

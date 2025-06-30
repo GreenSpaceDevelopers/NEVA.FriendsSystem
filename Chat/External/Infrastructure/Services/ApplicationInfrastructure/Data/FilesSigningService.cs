@@ -4,18 +4,12 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Services.ApplicationInfrastructure.Data;
 
-public class FilesSigningService : IFilesSigningService
+public class FilesSigningService(IOptions<MinioConfig> minioConfig) : IFilesSigningService
 {
-    private readonly MinioConfig _minioConfig;
-
-    public FilesSigningService(IOptions<MinioConfig> minioConfig)
-    {
-        _minioConfig = minioConfig.Value;
-    }
 
     public Task<string> GetSignedUrlAsync(string unsignedUrl, CancellationToken cancellationToken = default)
     {
-        var signedUrl = $"{_minioConfig.Endpoint}/{_minioConfig.BucketName}/{unsignedUrl}";
+        var signedUrl = $"{minioConfig.Value.Endpoint}/{minioConfig.Value.BucketName}/{unsignedUrl}";
         return Task.FromResult(signedUrl);
     }
 }
