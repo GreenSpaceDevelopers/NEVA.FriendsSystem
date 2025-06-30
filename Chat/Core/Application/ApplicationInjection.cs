@@ -14,6 +14,6 @@ public static class ApplicationInjection
         services.AddSender();
         services.AddRequestHandlers(Assembly.GetExecutingAssembly());
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-        services.AddTransient(typeof(IPipelineBehavior<>), typeof(ValidationPipelineBehavior<>));
+        services.AddScoped(typeof(IPipelineBehavior<>), typeof(ValidationPipelineBehavior<>));
     }
 }

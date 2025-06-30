@@ -3,6 +3,7 @@ using Application.Abstractions.Persistence.Repositories.Media;
 using Application.Abstractions.Persistence.Repositories.Messaging;
 using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Data;
+using Application.Abstractions.Services.Reporting;
 using Infrastructure.Configs;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.Repositories.Blog;
@@ -10,10 +11,12 @@ using Infrastructure.Persistence.Repositories.Media;
 using Infrastructure.Persistence.Repositories.Messaging;
 using Infrastructure.Persistence.Repositories.Users;
 using Infrastructure.Services.ApplicationInfrastructure.Data;
+using Infrastructure.Services.Reporting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
+using Telegram.Bot;
 
 namespace Infrastructure;
 
@@ -22,6 +25,7 @@ public static class InfrastructureInjection
     public static void AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<MinioConfig>(configuration.GetSection(MinioConfig.SectionName));
+        services.Configure<TelegramConfig>(configuration.GetSection(TelegramConfig.SectionName));
 
         services.AddScoped<IChatsRepository, ChatsRepository>();
         services.AddScoped<IChatUsersRepository, ChatChatUsersRepository>();
@@ -35,6 +39,13 @@ public static class InfrastructureInjection
         services.AddScoped<IFilesStorage, FilesStorage>();
         services.AddScoped<IFilesValidator, FilesValidator>();
         services.AddScoped<IFilesSigningService, FilesSigningService>();
+
+        services.AddSingleton<ITelegramBotClient>(provider =>
+        {
+            var telegramConfig = configuration.GetSection(TelegramConfig.SectionName).Get<TelegramConfig>();
+            return new TelegramBotClient(telegramConfig?.BotToken ?? string.Empty);
+        });
+        services.AddScoped<IBugReporter, TelegramBugReporter>();
 
         services.AddHostedService<MinioInitializer>();
 
