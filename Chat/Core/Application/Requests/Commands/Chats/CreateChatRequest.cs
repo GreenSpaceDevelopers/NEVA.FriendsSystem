@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Application.Abstractions.Persistence.Repositories.Messaging;
 using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
@@ -19,7 +20,7 @@ public class CreateChatRequestValidator : AbstractValidator<CreateChatRequest>
     }
 }
 
-public class CreateChatRequestHandler(IChatUsersRepository chatUsersRepository) : IRequestHandler<CreateChatRequest>
+public class CreateChatRequestHandler(IChatUsersRepository chatUsersRepository, IChatsRepository chatsRepository) : IRequestHandler<CreateChatRequest>
 {
     public async Task<IOperationResult> HandleAsync(CreateChatRequest request, CancellationToken cancellationToken = default)
     {
@@ -43,6 +44,8 @@ public class CreateChatRequestHandler(IChatUsersRepository chatUsersRepository) 
             Users = chatUsers.ToList()
         };
         
+        await chatsRepository.AddAsync(chat, cancellationToken);
+        await chatsRepository.SaveChangesAsync(cancellationToken);
         
         return ResultsHelper.Created(chat.Id);
     }
