@@ -29,6 +29,17 @@ public static class Chats
         .Produces<List<Application.Dtos.Responses.Chats.UserChatListItemDto>>(200)
         .Produces(404);
 
+        app.MapPost("/chats/", async (
+            [FromBody] Guid[] users,
+            [FromServices] ISender sender,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            var request = new CreateChatRequest(users);
+            var result = await sender.SendAsync(request, cancellationToken);
+            return result.ToResult();
+        });
+
         app.MapGet("/chats/{chatId:guid}/messages", async (
             [FromRoute] Guid chatId,
             [FromQuery] int skip,

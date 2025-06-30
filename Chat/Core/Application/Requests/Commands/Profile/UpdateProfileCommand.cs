@@ -52,7 +52,7 @@ public class UpdateProfileRequestHandler(
 
             if (!avatarUploadResult.IsSuccess)
             {
-                return ResultsHelper.BadRequest(avatarUploadResult.GetValue<string>());
+                return ResultsHelper.BadRequest("file upload failed");
             }
 
             var avatarType = await attachments.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);

@@ -44,7 +44,7 @@ public class AddPostRequestHandler (
 
             if (!uploadResult.IsSuccess)
             {
-                return ResultsHelper.BadRequest(uploadResult.GetValue<string>());
+                return ResultsHelper.BadRequest("file upload failed");
             }
             
             var type = await attachments.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);

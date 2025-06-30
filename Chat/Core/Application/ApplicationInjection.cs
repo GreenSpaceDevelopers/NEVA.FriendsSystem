@@ -1,5 +1,7 @@
 using System.Reflection;
+using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Services.ApplicationInfrastructure.Mediator;
+using Application.Services.ApplicationInfrastructure.Mediator.PipelineBehaviors;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,5 +14,6 @@ public static class ApplicationInjection
         services.AddSender();
         services.AddRequestHandlers(Assembly.GetExecutingAssembly());
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+        services.AddTransient(typeof(IPipelineBehavior<>), typeof(ValidationPipelineBehavior<>));
     }
 }
