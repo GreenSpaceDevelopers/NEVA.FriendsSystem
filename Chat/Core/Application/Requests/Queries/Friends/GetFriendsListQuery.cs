@@ -63,7 +63,7 @@ public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository
             
             if (!response.IsSuccessStatusCode)
             {
-                return new List<Guid>();
+                return [];
             }
 
             var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -72,11 +72,11 @@ public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository
                 PropertyNameCaseInsensitive = true 
             });
 
-            return matchHistoryResponse?.Data?.Data?.Select(m => m.GameTypeId).Distinct().ToList() ?? new List<Guid>();
+            return matchHistoryResponse?.Data?.Data?.Select(m => m.GameTypeId).Distinct().ToList() ?? [];
         }
         catch
         {
-            return new List<Guid>();
+            return [];
         }
     }
 }
