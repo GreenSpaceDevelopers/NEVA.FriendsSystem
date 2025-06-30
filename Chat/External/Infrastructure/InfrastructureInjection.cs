@@ -27,6 +27,7 @@ public static class InfrastructureInjection
         services.AddScoped<IChatUsersRepository, ChatChatUsersRepository>();
         services.AddScoped<IBlogRepository, BlogRepository>();
         services.AddScoped<IPrivacyRepository, PrivacyRepository>();
+        services.AddScoped<INotificationSettingsRepository, NotificationSettingsRepository>();
         services.AddScoped<IAttachmentsRepository, AttachmentsRepository>();
         services.AddScoped<IReactionsTypesRepository, ReactionsTypesRepository>();
         services.AddScoped<IMessagesRepository, MessagesRepository>();

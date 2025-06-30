@@ -105,6 +105,7 @@ public static class Program
         app.MapFriendsEndpoints();
         app.MapProfileEndpoints();
         app.MapBlackListEndpoints();
+        app.MapNotificationSettingsEndpoints();
         app.MapAdminEndpoints();
 
         await app.RunAsync();

@@ -21,6 +21,7 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
     public DbSet<ChatUser> ChatUsers { get; set; }
     public DbSet<ChatRole> ChatRoles { get; set; }
     public DbSet<PrivacySetting> PrivacySettings { get; set; }
+    public DbSet<NotificationSettings> NotificationSettings { get; set; }
 
     // MediaDto
     public DbSet<Picture> Services { get; set; }
@@ -91,6 +92,12 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
         // modelBuilder.Entity<Comment>().Navigation(m => m.Parent).AutoInclude();
         modelBuilder.Entity<Comment>().Navigation(a => a.Attachment).AutoInclude();
         modelBuilder.Entity<Post>().Navigation(a => a.Reactions).AutoInclude();
+        
+        modelBuilder.Entity<ChatUser>()
+            .HasOne(u => u.NotificationSettings)
+            .WithOne(n => n.User)
+            .HasForeignKey<NotificationSettings>(n  => n.UserId)
+            .OnDelete(DeleteBehavior.SetNull);
 
 
         base.OnModelCreating(modelBuilder);

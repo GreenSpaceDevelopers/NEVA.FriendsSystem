@@ -1,6 +1,7 @@
 using Domain.Abstractions;
 using Domain.Models.Blog;
 using Domain.Models.Messaging;
+using Domain.Models.Service;
 
 namespace Domain.Models.Users;
 
@@ -13,6 +14,8 @@ public class ChatUser : IEntity
         AspNetUser = requestAspNetUser;
     }
 
+    public Guid NotificationSettingsId { get; set; }
+    public NotificationSettings NotificationSettings { get; set; } = null!;
     public Guid? CoverId { get; set; }
     public Guid? AvatarId { get; set; }
     public ChatUser() { }
