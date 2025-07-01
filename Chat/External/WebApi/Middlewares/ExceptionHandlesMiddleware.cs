@@ -13,6 +13,10 @@ public class ExceptionHandlesMiddleware(
         {
             await next(context);
         }
+        catch (UnauthorizedException ex)
+        {
+            await SendResponse(context, 401, ex.Message);
+        }
         catch (LocalizationException ex)
         {
             logger.LogInformation(ex, "{Message}", ex.Message);

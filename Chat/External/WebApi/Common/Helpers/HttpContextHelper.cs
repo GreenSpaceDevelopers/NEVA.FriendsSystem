@@ -12,7 +12,7 @@ public static class HttpContextHelper
         {
             return identitySession.User.UserId;
         }
-        
-        throw new UnauthorizedAccessException("User not found or not authenticated");
+
+        return Guid.Empty;
     }
 }

@@ -17,6 +17,8 @@ public static class Program
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddApplication();
+        builder.Services.AddAuthentication();
+        builder.Services.AddAuthorization();
         builder.Services.AddInfrastructure(builder.Configuration);
 
         var identityClientBaseUrl = builder.Configuration["IdentityClient:BaseUrl"] ?? "";
@@ -86,9 +88,8 @@ public static class Program
             Console.WriteLine($"Error applying database migrations: {ex.Message}");
             throw;
         }
-        app.UseCors(CorsName);
-        
         app.UseMiddleware<ExceptionHandlesMiddleware>();
+        app.UseCors(CorsName);
         app.UseMiddleware<SessionValidationMiddleware>();
 
         app.UseSwagger();
@@ -99,7 +100,7 @@ public static class Program
         });
 
         app.UsePathBase("/api");
-
+        
         app.MapChatsEndpoints();
         app.MapBlogEndpoints();
         app.MapMediaEndpoints();
