@@ -10,4 +10,5 @@ public interface IChatUsersRepository : IBaseRepository<ChatUser>
     public Task<ChatUser?> GetByIdWithBlockerUsersAsync(Guid requestUserId, CancellationToken cancellationToken);
     public Task<List<ChatUser>> GetBlockedUsersAsync(Guid requestUserId, string queryString, PageSettings requestPageSettings, CancellationToken cancellationToken);
     public Task<bool> IsUsernameUniqueAsync(string username, CancellationToken cancellationToken = default);
+    public Task<ChatUser?> GetByIdWithProfileDataAsync(Guid userId, CancellationToken cancellationToken = default);
 };

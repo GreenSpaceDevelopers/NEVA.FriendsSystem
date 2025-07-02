@@ -62,4 +62,13 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
             .AnyAsync(user => user.Username == username, cancellationToken)
             .ContinueWith(task => !task.Result, cancellationToken);
     }
+
+    public Task<ChatUser?> GetByIdWithProfileDataAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Set<ChatUser>()
+            .Include(user => user.Avatar)
+            .Include(user => user.Cover)
+            .Include(user => user.PrivacySetting)
+            .SingleOrDefaultAsync(user => user.Id == userId, cancellationToken);
+    }
 }

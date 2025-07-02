@@ -6,6 +6,13 @@ namespace Application.Dtos.Responses.Profile;
 /// <summary>
 /// DTO профиля пользователя
 /// </summary>
+public class PrivacySettingDto
+{
+    public int Id { get; set; }
+    public Guid ChatUserId { get; set; }
+    public string SettingName { get; set; } = null!;
+}
+
 [SwaggerSchema(Description = "Информация о профиле пользователя")]
 public record ProfileDto(
     [SwaggerSchema(Description = "Уникальный идентификатор пользователя")]
@@ -24,8 +31,9 @@ public record ProfileDto(
     string? AvatarUrl,
     [SwaggerSchema(Description = "URL обложки профиля (может быть null)")]
     string? CoverUrl,
-    [SwaggerSchema(Description = "Настройки приватности профиля")]
-    PrivacySettingsEnums PrivacySetting);
+    [SwaggerSchema(Description = "Настройки приватности профиля (расширенный объект)")]
+    PrivacySettingDto PrivacySetting
+);
 
 /// <summary>
 /// DTO для валидации имени пользователя

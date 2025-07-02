@@ -15,11 +15,10 @@ public static class Profile
     {
         app.MapGet("/profile/{userId:guid}", async (
             [FromRoute] Guid userId,
-            [FromQuery] Guid currentUserId,
-            [FromServices] ISender sender,
+            [FromServices] ISender sender, HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetUserProfileQuery(userId, currentUserId);
+            var query = new GetUserProfileQuery(userId, context.GetUserId());
             var result = await sender.SendAsync(query, cancellationToken);
             return result.ToApiResult();
         })

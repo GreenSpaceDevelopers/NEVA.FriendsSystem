@@ -3,20 +3,20 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Common.Mappers;
 using Domain.Models.Users;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Requests.Queries.Profile;
 
 public record GetUserProfileQuery(Guid RequestedUserId, Guid CurrentUserId) : IRequest;
 
-public class GetUserProfileQueryHandler(IChatUsersRepository chatUsersRepository) : IRequestHandler<GetUserProfileQuery>
+public class GetUserProfileQueryHandler(IChatUsersRepository chatUsersRepository, ILogger<GetUserProfileQueryHandler> logger) : IRequestHandler<GetUserProfileQuery>
 {
     public async Task<IOperationResult> HandleAsync(GetUserProfileQuery request, CancellationToken cancellationToken = default)
     {
-        var user = await chatUsersRepository.GetByIdAsync(request.RequestedUserId, cancellationToken);
-
+        var user = await chatUsersRepository.GetByIdWithProfileDataAsync(request.RequestedUserId, cancellationToken);
         if (user is null)
         {
-            return ResultsHelper.NotFound("User not found");
+            return ResultsHelper.NotFound($"User not found. RequestedUserId: {request.RequestedUserId}");
         }
 
         var canViewFullProfile = request.RequestedUserId == request.CurrentUserId ||

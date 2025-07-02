@@ -10,32 +10,43 @@ public class SessionValidationMiddleware(
 {
     public async Task InvokeAsync(HttpContext context)
     {
+        var path = context.Request.Path.Value?.ToLower();
+        if (path != null && path.Contains("/swagger"))
+        {
+            await next(context);
+            return;
+        }
+
         try
         {
             var authHeader = context.Request.Headers.Authorization.ToString();
-            if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
             {
-                var sessionId = authHeader["Bearer ".Length..].Trim();
-                if (Guid.TryParse(sessionId, out var sessionGuid))
-                {
-                    var responseModel = await identityClient.GetUserSessionAsync(sessionGuid);
-
-                    if (responseModel is not { Success: true })
-                    {
-                        if (responseModel?.StatusCode == HttpStatusCode.Forbidden || responseModel?.StatusCode == HttpStatusCode.Unauthorized)
-                        {
-                            throw new UnauthorizedException("Session not found or expired");
-                        }
-
-                        throw new Exception("Error on Identity side");
-                    }
-                    
-                    var identity = responseModel.Data;
-                    context.Items["SessionContext"] = identity;
-                    
-                    await identityClient.ProlongUserSession(sessionGuid);
-                }
+                throw new UnauthorizedException("Authorization header is required");
             }
+
+            var sessionId = authHeader["Bearer ".Length..].Trim();
+            if (!Guid.TryParse(sessionId, out var sessionGuid))
+            {
+                throw new UnauthorizedException("Invalid session ID format");
+            }
+
+            var responseModel = await identityClient.GetUserSessionAsync(sessionGuid);
+
+            if (responseModel is not { Success: true })
+            {
+                if (responseModel?.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.Unauthorized)
+                {
+                    throw new UnauthorizedException("Session not found or expired");
+                }
+
+                throw new Exception("Error on Identity side");
+            }
+            
+            var identity = responseModel.Data;
+            context.Items["SessionContext"] = identity;
+            
+            await identityClient.ProlongUserSession(sessionGuid);
         }
         catch (Exception e)
         {

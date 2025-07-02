@@ -21,8 +21,8 @@ public class SearchUsersQueryHandler(IChatUsersRepository chatUsersRepository) :
         var users = await chatUsersRepository.GetByUsernameAsync(request.Query, request.PageSettings, cancellationToken);
 
         var searchResults = users
-            .Where(u => u.Id != request.CurrentUserId) // Исключаем текущего пользователя
-            .Where(u => currentUser.BlockedUsers.All(b => b.Id != u.Id)) // Исключаем уже заблокированных
+            .Where(u => u.Id != request.CurrentUserId)
+            .Where(u => currentUser.BlockedUsers.All(b => b.Id != u.Id))
             .Select(u => new UserSearchDto(
                 u.Id,
                 u.Username,

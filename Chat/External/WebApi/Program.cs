@@ -7,6 +7,7 @@ using WebApi.Swagger;
 using System.Reflection;
 using WebApi.Middlewares;
 using GS.IdentityServerApi.Extensions;
+using Microsoft.OpenApi.Models;
 
 public static class Program
 {
@@ -17,8 +18,7 @@ public static class Program
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddApplication();
-        builder.Services.AddAuthentication();
-        builder.Services.AddAuthorization();
+
         builder.Services.AddInfrastructure(builder.Configuration);
 
         var identityClientBaseUrl = builder.Configuration["IdentityClient:BaseUrl"] ?? "";
@@ -38,7 +38,26 @@ public static class Program
 
             c.SwaggerGeneratorOptions.DescribeAllParametersInCamelCase = true;
             c.OperationFilter<FileUploadOperationFilter>();
-
+            c.AddSecurityDefinition("Bearer",
+                new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Enter here your token with bearer format Bearer [token]"
+                });
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                    },
+                    Array.Empty<string>()
+                }
+            });
             c.EnableAnnotations();
 
             var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -47,16 +66,6 @@ public static class Program
             {
                 c.IncludeXmlComments(xmlPath);
             }
-
-            c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-            {
-                Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
-                Name = "Authorization",
-                In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-                Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
-                Scheme = "Bearer"
-            });
-
             c.OperationFilter<Swashbuckle.AspNetCore.Annotations.AnnotationsOperationFilter>();
         });
 
@@ -76,8 +85,6 @@ public static class Program
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ChatsDbContext>();
 
-        // await context.Database.EnsureDeletedAsync();
-        await context.Database.MigrateAsync();
         try
         {
             await context.Database.MigrateAsync();
