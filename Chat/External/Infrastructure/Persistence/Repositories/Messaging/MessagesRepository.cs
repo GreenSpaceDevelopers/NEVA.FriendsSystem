@@ -1,39 +1,28 @@
 using Application.Abstractions.Persistence.Repositories.Messaging;
+using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Domain.Models.Messaging;
+using Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories.Messaging;
 
 public class MessagesRepository(ChatsDbContext dbContext) : IMessagesRepository
 {
-    public async Task<List<Message>> GetChatMessagesAsync(Guid chatId, PageSettings pageSettings, CancellationToken cancellationToken = default)
+    public Task<PagedList<Message>> GetChatMessagesPagedAsync(
+        Guid chatId,
+        PageSettings pageSettings,
+        List<SortExpression>? sortExpressions,
+        CancellationToken cancellationToken = default)
     {
-        return await dbContext.Set<Message>()
+        var query = dbContext.Set<Message>()
             .AsNoTracking()
             .Include(m => m.Sender)
             .Include(m => m.Attachment)
             .Include(m => m.Replies)
             .Include(m => m.Reactions)
-            .Where(m => m.ChatId == chatId)
-            .OrderBy(m => m.CreatedAt)
-            .Skip(pageSettings.Skip)
-            .Take(pageSettings.Take)
-            .ToListAsync(cancellationToken);
-    }
+            .Where(m => m.ChatId == chatId);
 
-    public async Task<List<Message>> GetChatMessagesDescAsync(Guid chatId, PageSettings pageSettings, CancellationToken cancellationToken = default)
-    {
-        return await dbContext.Set<Message>()
-            .AsNoTracking()
-            .Include(m => m.Sender)
-            .Include(m => m.Attachment)
-            .Include(m => m.Replies)
-            .Include(m => m.Reactions)
-            .Where(m => m.ChatId == chatId)
-            .OrderByDescending(m => m.CreatedAt)
-            .Skip(pageSettings.Skip)
-            .Take(pageSettings.Take)
-            .ToListAsync(cancellationToken);
+        return query.ToPagedList(sortExpressions, pageSettings.Skip, pageSettings.Take, cancellationToken);
     }
 } 

@@ -6,7 +6,7 @@ namespace Domain.Models.Blog;
 
 public class Post : Entity<Post>
 {
-    public string Title { get; set; } = null!;
+    public string? Title { get; set; }
     public string Content { get; set; } = null!;
     public bool IsRepost { get; set; }
     public bool IsPinned { get; set; } = false;

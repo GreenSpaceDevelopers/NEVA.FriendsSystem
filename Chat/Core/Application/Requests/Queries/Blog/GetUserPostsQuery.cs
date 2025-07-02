@@ -7,7 +7,7 @@ using Application.Services.ApplicationInfrastructure.Results;
 
 namespace Application.Requests.Queries.Blog;
 
-public record GetUserPostsQuery(Guid UserId, PageSettings PageSettings, bool Desc = true) : IRequest;
+public record GetUserPostsQuery(Guid UserId, PageSettings PageSettings, bool? Desc = true) : IRequest;
 
 public class GetUserPostsQueryHandler(IBlogRepository blogRepository) : IRequestHandler<GetUserPostsQuery>
 {
@@ -19,26 +19,33 @@ public class GetUserPostsQueryHandler(IBlogRepository blogRepository) : IRequest
             return ResultsHelper.NotFound("User not found");
         }
 
-        var posts = request.Desc
-            ? user.Posts.OrderByDescending(p => p.CreatedAt)
-            : user.Posts.OrderBy(p => p.CreatedAt);
+        var sortExpressions = new List<Common.Models.SortExpression>
+        {
+            new()
+            {
+                PropertyName = nameof(Domain.Models.Blog.Post.CreatedAt),
+                Direction = request.Desc == true ? Common.Models.SortDirection.Desc : Common.Models.SortDirection.Asc
+            }
+        };
 
-        var paged = posts
-            .Skip(request.PageSettings.Skip)
-            .Take(request.PageSettings.Take)
-            .Select(p => new PostListItemDto(
-                p.Id,
-                p.Title,
-                p.Content,
-                p.Attachment?.Url,
-                p.CreatedAt,
-                p.Comments?.Count ?? 0,
-                p.Reactions?.Count ?? 0,
-                p.IsPinned,
-                p.IsCommentsEnabled
-            ))
-            .ToList();
+        var pagedPosts = await blogRepository.GetUserPostsPagedAsync(
+            request.UserId,
+            request.PageSettings,
+            sortExpressions,
+            cancellationToken);
 
-        return ResultsHelper.Ok(new {paged, user.Posts.Count});
+        var pagedResult = pagedPosts.Map(p => new PostListItemDto(
+            p.Id,
+            p.Title,
+            p.Content,
+            p.Attachment?.Url,
+            p.CreatedAt,
+            p.Comments?.Count ?? 0,
+            p.Reactions?.Count ?? 0,
+            p.IsPinned,
+            p.IsCommentsEnabled
+        ));
+
+        return ResultsHelper.Ok(pagedResult);
     }
 }

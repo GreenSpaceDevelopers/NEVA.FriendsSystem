@@ -7,7 +7,7 @@ using Application.Services.ApplicationInfrastructure.Results;
 
 namespace Application.Requests.Queries.BlackList;
 
-public record GetUserBlackListQuery(Guid UserId, string Query, PageSettings PageSettings) : IRequest;
+public record GetUserBlackListQuery(Guid UserId, string? Query, PageSettings PageSettings) : IRequest;
 
 public class GetUserBlackListRequest(IChatUsersRepository chatUsersRepository)
     : IRequestHandler<GetUserBlackListQuery>
@@ -15,14 +15,13 @@ public class GetUserBlackListRequest(IChatUsersRepository chatUsersRepository)
     public async Task<IOperationResult> HandleAsync(GetUserBlackListQuery request,
         CancellationToken cancellationToken = default)
     {
-        var blockedUsers = await chatUsersRepository.GetBlockedUsersAsync(
+        var blockedUsers = await chatUsersRepository.GetBlockedUsersPagedAsync(
             request.UserId,
             request.Query,
             request.PageSettings,
             cancellationToken);
 
-        var userBlockList = blockedUsers.Select(bu => bu.ToBlackListItem()).ToList();
-
-        return ResultsHelper.Ok(userBlockList);
+        var pagedResult = blockedUsers.Map(bu => bu.ToBlackListItem());
+        return ResultsHelper.Ok(pagedResult);
     }
 }

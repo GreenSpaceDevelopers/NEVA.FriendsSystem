@@ -13,11 +13,22 @@ public class GetChatMessagesQueryHandler(IMessagesRepository messagesRepository)
 {
     public async Task<IOperationResult> HandleAsync(GetChatMessagesQuery request, CancellationToken cancellationToken = default)
     {
-        var messages = request.Desc
-            ? await messagesRepository.GetChatMessagesDescAsync(request.ChatId, request.PageSettings, cancellationToken)
-            : await messagesRepository.GetChatMessagesAsync(request.ChatId, request.PageSettings, cancellationToken);
+        var sortExpressions = new List<Common.Models.SortExpression>
+        {
+            new()
+            {
+                PropertyName = nameof(Domain.Models.Messaging.Message.CreatedAt),
+                Direction = request.Desc ? Common.Models.SortDirection.Desc : Common.Models.SortDirection.Asc
+            }
+        };
 
-        var messageDtos = messages.Select(m => new MessageDto(
+        var pagedMessages = await messagesRepository.GetChatMessagesPagedAsync(
+            request.ChatId,
+            request.PageSettings,
+            sortExpressions,
+            cancellationToken);
+
+        var pagedResult = pagedMessages.Map(m => new MessageDto(
             m.Id,
             m.ChatId,
             m.SenderId,
@@ -28,8 +39,8 @@ public class GetChatMessagesQueryHandler(IMessagesRepository messagesRepository)
             m.CreatedAt,
             m.Replies.Count,
             m.Reactions.Count
-        )).ToList();
+        ));
 
-        return ResultsHelper.Ok(messageDtos);
+        return ResultsHelper.Ok(pagedResult);
     }
 } 

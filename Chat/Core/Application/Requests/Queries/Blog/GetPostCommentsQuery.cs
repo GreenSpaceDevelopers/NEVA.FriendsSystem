@@ -1,6 +1,7 @@
 using Application.Abstractions.Persistence.Repositories.Blog;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
+using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Application.Dtos.Responses.Blog;
 using Application.Services.ApplicationInfrastructure.Results;
@@ -24,25 +25,34 @@ public class GetPostCommentsQueryHandler(IBlogRepository blogRepository) : IRequ
             return ResultsHelper.BadRequest("Comments are disabled for this post");
         }
 
-        var comments = post.Comments
-            .Where(c => !c.ParentCommentId.HasValue) // Только корневые комментарии
-            .OrderByDescending(c => c.CreatedAt)
-            .Skip(request.PageSettings.Skip)
-            .Take(request.PageSettings.Take)
-            .Select(c => new CommentDto(
-                c.Id,
-                c.Content,
-                c.Attachment?.Url,
-                c.CreatedAt,
-                c.Author.Id,
-                c.Author.Username,
-                c.Author.Avatar?.Url,
-                c.ParentCommentId,
-                post.Comments.Count(reply => reply.ParentCommentId == c.Id),
-                c.CommentReactions?.Count ?? 0
-            ))
-            .ToList();
+        var sortExpressions = new List<SortExpression>
+        {
+            new()
+            {
+                PropertyName = nameof(Domain.Models.Blog.Comment.CreatedAt),
+                Direction = SortDirection.Desc
+            }
+        };
 
-        return ResultsHelper.Ok(comments);
+        var pagedComments = await blogRepository.GetPostCommentsPagedAsync(
+            request.PostId,
+            request.PageSettings,
+            sortExpressions,
+            cancellationToken);
+
+        var pagedResult = pagedComments.Map(c => new CommentDto(
+            c.Id,
+            c.Content,
+            c.Attachment?.Url,
+            c.CreatedAt,
+            c.Author.Id,
+            c.Author.Username,
+            c.Author.Avatar?.Url,
+            c.ParentCommentId,
+            pagedComments.Data.Count(reply => reply.ParentCommentId == c.Id),
+            c.CommentReactions?.Count ?? 0
+        ));
+
+        return ResultsHelper.Ok(pagedResult);
     }
 }

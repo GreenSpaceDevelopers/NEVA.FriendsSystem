@@ -16,7 +16,7 @@ public class AddPostRequest : IRequest
     public IFormFile? File { get; set; }
     public Guid? UserId { get; set; }
     public string? Content { get; set; }
-    public string Title { get; set; } = string.Empty;
+    public string? Title { get; set; } = string.Empty;
     public bool IsCommentsEnabled { get; set; }
 }
 
@@ -91,10 +91,6 @@ public class AddPostRequestValidator : AbstractValidator<AddPostRequest>
 {
     public AddPostRequestValidator()
     {
-        RuleFor(x => x.Title)
-            .NotEmpty().WithMessage("Title is required.")
-            .MaximumLength(100).WithMessage("Title must not exceed 100 characters.");
-
         RuleFor(x => x.Content)
             .NotEmpty().WithMessage("Content is required.")
             .MinimumLength(10).WithMessage("Content must be at least 10 characters long.")

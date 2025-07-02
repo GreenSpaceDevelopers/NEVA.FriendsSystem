@@ -76,7 +76,6 @@ public static class Profile
     /// </summary>
     public class UpdateProfileForm
     {
-
         /// <summary>
         /// Имя пользователя
         /// </summary>

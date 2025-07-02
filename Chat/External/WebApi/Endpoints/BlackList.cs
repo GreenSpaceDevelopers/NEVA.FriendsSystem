@@ -11,7 +11,7 @@ public static class BlackList
     public static void MapBlackListEndpoints(this WebApplication app)
     {
         app.MapGet("/users/search", async (
-            [FromQuery] string query,
+            [FromQuery] string? query,
             [FromQuery] int skip,
             [FromQuery] int take,
             [FromServices] ISender sender, HttpContext context,

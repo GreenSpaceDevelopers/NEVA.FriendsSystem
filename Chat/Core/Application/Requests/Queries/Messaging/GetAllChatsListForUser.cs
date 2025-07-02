@@ -22,8 +22,8 @@ public class GetAllChatsForUserQueryHandler(IChatUsersRepository chatUsersReposi
 
         var chats = await chatsRepository.GetUserChatsNoTrackingAsync(user.Id, request.PageSettings, cancellationToken);
 
-        var chatList = chats.Select(chat => chat.ToUserChatListItem(user.Id)).ToList();
+        var pagedResult = chats.Map(chat => chat.ToUserChatListItem(user.Id));
 
-        return ResultsHelper.Ok(chatList);
+        return ResultsHelper.Ok(pagedResult);
     }
 }

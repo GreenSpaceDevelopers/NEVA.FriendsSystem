@@ -94,7 +94,7 @@ public static class QueryableExtensions
                 ? query.OrderByExpressions(sortExpressions) 
                 : query;
                 
-            result.Items = await orderedQuery
+            result.Data = await orderedQuery
                 .Skip(skip)
                 .Take(take)
                 .ToListAsync(cancellationToken);

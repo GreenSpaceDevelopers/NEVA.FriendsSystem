@@ -1,15 +1,20 @@
 using Application.Abstractions.Persistence.Repositories.Messaging;
+using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Domain.Models.Messaging;
+using Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories.Messaging;
 
 public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(dbContext), IChatsRepository
 {
-    public async Task<List<Chat>> GetUserChatsNoTrackingAsync(Guid userId, PageSettings pageSettings, CancellationToken cancellationToken = default)
+    public Task<PagedList<Chat>> GetUserChatsNoTrackingAsync(
+        Guid userId,
+        PageSettings pageSettings,
+        CancellationToken cancellationToken = default)
     {
-        return await dbContext.Set<Chat>()
+        return dbContext.Set<Chat>()
             .AsNoTracking()
             .Include(c => c.ChatPicture)
             .Include(c => c.Users)
@@ -19,9 +24,7 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
             .ThenInclude(m => m.Attachment)
             .Where(c => c.Users.Any(u => u.Id == userId))
             .OrderByDescending(c => c.LastMessageDate)
-            .Skip(pageSettings.Skip)
-            .Take(pageSettings.Take)
-            .ToListAsync(cancellationToken);
+            .ToPagedList(pageSettings, cancellationToken);
     }
 
     public async Task<Guid[]> GetUserIdsFromChatNoTrackingAsync(string messageChatId)

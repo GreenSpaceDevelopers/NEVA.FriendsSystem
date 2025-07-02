@@ -16,24 +16,25 @@ public class GetUserSentRequestsQueryHandler(IChatUsersRepository chatUsersRepos
     public async Task<IOperationResult> HandleAsync(GetUserSentRequests request, CancellationToken cancellationToken = default)
     {
         var user = await chatUsersRepository.GetByIdWithFriendsAsync(request.RequestedUserId, cancellationToken);
-        
         if (user is null)
         {
             return ResultsHelper.NotFound("User not found");
         }
         
-        var count = user.WaitingFriendRequests.Count;
-        var sentRequests = user.WaitingFriendRequests
-            .OrderBy(f => f.Username)
-            .Skip(request.PageSettings.Skip)
-            .Take(request.PageSettings.Take)
-            .Select(f => new FriendRequestsDto(
-                user.Id,
-                f.Id
-            ))
-            .ToList();
-        
-        return ResultsHelper.Ok(new {sentRequests, count});
+        var pagedResult = new Common.Models.PagedList<FriendRequestsDto>
+        {
+            TotalCount = user.WaitingFriendRequests.Count,
+            Data = user.WaitingFriendRequests
+                .OrderBy(f => f.Username)
+                .Skip(request.PageSettings.Skip)
+                .Take(request.PageSettings.Take)
+                .Select(f => new FriendRequestsDto(
+                    user.Id,
+                    f.Id
+                ))
+                .ToList()
+        };
+        return ResultsHelper.Ok(pagedResult);
     }
 }
 
@@ -42,24 +43,25 @@ public class GetUserPendingRequestsQueryHandler(IChatUsersRepository chatUsersRe
     public async Task<IOperationResult> HandleAsync(GetUserPendingRequests request, CancellationToken cancellationToken = default)
     {
         var user = await chatUsersRepository.GetByIdWithFriendsAsync(request.RequestedUserId, cancellationToken);
-        
         if (user is null)
         {
             return ResultsHelper.NotFound("User not found");
         }
         
-        var count = user.FriendRequests.Count;
-        var sentRequests = user.FriendRequests
-            .OrderBy(f => f.Username)
-            .Skip(request.PageSettings.Skip)
-            .Take(request.PageSettings.Take)
-            .Select(f => new FriendRequestsDto(
-                f.Id,
-                user.Id
-            ))
-            .ToList();
-        
-        return ResultsHelper.Ok(new {sentRequests, count});
+        var pagedResult = new Common.Models.PagedList<FriendRequestsDto>
+        {
+            TotalCount = user.FriendRequests.Count,
+            Data = user.FriendRequests
+                .OrderBy(f => f.Username)
+                .Skip(request.PageSettings.Skip)
+                .Take(request.PageSettings.Take)
+                .Select(f => new FriendRequestsDto(
+                    f.Id,
+                    user.Id
+                ))
+                .ToList()
+        };
+        return ResultsHelper.Ok(pagedResult);
     }
 }
 

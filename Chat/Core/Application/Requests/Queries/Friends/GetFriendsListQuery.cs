@@ -40,18 +40,22 @@ public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository
             friends = friendsInDiscipline;
         }
 
+        var totalCount = friends.Count;
         var pagedFriends = friends
             .Skip(request.PageSettings.Skip)
             .Take(request.PageSettings.Take)
-            .Select(f => new FriendDto(
+            .ToList();
+        var pagedResult = new Common.Models.PagedList<FriendDto>
+        {
+            TotalCount = totalCount,
+            Data = pagedFriends.Select(f => new FriendDto(
                 f.Id,
                 f.Username,
                 f.Avatar?.Url,
                 f.LastSeen
-            ))
-            .ToList();
-
-        return ResultsHelper.Ok(pagedFriends);
+            )).ToList()
+        };
+        return ResultsHelper.Ok(pagedResult);
     }
 
     private async Task<List<Guid>> GetUserDisciplinesFromMatchHistory(Guid playerId, CancellationToken cancellationToken)

@@ -46,7 +46,7 @@ public static class Friends
             .Produces(404);
 
         app.MapGet("/friends/blacklist",
-            async ([FromQuery] ushort skip, [FromQuery] ushort take, [FromQuery] string searchQuery,
+            async ([FromQuery] ushort skip, [FromQuery] ushort take, [FromQuery] string? searchQuery,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
                 var query = new GetUserBlackListQuery(context.GetUserId(), searchQuery, new PageSettings(skip, take));
