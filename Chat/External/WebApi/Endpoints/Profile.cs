@@ -33,8 +33,19 @@ public static class Profile
             [FromServices] ISender sender, HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            var request = new UpdateProfileRequest(context.GetUserId(), form.Username, form.Name, form.Surname, form.MiddleName, form.DateOfBirth, form.Avatar, form.Cover, form.PrivacySetting);
+            var request = new UpdateProfileRequest(
+                context.GetUserId(),
+                form.Username,
+                form.Name,
+                form.Surname,
+                form.MiddleName,
+                form.DateOfBirth,
+                form.Avatar,
+                form.Cover,
+                form.PrivacySetting);
+            
             var result = await sender.SendAsync(request, cancellationToken);
+            
             return result.ToApiResult();
         })
         .DisableAntiforgery()
@@ -112,6 +123,6 @@ public static class Profile
         /// Настройки приватности
         /// </summary>
         [SwaggerSchema(Description = "Настройки приватности профиля")]
-        public PrivacySettingsEnums PrivacySetting { get; set; }
+        public PrivacySettingsEnums? PrivacySetting { get; set; } = PrivacySettingsEnums.Public;
     }
 }

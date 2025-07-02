@@ -10,8 +10,8 @@ public class Post : Entity<Post>
     public string Content { get; set; } = null!;
     public bool IsRepost { get; set; }
     public bool IsPinned { get; set; } = false;
-    public Guid AttachmentId { get; set; }
-    public Guid OriginalPostId { get; set; }
+    public Guid? AttachmentId { get; set; }
+    public Guid? OriginalPostId { get; set; }
     public Guid AuthorId { get; set; }
     public DateTime CreatedAt { get; set; }
 

@@ -10,7 +10,14 @@ using Microsoft.AspNetCore.Http;
 
 namespace Application.Requests.Commands.Posts;
 
-public record AddPostRequest(IFormFile? File, Guid? UserId, string? Content, string Title, bool IsCommentsEnabled) : IRequest;
+public class AddPostRequest : IRequest
+{
+    public IFormFile? File { get; set; }
+    public Guid? UserId { get; set; }
+    public string? Content { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public bool IsCommentsEnabled { get; set; }
+}
 
 public class AddPostRequestHandler (
     IBlogRepository blogRepository,
@@ -67,7 +74,8 @@ public class AddPostRequestHandler (
             AuthorId = user.Id,
             Content = request.Content ?? string.Empty,
             Title = request.Title,
-            AttachmentId = attachment?.Id ?? Guid.Empty,
+            AttachmentId = attachment?.Id ?? null,
+            CreatedAt = DateTime.UtcNow,
             IsCommentsEnabled = request.IsCommentsEnabled
         };
 
@@ -94,10 +102,5 @@ public class AddPostRequestValidator : AbstractValidator<AddPostRequest>
         RuleFor(x => x.UserId)
             .NotEmpty().WithMessage("UserId is required.")
             .Must(id => id != Guid.Empty).WithMessage("UserId must not be empty.");
-
-        RuleFor(x => x.File)
-            .NotNull().WithMessage("File is required.")
-            .Must(file => file?.Length > 0).WithMessage("File must not be empty.")
-            .When(x => x.File is not null);
     }
 }

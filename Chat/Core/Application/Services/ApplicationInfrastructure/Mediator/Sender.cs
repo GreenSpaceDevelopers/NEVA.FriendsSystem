@@ -17,7 +17,7 @@ public class Sender(IServiceProvider serviceProvider) : ISender
             throw new NotImplementedException($"Handler for request {request.GetType()} not found");
         }
 
-        var behaviors = serviceProvider
+        var behaviors = scope.ServiceProvider
             .GetServices<IPipelineBehavior<TRequest>>()
             .Reverse()
             .ToList();
@@ -43,7 +43,7 @@ public class Sender(IServiceProvider serviceProvider) : ISender
             throw new NotImplementedException($"Processor for notification {notification.GetType()} not found");
         }
 
-        var behaviors = serviceProvider
+        var behaviors = scope.ServiceProvider
             .GetServices<INotificationBehavior<TNotification>>()
             .Reverse()
             .ToList();

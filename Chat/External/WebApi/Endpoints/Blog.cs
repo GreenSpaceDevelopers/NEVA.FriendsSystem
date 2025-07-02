@@ -62,7 +62,7 @@ public static class Blog
             async ([FromForm] AddPostRequest request,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
-                request = request with { UserId = context.GetUserId() };
+                request.UserId = context.GetUserId();
                 var result = await sender.SendAsync(request, cancellationToken);
                 return result.ToResult();
             })

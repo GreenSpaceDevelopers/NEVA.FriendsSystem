@@ -11,7 +11,17 @@ using Microsoft.AspNetCore.Http;
 
 namespace Application.Requests.Commands.Profile;
 
-public record UpdateProfileRequest(Guid UserId, string Username, string? Name, string? Surname, string? MiddleName, DateTime? DateOfBirth, IFormFile? Avatar, IFormFile? Cover, PrivacySettingsEnums PrivacySetting) : IRequest;
+public record UpdateProfileRequest(
+    Guid UserId,
+    string Username,
+    string? Name,
+    string? Surname,
+    string? MiddleName,
+    DateTime? DateOfBirth,
+    IFormFile? Avatar,
+    IFormFile? Cover,
+    PrivacySettingsEnums? PrivacySetting)
+    : IRequest;
 
 public class UpdateProfileRequestHandler(
     IChatUsersRepository chatUsersRepository,
@@ -104,10 +114,11 @@ public class UpdateProfileRequestHandler(
         user.Name = request.Name;
         user.Surname = request.Surname;
         user.MiddleName = request.MiddleName;
-        user.DateOfBirth = request.DateOfBirth;
+        user.DateOfBirth = request.DateOfBirth?.ToUniversalTime();
 
         var privacySettings = await privacyRepository.GetPrivacySettingsAsync(cancellationToken);
-        user.PrivacySetting = privacySettings.First(p => p.Id == (int)request.PrivacySetting);
+        var settingName = (request.PrivacySetting ?? PrivacySettingsEnums.Public).ToString();
+        user.PrivacySetting = privacySettings.First(p => p.SettingName == settingName);
 
         await chatUsersRepository.SaveChangesAsync(cancellationToken);
 
