@@ -77,7 +77,7 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
         return dbContext.Set<ChatUser>()
             .Include(user => user.Avatar)
             .Include(user => user.Cover)
-            .Include(user => user.PrivacySetting)
+            .Include(user => user.PrivacySettings)
             .SingleOrDefaultAsync(user => user.Id == userId, cancellationToken);
     }
 
@@ -96,5 +96,12 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
         return query
             .OrderBy(u => u.Username)
             .ToPagedList(requestPageSettings, cancellationToken);
+    }
+
+    public Task<List<ChatUser>> GetAllUsersAsync(CancellationToken cancellationToken = default)
+    {
+        return dbContext.Set<ChatUser>()
+            .OrderBy(u => u.Username)
+            .ToListAsync(cancellationToken);
     }
 }

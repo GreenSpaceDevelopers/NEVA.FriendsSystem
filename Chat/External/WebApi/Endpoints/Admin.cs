@@ -1,4 +1,5 @@
 using Application.Requests.Commands.Profile;
+using Application.Requests.Commands.Privacy;
 using Domain.Models.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -18,11 +19,30 @@ public static class AdminEndpoints
         group.MapPost("/sync-all-users", SyncAllUsersFromIdentity)
             .WithName("SyncAllUsersFromIdentity");
             
+        group.MapPost("/create-privacy-settings", CreatePrivacySettingsForAllUsers)
+            .WithName("CreatePrivacySettingsForAllUsers");
+            
         group.MapGet("/identity-diagnostics", GetIdentityDiagnostics)
             .WithName("GetIdentityDiagnostics");
             
         group.MapGet("/auth-diagnostics", GetAuthDiagnostics)
             .WithName("GetAuthDiagnostics");
+    }
+
+    private static async Task<IResult> CreatePrivacySettingsForAllUsers(
+        ISender mediator,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var command = new CreatePrivacySettingsForAllUsersCommand();
+            var result = await mediator.SendAsync(command, cancellationToken);
+            return result.ToApiResult();
+        }
+        catch (Exception ex)
+        {
+            return Results.BadRequest($"Ошибка при создании настроек приватности: {ex.Message}");
+        }
     }
 
     private static async Task<IResult> SyncAllUsersFromIdentity(

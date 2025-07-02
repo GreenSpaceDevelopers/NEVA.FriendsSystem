@@ -21,8 +21,7 @@ public class GetUserProfileQueryHandler(IChatUsersRepository chatUsersRepository
         }
 
         var canViewFullProfile = request.RequestedUserId == request.CurrentUserId ||
-                                user.PrivacySetting.Id == (int)PrivacySettingsEnums.Public ||
-                                user.PrivacySetting.Id == (int)PrivacySettingsEnums.Friends;
+                                user.PrivacySettings.FriendsListVisibility == PrivacyLevel.Public;
 
         var profileDto = user.ToProfileDto(canViewFullProfile);
 

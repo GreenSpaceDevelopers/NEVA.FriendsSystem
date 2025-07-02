@@ -4,7 +4,8 @@ namespace Application.Abstractions.Persistence.Repositories.Blog;
 
 public interface IPrivacyRepository
 {
-    public Task<PrivacySetting> GetPrivacySettingsAsync(Guid userId, CancellationToken cancellationToken = default);
-    public Task<List<PrivacySetting>> GetPrivacySettingsAsync(CancellationToken cancellationToken = default);
-    public Task AddPrivacySettingsAsync(List<PrivacySetting> settings, CancellationToken cancellationToken = default);
+    Task<UserPrivacySettings?> GetUserPrivacySettingsAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<UserPrivacySettings> CreateDefaultPrivacySettingsAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task UpdateUserPrivacySettingsAsync(UserPrivacySettings settings, CancellationToken cancellationToken = default);
+    Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

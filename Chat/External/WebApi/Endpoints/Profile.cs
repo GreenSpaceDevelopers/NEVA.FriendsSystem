@@ -41,8 +41,7 @@ public static class Profile
                 form.MiddleName,
                 form.DateOfBirth,
                 form.Avatar,
-                form.Cover,
-                form.PrivacySetting);
+                form.Cover);
             
             var result = await sender.SendAsync(request, cancellationToken);
             
@@ -117,11 +116,5 @@ public static class Profile
         /// </summary>
         [SwaggerSchema(Description = "Файл обложки профиля (изображение)")]
         public IFormFile? Cover { get; set; }
-
-        /// <summary>
-        /// Настройки приватности
-        /// </summary>
-        [SwaggerSchema(Description = "Настройки приватности профиля")]
-        public PrivacySettingsEnums? PrivacySetting { get; set; } = PrivacySettingsEnums.Public;
     }
 }

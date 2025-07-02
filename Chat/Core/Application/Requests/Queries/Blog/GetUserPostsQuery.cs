@@ -37,7 +37,7 @@ public class GetUserPostsQueryHandler(IBlogRepository blogRepository) : IRequest
         var currentUserId = request.CurrentUserId;
         var pagedResult = pagedPosts.Map(p => new PostListItemDto(
             p.Id,
-            p.Title,
+            p.Title ?? string.Empty,
             p.Content,
             p.Attachment?.Url,
             p.CreatedAt,
@@ -48,7 +48,7 @@ public class GetUserPostsQueryHandler(IBlogRepository blogRepository) : IRequest
             p.Author.Id,
             p.Author.Username,
             p.Author.Avatar?.Url,
-            currentUserId.HasValue && p.Reactions.Any(r => r.UserId == currentUserId.Value)
+            currentUserId.HasValue && (p.Reactions?.Any(r => r.UserId == currentUserId.Value) ?? false)
         ));
 
         return ResultsHelper.Ok(pagedResult);

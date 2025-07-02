@@ -20,13 +20,11 @@ public record UpdateProfileRequest(
     string? MiddleName,
     DateTime? DateOfBirth,
     IFormFile? Avatar,
-    IFormFile? Cover,
-    PrivacySettingsEnums? PrivacySetting)
+    IFormFile? Cover)
     : IRequest;
 
 public class UpdateProfileRequestHandler(
     IChatUsersRepository chatUsersRepository,
-    IPrivacyRepository privacyRepository,
     IFilesStorage filesStorage,
     IFilesValidator filesValidator,
     IAttachmentsRepository attachments) : IRequestHandler<UpdateProfileRequest>
@@ -116,10 +114,6 @@ public class UpdateProfileRequestHandler(
         user.Surname = request.Surname;
         user.MiddleName = request.MiddleName;
         user.DateOfBirth = request.DateOfBirth?.ToUniversalTime();
-
-        var privacySettings = await privacyRepository.GetPrivacySettingsAsync(cancellationToken);
-        var settingName = (request.PrivacySetting ?? PrivacySettingsEnums.Public).ToString();
-        user.PrivacySetting = privacySettings.First(p => p.SettingName == settingName);
 
         await chatUsersRepository.SaveChangesAsync(cancellationToken);
 

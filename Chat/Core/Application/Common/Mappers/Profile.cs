@@ -16,12 +16,12 @@ public static class Profile
             canViewFullProfile ? user.DateOfBirth : null,
             canViewFullProfile ? user.Avatar?.Url : null,
             canViewFullProfile ? user.Cover?.Url : null,
-            new PrivacySettingDto
-            {
-                Id = user.PrivacySetting.Id,
-                ChatUserId = user.PrivacySetting.ChatUserId,
-                SettingName = user.PrivacySetting.SettingName
-            }
+            new UserPrivacySettingsDto(
+                user.PrivacySettings.Id,
+                user.PrivacySettings.FriendsListVisibility,
+                user.PrivacySettings.CommentsPermission,
+                user.PrivacySettings.DirectMessagesPermission
+            )
         );
     }
 }

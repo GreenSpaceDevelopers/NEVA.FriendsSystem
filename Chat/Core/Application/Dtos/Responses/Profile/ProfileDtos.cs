@@ -4,14 +4,18 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace Application.Dtos.Responses.Profile;
 
 /// <summary>
-/// DTO профиля пользователя
+/// DTO настроек приватности пользователя
 /// </summary>
-public class PrivacySettingDto
-{
-    public int Id { get; set; }
-    public Guid ChatUserId { get; set; }
-    public string SettingName { get; set; } = null!;
-}
+[SwaggerSchema(Description = "Настройки приватности пользователя")]
+public record UserPrivacySettingsDto(
+    Guid Id,
+    [SwaggerSchema(Description = "Кто может видеть список друзей (0=Private, 1=Friends, 2=Public)")]
+    PrivacyLevel FriendsListVisibility,
+    [SwaggerSchema(Description = "Кто может оставлять комментарии (0=Private, 1=Friends, 2=Public)")]
+    PrivacyLevel CommentsPermission,
+    [SwaggerSchema(Description = "Кто может отправлять личные сообщения (0=Private, 1=Friends, 2=Public)")]
+    PrivacyLevel DirectMessagesPermission
+);
 
 [SwaggerSchema(Description = "Информация о профиле пользователя")]
 public record ProfileDto(
@@ -31,8 +35,8 @@ public record ProfileDto(
     string? AvatarUrl,
     [SwaggerSchema(Description = "URL обложки профиля (может быть null)")]
     string? CoverUrl,
-    [SwaggerSchema(Description = "Настройки приватности профиля (расширенный объект)")]
-    PrivacySettingDto PrivacySetting
+    [SwaggerSchema(Description = "Настройки приватности пользователя")]
+    UserPrivacySettingsDto PrivacySettings
 );
 
 /// <summary>

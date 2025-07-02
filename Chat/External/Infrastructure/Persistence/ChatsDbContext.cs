@@ -20,7 +20,7 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
     // Users
     public DbSet<ChatUser> ChatUsers { get; set; }
     public DbSet<ChatRole> ChatRoles { get; set; }
-    public DbSet<PrivacySetting> PrivacySettings { get; set; }
+    public DbSet<UserPrivacySettings> UserPrivacySettings { get; set; }
     public DbSet<NotificationSettings> NotificationSettings { get; set; }
 
     // MediaDto
@@ -83,6 +83,12 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
             .WithMany()
             .HasForeignKey(u => u.CoverId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<ChatUser>()
+            .HasOne(u => u.PrivacySettings)
+            .WithOne(p => p.ChatUser)
+            .HasForeignKey<UserPrivacySettings>(p => p.ChatUserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<ChatUser>().Navigation(ch => ch.AspNetUser).AutoInclude();
         modelBuilder.Entity<Post>().Navigation(p => p.Author).AutoInclude();

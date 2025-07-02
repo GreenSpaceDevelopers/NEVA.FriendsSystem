@@ -10,16 +10,21 @@ namespace Application.Requests.Commands.Profile;
 
 public record CreateProfileCommand(AspNetUser AspNetUser) : IRequest;
 
-public class CreateProfileCommandHandler(IChatUsersRepository chatUsersRepository, IPrivacyRepository privacyRepository) : IRequestHandler<CreateProfileCommand>
+public class CreateProfileCommandHandler(IChatUsersRepository chatUsersRepository) : IRequestHandler<CreateProfileCommand>
 {
     public async Task<IOperationResult> HandleAsync(CreateProfileCommand request, CancellationToken cancellationToken = default)
     {
         var chatUser = new ChatUser(request.AspNetUser);
 
-        var userPrivacySetting = new PrivacySetting
+        var userPrivacySettings = new UserPrivacySettings
         {
+            Id = Guid.NewGuid(),
             ChatUserId = chatUser.Id,
-            SettingName = "Public"
+            FriendsListVisibility = PrivacyLevel.Public,
+            CommentsPermission = PrivacyLevel.Public,
+            DirectMessagesPermission = PrivacyLevel.Public,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
         
         var notificationSetting = new NotificationSettings
@@ -48,7 +53,7 @@ public class CreateProfileCommandHandler(IChatUsersRepository chatUsersRepositor
             TournamentLobbyInvites = true
         };
 
-        chatUser.PrivacySetting = userPrivacySetting;
+        chatUser.PrivacySettings = userPrivacySettings;
 
         await chatUsersRepository.AddAsync(chatUser, cancellationToken);
         await chatUsersRepository.SaveChangesAsync(cancellationToken);

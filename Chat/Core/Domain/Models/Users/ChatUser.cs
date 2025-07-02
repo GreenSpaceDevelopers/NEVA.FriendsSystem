@@ -30,7 +30,7 @@ public class ChatUser : IEntity
     public List<Chat> Chats { get; set; } = [];
     public Attachment? Avatar { get; set; }
     public Attachment? Cover { get; set; }
-    public PrivacySetting PrivacySetting { get; set; } = null!;
+    public UserPrivacySettings PrivacySettings { get; set; } = null!;
 
     public List<ChatUser> Friends { get; set; } = [];
 
@@ -58,16 +58,36 @@ public class AspNetUser
     public ChatRole Role { get; set; } = null!;
 }
 
-public class PrivacySetting
+public class UserPrivacySettings
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public Guid ChatUserId { get; set; }
-    public string SettingName { get; set; } = null!;
+    public ChatUser ChatUser { get; set; } = null!;
+    
+    public PrivacyLevel FriendsListVisibility { get; set; } = PrivacyLevel.Public;
+    
+    public PrivacyLevel CommentsPermission { get; set; } = PrivacyLevel.Public;
+    
+    public PrivacyLevel DirectMessagesPermission { get; set; } = PrivacyLevel.Public;
+    
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
 
-public enum PrivacySettingsEnums
+public enum PrivacyLevel
 {
+    /// <summary>
+    /// Only me
+    /// </summary>
     Private = 0,
+    
+    /// <summary>
+    /// Only friends
+    /// </summary>
     Friends = 1,
-    Public = 2,
+    
+    /// <summary>
+    /// For all
+    /// </summary>
+    Public = 2
 }

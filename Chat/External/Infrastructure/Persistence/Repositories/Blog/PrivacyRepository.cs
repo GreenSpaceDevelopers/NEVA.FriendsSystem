@@ -6,27 +6,38 @@ namespace Infrastructure.Persistence.Repositories.Blog;
 
 public class PrivacyRepository(ChatsDbContext dbContext) : IPrivacyRepository
 {
-    public async Task<PrivacySetting> GetPrivacySettingsAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<UserPrivacySettings?> GetUserPrivacySettingsAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var setting = await dbContext.Set<PrivacySetting>()
+        return await dbContext.Set<UserPrivacySettings>()
             .FirstOrDefaultAsync(p => p.ChatUserId == userId, cancellationToken);
+    }
 
-        if (setting == null)
+    public async Task<UserPrivacySettings> CreateDefaultPrivacySettingsAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var settings = new UserPrivacySettings
         {
-            throw new InvalidOperationException($"Privacy setting not found for user {userId}");
-        }
+            Id = Guid.NewGuid(),
+            ChatUserId = userId,
+            FriendsListVisibility = PrivacyLevel.Friends,
+            CommentsPermission = PrivacyLevel.Public,
+            DirectMessagesPermission = PrivacyLevel.Friends,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
 
-        return setting;
+        await dbContext.Set<UserPrivacySettings>().AddAsync(settings, cancellationToken);
+        return settings;
     }
 
-    public Task<List<PrivacySetting>> GetPrivacySettingsAsync(CancellationToken cancellationToken = default)
+    public async Task UpdateUserPrivacySettingsAsync(UserPrivacySettings settings, CancellationToken cancellationToken = default)
     {
-        return dbContext.Set<PrivacySetting>().ToListAsync(cancellationToken);
+        settings.UpdatedAt = DateTime.UtcNow;
+        dbContext.Set<UserPrivacySettings>().Update(settings);
+        await SaveChangesAsync(cancellationToken);
     }
 
-    public async Task AddPrivacySettingsAsync(List<PrivacySetting> settings, CancellationToken cancellationToken = default)
+    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        await dbContext.Set<PrivacySetting>().AddRangeAsync(settings, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 }
