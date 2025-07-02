@@ -3,6 +3,7 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Dtos.Requests.Shared;
 using Application.Dtos.Responses.Friends;
+using Application.Services.ApplicationInfrastructure.Results;
 
 namespace Application.Requests.Queries.Friends;
 

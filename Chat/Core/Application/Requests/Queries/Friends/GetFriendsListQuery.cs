@@ -6,6 +6,7 @@ using Application.Dtos.Responses.Friends;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Application.Dtos.Responses.Match;
+using Application.Services.ApplicationInfrastructure.Results;
 
 namespace Application.Requests.Queries.Friends;
 

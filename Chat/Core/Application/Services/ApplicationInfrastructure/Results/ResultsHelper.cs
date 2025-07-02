@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
+using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 
-namespace Application.Abstractions.Services.ApplicationInfrastructure.Results;
+namespace Application.Services.ApplicationInfrastructure.Results;
 
 public static class ResultsHelper
 {

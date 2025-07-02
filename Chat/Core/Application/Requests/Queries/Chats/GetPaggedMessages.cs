@@ -2,6 +2,7 @@ using Application.Abstractions.Persistence.Repositories.Messaging;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Dtos.Responses.Chats;
+using Application.Services.ApplicationInfrastructure.Results;
 
 namespace Application.Requests.Queries.Chats;
 
