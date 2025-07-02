@@ -61,11 +61,17 @@ public static class Blog
     public static void MapBlogEndpoints(this WebApplication app)
     {
         app.MapPost("/blog/",
-            async ([FromForm] AddPostRequest request,
+            async ([FromForm] AddPostApiRequest request,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
-                request.UserId = context.GetUserId();
-                var result = await sender.SendAsync(request, cancellationToken);
+                var command = new AddPostRequest
+                {
+                    File = request.File,
+                    UserId = context.GetUserId(),
+                    Content = request.Content,
+                    Title = request.Title
+                };
+                var result = await sender.SendAsync(command, cancellationToken);
                 return result.ToResult();
             })
             .DisableAntiforgery()
@@ -75,12 +81,12 @@ public static class Blog
             .Produces(201)
             .Produces(400);
 
-        app.MapDelete("/blog/",
-            async ([FromBody] DeletePostRequest request,
+        app.MapDelete("/blog/{id:guid}",
+            async ([FromRoute] Guid id,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
-                request = request with { UserId = context.GetUserId() };
-                var result = await sender.SendAsync(request, cancellationToken);
+                var command = new DeletePostRequest(id, context.GetUserId());
+                var result = await sender.SendAsync(command, cancellationToken);
                 return result.ToResult();
             })
             .WithName("DeletePost")
@@ -90,11 +96,11 @@ public static class Blog
             .Produces(404);
 
         app.MapPost("/blog/reactions/",
-            async ([FromForm] SendReactionCommand request,
+            async ([FromForm] SendReactionApiRequest request,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
-                request = request with { UserId = context.GetUserId() };
-                var result = await sender.SendAsync(request, cancellationToken);
+                var command = new SendReactionCommand(request.PostId, request.ReactionTypeId, context.GetUserId());
+                var result = await sender.SendAsync(command, cancellationToken);
                 return result.ToResult();
             })
             .DisableAntiforgery()
@@ -105,12 +111,12 @@ public static class Blog
             .Produces(400);
 
         app.MapPatch("/blog/pin/toggle/",
-            async ([FromBody] TogglePinPostRequest request,
+            async ([FromBody] TogglePinPostApiRequest request,
                 [FromServices] ISender sender,
                 HttpContext context, CancellationToken cancellationToken) =>
             {
-                request = request with { UserId = context.GetUserId() };
-                var result = await sender.SendAsync(request, cancellationToken);
+                var command = new TogglePinPostRequest(request.PostId, context.GetUserId());
+                var result = await sender.SendAsync(command, cancellationToken);
                 return result.ToResult();
             })
             .WithName("TogglePinPost")
@@ -223,5 +229,23 @@ public static class Blog
         .WithTags("Blog")
         .Produces(200)
         .Produces(404);
+
+        app.MapPatch("/blog/comments/toggle/{postId:guid}",
+            async ([FromRoute] Guid postId,
+                [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                var command = new TogglePostCommentsRequest(postId, context.GetUserId());
+                var result = await sender.SendAsync(command, cancellationToken);
+                return result.ToResult();
+            })
+            .WithName("TogglePostComments")
+            .WithOpenApi()
+            .WithTags("Blog")
+            .Produces(200)
+            .Produces(404);
     }
+
+    private record AddPostApiRequest(IFormFile? File, string? Content, string? Title);
+    private record SendReactionApiRequest(Guid PostId, Guid ReactionTypeId);
+    private record TogglePinPostApiRequest(Guid PostId);
 }

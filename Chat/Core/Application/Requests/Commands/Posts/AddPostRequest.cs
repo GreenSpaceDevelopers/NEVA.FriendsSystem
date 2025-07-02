@@ -17,7 +17,6 @@ public class AddPostRequest : IRequest
     public Guid? UserId { get; set; }
     public string? Content { get; set; }
     public string? Title { get; set; } = string.Empty;
-    public bool IsCommentsEnabled { get; set; }
 }
 
 public class AddPostRequestHandler (
@@ -77,7 +76,7 @@ public class AddPostRequestHandler (
             Title = request.Title,
             AttachmentId = attachment?.Id ?? null,
             CreatedAt = DateTime.UtcNow,
-            IsCommentsEnabled = request.IsCommentsEnabled
+            IsCommentsEnabled = true
         };
 
         await blogRepository.AddAsync(post, cancellationToken);

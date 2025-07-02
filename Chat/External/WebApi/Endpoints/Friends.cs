@@ -18,11 +18,11 @@ public static class Friends
     public static void MapFriendsEndpoints(this WebApplication app)
     {
         app.MapPost("/friends/",
-            async ([FromBody] AddFriendRequest request,
+            async ([FromBody] AddFriendApiRequest request,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
-                var result = await sender.SendAsync(request, cancellationToken);
-
+                var command = new AddFriendRequest(context.GetUserId(), request.FriendId);
+                var result = await sender.SendAsync(command, cancellationToken);
                 return result.ToResult();
             })
             .WithName("AddFriend")
@@ -32,12 +32,12 @@ public static class Friends
             .Produces(400)
             .Produces(404);
 
-        app.MapDelete("/friends/",
-            async ([FromBody] DeleteFriendRequest request,
+        app.MapDelete("/friends/{friendId:guid}",
+            async ([FromRoute] Guid friendId,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
-                var result = await sender.SendAsync(request, cancellationToken);
-
+                var command = new DeleteFriendRequest(context.GetUserId(), friendId);
+                var result = await sender.SendAsync(command, cancellationToken);
                 return result.ToResult();
             })
             .WithName("DeleteFriend")
@@ -61,11 +61,11 @@ public static class Friends
             .Produces<PagedList<BlackListItemDto>>(200);
 
         app.MapPost("/friends/accept/",
-            async ([FromBody] AcceptPendingFriendRequest request,
+            async ([FromBody] AcceptPendingFriendApiRequest request,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
-                var result = await sender.SendAsync(request, cancellationToken);
-
+                var command = new AcceptPendingFriendRequest(context.GetUserId(), request.FriendId);
+                var result = await sender.SendAsync(command, cancellationToken);
                 return result.ToResult();
             })
             .WithName("AcceptFriendRequest")
@@ -75,11 +75,11 @@ public static class Friends
             .Produces(404);
 
         app.MapPost("/friends/deny/",
-            async ([FromBody] DenyPendingFriendRequest request,
+            async ([FromBody] DenyPendingFriendApiRequest request,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
-                var result = await sender.SendAsync(request, cancellationToken);
-
+                var command = new DenyPendingFriendRequest(context.GetUserId(), request.FriendId);
+                var result = await sender.SendAsync(command, cancellationToken);
                 return result.ToResult();
             })
             .WithName("DenyFriendRequest")
@@ -89,11 +89,11 @@ public static class Friends
             .Produces(404);
 
         app.MapPost("/friends/blacklist/",
-            async ([FromBody] BlockUserRequest request,
+            async ([FromBody] BlockUserApiRequest request,
                 [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
-                var result = await sender.SendAsync(request, cancellationToken);
-
+                var command = new BlockUserRequest(context.GetUserId(), request.BlockedUserId);
+                var result = await sender.SendAsync(command, cancellationToken);
                 return result.ToResult();
             })
             .WithName("BlockUser")
@@ -103,12 +103,12 @@ public static class Friends
             .Produces(400)
             .Produces(404);
 
-        app.MapDelete("/friends/blacklist/",
-            async ([FromBody] RemoveFromBlockList request,
-                [FromServices] ISender sender, CancellationToken cancellationToken) =>
+        app.MapDelete("/friends/blacklist/{unblockedUserId:guid}",
+            async ([FromRoute] Guid unblockedUserId,
+                [FromServices] ISender sender, HttpContext context, CancellationToken cancellationToken) =>
             {
-                var result = await sender.SendAsync(request, cancellationToken);
-
+                var command = new RemoveFromBlockList(context.GetUserId(), unblockedUserId);
+                var result = await sender.SendAsync(command, cancellationToken);
                 return result.ToResult();
             })
             .WithName("RemoveFromBlockList")
@@ -162,4 +162,12 @@ public static class Friends
             .WithTags("Friends")
             .Produces<PagedList<FriendRequestsDto>>(200);
     }
+
+    private record BlockUserApiRequest(Guid BlockedUserId);
+
+    private record AcceptPendingFriendApiRequest(Guid FriendId);
+
+    private record DenyPendingFriendApiRequest(Guid FriendId);
+
+    private record AddFriendApiRequest(Guid FriendId);
 }

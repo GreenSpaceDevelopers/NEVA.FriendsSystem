@@ -13,14 +13,12 @@ public class AcceptPendingFriendRequestHandler(IChatUsersRepository chatUsersRep
     public async Task<IOperationResult> HandleAsync(AcceptPendingFriendRequest request, CancellationToken cancellationToken = default)
     {
         var user = await chatUsersRepository.GetByIdWithFriendsAsync(request.UserId, cancellationToken);
-
         if (user is null)
         {
             return ResultsHelper.NotFound("User not found");
         }
 
         var friendUser = await chatUsersRepository.GetByIdWithFriendsAsync(request.FriendId, cancellationToken);
-
         if (friendUser is null)
         {
             return ResultsHelper.NotFound("Friend not found");

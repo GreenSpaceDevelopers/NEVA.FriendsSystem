@@ -13,7 +13,6 @@ public class AddFriendRequestHandler(IChatUsersRepository chatUsersRepository) :
     public async Task<IOperationResult> HandleAsync(AddFriendRequest request, CancellationToken cancellationToken = default)
     {
         var user = await chatUsersRepository.GetByIdWithFriendsAsync(request.UserId, cancellationToken);
-
         if (user is null)
         {
             return ResultsHelper.NotFound("User not found");
