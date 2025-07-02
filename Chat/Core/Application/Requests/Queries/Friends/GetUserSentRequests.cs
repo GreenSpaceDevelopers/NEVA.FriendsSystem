@@ -1,6 +1,7 @@
 using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
+using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Application.Dtos.Responses.Friends;
 using Application.Services.ApplicationInfrastructure.Results;
@@ -21,7 +22,7 @@ public class GetUserSentRequestsQueryHandler(IChatUsersRepository chatUsersRepos
             return ResultsHelper.NotFound("User not found");
         }
         
-        var pagedResult = new Common.Models.PagedList<FriendRequestsDto>
+        var pagedResult = new PagedList<FriendRequestsDto>
         {
             TotalCount = user.WaitingFriendRequests.Count,
             Data = user.WaitingFriendRequests
@@ -48,7 +49,7 @@ public class GetUserPendingRequestsQueryHandler(IChatUsersRepository chatUsersRe
             return ResultsHelper.NotFound("User not found");
         }
         
-        var pagedResult = new Common.Models.PagedList<FriendRequestsDto>
+        var pagedResult = new PagedList<FriendRequestsDto>
         {
             TotalCount = user.FriendRequests.Count,
             Data = user.FriendRequests

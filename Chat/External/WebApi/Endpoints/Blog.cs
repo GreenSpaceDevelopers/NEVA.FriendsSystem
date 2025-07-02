@@ -1,7 +1,9 @@
 using System.Text.Json.Serialization;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
+using Application.Common.Models;
 using Application.Requests.Commands.Posts;
 using Application.Dtos.Requests.Shared;
+using Application.Dtos.Responses.Blog;
 using Application.Requests.Queries.Blog;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OpenApi;
@@ -132,7 +134,7 @@ public static class Blog
         .WithName("GetUserPosts")
         .WithOpenApi()
         .WithTags("Blog")
-        .Produces<List<Application.Dtos.Responses.Blog.PostListItemDto>>(200)
+        .Produces<PagedList<PostListItemDto>>(200)
         .Produces(404);
 
         app.MapGet("/blog/posts/{postId:guid}/comments", async (
@@ -149,7 +151,7 @@ public static class Blog
         .WithName("GetPostComments")
         .WithOpenApi()
         .WithTags("Blog")
-        .Produces<List<Application.Dtos.Responses.Blog.CommentDto>>(200)
+        .Produces<PagedList<CommentDto>>(200)
         .Produces(404);
 
         app.MapPost("/blog/posts/{postId:guid}/comments", async (

@@ -4,6 +4,7 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Dtos.Requests.Shared;
 using Application.Dtos.Responses.Friends;
 using System.Text.Json;
+using Application.Common.Models;
 using Microsoft.Extensions.Configuration;
 using Application.Dtos.Responses.Match;
 using Application.Services.ApplicationInfrastructure.Results;
@@ -45,7 +46,7 @@ public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository
             .Skip(request.PageSettings.Skip)
             .Take(request.PageSettings.Take)
             .ToList();
-        var pagedResult = new Common.Models.PagedList<FriendDto>
+        var pagedResult = new PagedList<FriendDto>
         {
             TotalCount = totalCount,
             Data = pagedFriends.Select(f => new FriendDto(

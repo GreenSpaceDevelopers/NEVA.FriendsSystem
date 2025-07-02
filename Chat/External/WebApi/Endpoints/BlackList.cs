@@ -1,5 +1,7 @@
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
+using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
+using Application.Dtos.Responses.BlackList;
 using Application.Requests.Queries.BlackList;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Common.Helpers;
@@ -24,7 +26,7 @@ public static class BlackList
         .WithName("SearchUsers")
         .WithOpenApi()
         .WithTags("BlackList")
-        .Produces<List<Application.Dtos.Responses.BlackList.UserSearchDto>>(200)
+        .Produces<PagedList<UserSearchDto>>(200)
         .Produces(404);
     }
 }

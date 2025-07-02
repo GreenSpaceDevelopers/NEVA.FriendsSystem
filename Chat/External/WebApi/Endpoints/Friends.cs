@@ -1,4 +1,5 @@
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
+using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Application.Dtos.Responses.BlackList;
 using Application.Dtos.Responses.Friends;
@@ -57,7 +58,7 @@ public static class Friends
             .WithName("GetUserBlackList")
             .WithOpenApi()
             .WithTags("Friends")
-            .Produces<List<BlackListItemDto>>(200);
+            .Produces<PagedList<BlackListItemDto>>(200);
 
         app.MapPost("/friends/accept/",
             async ([FromBody] AcceptPendingFriendRequest request,
@@ -130,7 +131,7 @@ public static class Friends
         .WithName("GetFriendsList")
         .WithOpenApi()
         .WithTags("Friends")
-        .Produces<List<FriendDto>>(200)
+        .Produces<PagedList<FriendDto>>(200)
         .Produces(404);
 
         app.MapGet("/friends/requests/sent",
@@ -145,7 +146,7 @@ public static class Friends
             .WithName("GetUsersSendedRequests")
             .WithOpenApi()
             .WithTags("Friends")
-            .Produces<List<FriendRequestsDto>>(200);
+            .Produces<PagedList<FriendRequestsDto>>(200);
         
         app.MapGet("/friends/requests/pending",
                 async ([FromQuery] ushort skip, [FromQuery] ushort take,
@@ -159,6 +160,6 @@ public static class Friends
             .WithName("GetUsersPendingRequests")
             .WithOpenApi()
             .WithTags("Friends")
-            .Produces<List<FriendRequestsDto>>(200);
+            .Produces<PagedList<FriendRequestsDto>>(200);
     }
 }

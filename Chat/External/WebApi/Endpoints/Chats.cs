@@ -1,5 +1,7 @@
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
+using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
+using Application.Dtos.Responses.Chats;
 using Application.Requests.Commands.Chats;
 using Application.Requests.Queries.Messaging;
 using Microsoft.AspNetCore.Mvc;
@@ -27,7 +29,7 @@ public static class Chats
         .WithName("GetUserChats")
         .WithOpenApi()
         .WithTags("Chats")
-        .Produces<List<Application.Dtos.Responses.Chats.UserChatListItemDto>>(200)
+        .Produces<PagedList<UserChatListItemDto>>(200)
         .Produces(404);
 
         app.MapPost("/chats/", async (
@@ -56,7 +58,7 @@ public static class Chats
         .WithName("GetChatMessages")
         .WithOpenApi()
         .WithTags("Chats")
-        .Produces<List<Application.Dtos.Responses.Chats.MessageDto>>(200)
+        .Produces<PagedList<MessageDto>>(200)
         .Produces(404);
     }
 }
