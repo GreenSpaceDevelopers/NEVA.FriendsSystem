@@ -8,7 +8,7 @@ using Application.Services.ApplicationInfrastructure.Results;
 
 namespace Application.Requests.Queries.Blog;
 
-public record GetPostCommentsQuery(Guid PostId, PageSettings PageSettings) : IRequest;
+public record GetPostCommentsQuery(Guid PostId, PageSettings PageSettings, Guid? CurrentUserId = null) : IRequest;
 
 public class GetPostCommentsQueryHandler(IBlogRepository blogRepository) : IRequestHandler<GetPostCommentsQuery>
 {
@@ -40,6 +40,7 @@ public class GetPostCommentsQueryHandler(IBlogRepository blogRepository) : IRequ
             sortExpressions,
             cancellationToken);
 
+        var currentUserId = request.CurrentUserId;
         var pagedResult = pagedComments.Map(c => new CommentDto(
             c.Id,
             c.Content,
@@ -50,7 +51,8 @@ public class GetPostCommentsQueryHandler(IBlogRepository blogRepository) : IRequ
             c.Author.Avatar?.Url,
             c.ParentCommentId,
             pagedComments.Data.Count(reply => reply.ParentCommentId == c.Id),
-            c.CommentReactions?.Count ?? 0
+            c.CommentReactions?.Count ?? 0,
+            currentUserId.HasValue && c.CommentReactions != null && c.CommentReactions.Any(r => r.UserId == currentUserId.Value)
         ));
 
         return ResultsHelper.Ok(pagedResult);

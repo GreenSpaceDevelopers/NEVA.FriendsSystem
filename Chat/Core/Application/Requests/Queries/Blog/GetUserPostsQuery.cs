@@ -7,7 +7,7 @@ using Application.Services.ApplicationInfrastructure.Results;
 
 namespace Application.Requests.Queries.Blog;
 
-public record GetUserPostsQuery(Guid UserId, PageSettings PageSettings, bool? Desc = true) : IRequest;
+public record GetUserPostsQuery(Guid UserId, PageSettings PageSettings, bool? Desc = true, Guid? CurrentUserId = null) : IRequest;
 
 public class GetUserPostsQueryHandler(IBlogRepository blogRepository) : IRequestHandler<GetUserPostsQuery>
 {
@@ -34,6 +34,7 @@ public class GetUserPostsQueryHandler(IBlogRepository blogRepository) : IRequest
             sortExpressions,
             cancellationToken);
 
+        var currentUserId = request.CurrentUserId;
         var pagedResult = pagedPosts.Map(p => new PostListItemDto(
             p.Id,
             p.Title,
@@ -43,7 +44,11 @@ public class GetUserPostsQueryHandler(IBlogRepository blogRepository) : IRequest
             p.Comments?.Count ?? 0,
             p.Reactions?.Count ?? 0,
             p.IsPinned,
-            p.IsCommentsEnabled
+            p.IsCommentsEnabled,
+            p.Author.Id,
+            p.Author.Username,
+            p.Author.Avatar?.Url,
+            currentUserId.HasValue && p.Reactions.Any(r => r.UserId == currentUserId.Value)
         ));
 
         return ResultsHelper.Ok(pagedResult);

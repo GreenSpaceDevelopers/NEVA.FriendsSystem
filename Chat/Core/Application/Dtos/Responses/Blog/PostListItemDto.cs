@@ -24,5 +24,13 @@ public record PostListItemDto(
     [SwaggerSchema(Description = "Закреплен ли пост")]
     bool IsPinned,
     [SwaggerSchema(Description = "Включены ли комментарии к посту")]
-    bool IsCommentsEnabled
+    bool IsCommentsEnabled,
+    [SwaggerSchema(Description = "Владелец поста (id)")]
+    Guid AuthorId,
+    [SwaggerSchema(Description = "Имя пользователя автора поста")]
+    string AuthorUsername,
+    [SwaggerSchema(Description = "URL аватара автора поста (может быть null)")]
+    string? AuthorAvatarUrl,
+    [SwaggerSchema(Description = "Лайкнул ли текущий пользователь этот пост")]
+    bool IsLikedByCurrentUser
 );

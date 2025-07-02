@@ -26,4 +26,7 @@ public record CommentDto(
     [SwaggerSchema(Description = "Количество ответов на данный комментарий")]
     int RepliesCount,
     [SwaggerSchema(Description = "Количество реакций на комментарий")]
-    int ReactionsCount);
+    int ReactionsCount,
+    [SwaggerSchema(Description = "Лайкнул ли текущий пользователь этот комментарий")]
+    bool IsLikedByCurrentUser
+);

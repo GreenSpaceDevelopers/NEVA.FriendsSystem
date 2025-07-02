@@ -133,7 +133,8 @@ public static class Blog
             [FromServices] ISender sender, HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetUserPostsQuery(userId, new PageSettings(skip, take), desc);
+            var currentUserId = context.GetUserId();
+            var query = new GetUserPostsQuery(userId, new PageSettings(skip, take), desc, currentUserId);
             var result = await sender.SendAsync(query, cancellationToken);
             return result.ToApiResult();
         })
@@ -148,9 +149,11 @@ public static class Blog
             [FromQuery] int skip,
             [FromQuery] int take,
             [FromServices] ISender sender,
+            HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetPostCommentsQuery(postId, new PageSettings(skip, take));
+            var currentUserId = context.GetUserId();
+            var query = new GetPostCommentsQuery(postId, new PageSettings(skip, take), currentUserId);
             var result = await sender.SendAsync(query, cancellationToken);
             return result.ToApiResult();
         })
