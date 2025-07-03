@@ -23,25 +23,22 @@ public class TogglePostLikeRequestHandler(IBlogRepository blogRepository) : IReq
 
         if (existingLike is not null)
         {
-            post.Reactions!.Remove(existingLike);
+            await blogRepository.RemovePostReactionAsync(existingLike, cancellationToken);
             await blogRepository.SaveChangesAsync(cancellationToken);
             return ResultsHelper.Ok(new { Liked = false });
         }
-        else
-        {
-            var newLike = new PostReaction
-            {
-                Id = Guid.NewGuid(),
-                PostId = request.PostId,
-                UserId = request.UserId,
-                CreatedAt = DateTime.UtcNow
-            };
 
-            post.Reactions ??= new List<PostReaction>();
-            post.Reactions.Add(newLike);
-            await blogRepository.SaveChangesAsync(cancellationToken);
-            return ResultsHelper.Ok(new { Liked = true });
-        }
+        var newLike = new PostReaction
+        {
+            Id = Guid.NewGuid(),
+            PostId = request.PostId,
+            UserId = request.UserId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await blogRepository.AddPostReactionAsync(newLike, cancellationToken);
+        await blogRepository.SaveChangesAsync(cancellationToken);
+        return ResultsHelper.Ok(new { Liked = true });
     }
 }
 

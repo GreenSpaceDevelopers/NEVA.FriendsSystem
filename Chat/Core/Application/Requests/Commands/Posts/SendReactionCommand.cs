@@ -49,7 +49,7 @@ public class SendReactionAsyncHandler(IBlogRepository blogRepository, IReactions
             Reactor = user
         };
 
-        post.Reactions.Add(reaction);
+        await blogRepository.AddPostReactionAsync(reaction, cancellationToken);
         await blogRepository.SaveChangesAsync(cancellationToken);
 
         return ResultsHelper.NoContent();

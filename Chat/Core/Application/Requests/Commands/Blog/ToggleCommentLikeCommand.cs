@@ -23,7 +23,7 @@ public class ToggleCommentLikeRequestHandler(IBlogRepository blogRepository) : I
 
         if (existingLike is not null)
         {
-            comment.CommentReactions!.Remove(existingLike);
+            await blogRepository.RemoveCommentReactionAsync(existingLike, cancellationToken);
             await blogRepository.SaveChangesAsync(cancellationToken);
             return ResultsHelper.Ok(new { Liked = false });
         }
@@ -37,8 +37,7 @@ public class ToggleCommentLikeRequestHandler(IBlogRepository blogRepository) : I
                 CreatedAt = DateTime.UtcNow
             };
 
-            comment.CommentReactions ??= new List<CommentReaction>();
-            comment.CommentReactions.Add(newLike);
+            await blogRepository.AddCommentReactionAsync(newLike, cancellationToken);
             await blogRepository.SaveChangesAsync(cancellationToken);
             return ResultsHelper.Ok(new { Liked = true });
         }

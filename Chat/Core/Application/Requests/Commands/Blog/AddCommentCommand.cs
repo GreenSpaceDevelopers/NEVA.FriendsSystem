@@ -73,17 +73,15 @@ public class AddCommentRequestHandler(
         var comment = new Comment
         {
             Id = Guid.NewGuid(),
-            Text = request.Content,
             Content = request.Content,
             AuthorId = request.UserId,
             PostId = request.PostId,
-            ParentId = request.ParentCommentId ?? Guid.Empty,
             ParentCommentId = request.ParentCommentId,
             Attachment = attachment,
             CreatedAt = DateTime.UtcNow
         };
 
-        post.Comments.Add(comment);
+        await blogRepository.AddCommentAsync(comment, cancellationToken);
         await blogRepository.SaveChangesAsync(cancellationToken);
 
         return ResultsHelper.Created(comment.Id);

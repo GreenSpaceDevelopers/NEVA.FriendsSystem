@@ -70,17 +70,15 @@ public class ReplyToCommentRequestHandler(
         var reply = new Comment
         {
             Id = Guid.NewGuid(),
-            Text = request.Content,
             Content = request.Content,
             AuthorId = request.UserId,
             PostId = post.Id,
-            ParentId = request.CommentId,
             ParentCommentId = request.CommentId,
             Attachment = attachment,
             CreatedAt = DateTime.UtcNow
         };
 
-        post.Comments.Add(reply);
+        await blogRepository.AddCommentAsync(reply, cancellationToken);
         await blogRepository.SaveChangesAsync(cancellationToken);
 
         return ResultsHelper.Created(reply.Id);

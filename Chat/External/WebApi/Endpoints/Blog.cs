@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Common.Models;
 using Application.Requests.Commands.Posts;
@@ -6,7 +5,6 @@ using Application.Dtos.Requests.Shared;
 using Application.Dtos.Responses.Blog;
 using Application.Requests.Queries.Blog;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.OpenApi;
 using WebApi.Common.Mappers;
 using Application.Requests.Commands.Blog;
 using WebApi.Common.Helpers;

@@ -41,20 +41,26 @@ public class GetPostCommentsQueryHandler(IBlogRepository blogRepository) : IRequ
             cancellationToken);
 
         var currentUserId = request.CurrentUserId;
-        var pagedResult = pagedComments.Map(c => new CommentDto(
-            c.Id,
-            c.Content,
-            c.Attachment?.Url,
-            c.CreatedAt,
-            c.Author.Id,
-            c.Author.Username,
-            c.Author.Avatar?.Url,
-            c.ParentCommentId,
-            pagedComments.Data.Count(reply => reply.ParentCommentId == c.Id),
-            c.CommentReactions?.Count ?? 0,
-            currentUserId.HasValue && c.CommentReactions != null && c.CommentReactions.Any(r => r.UserId == currentUserId.Value)
-        ));
+        var pagedResult = pagedComments.Map(c => MapCommentToDto(c, pagedComments.Data, currentUserId));
 
         return ResultsHelper.Ok(pagedResult);
+    }
+
+    private static CommentDto MapCommentToDto(Domain.Models.Blog.Comment comment, IReadOnlyCollection<Domain.Models.Blog.Comment> allComments, Guid? currentUserId)
+    {
+        return new CommentDto(
+            comment.Id,
+            comment.Content,
+            comment.Attachment?.Url,
+            comment.CreatedAt,
+            comment.Author.Id,
+            comment.Author.Username,
+            comment.Author.Avatar?.Url,
+            comment.ParentCommentId,
+            comment.Replies?.Count ?? 0,
+            comment.CommentReactions?.Count ?? 0,
+            currentUserId.HasValue && comment.CommentReactions != null && comment.CommentReactions.Any(r => r.UserId == currentUserId.Value),
+            (comment.Replies ?? []).Select(r => MapCommentToDto(r, allComments, currentUserId)).ToList()
+        );
     }
 }

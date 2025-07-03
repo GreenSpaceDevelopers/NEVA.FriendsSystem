@@ -105,6 +105,17 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
             .HasForeignKey<NotificationSettings>(n  => n.UserId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        modelBuilder.Entity<Comment>()
+            .HasOne(c => c.Parent)
+            .WithMany(c => c.Replies)
+            .HasForeignKey(c => c.ParentCommentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Comment>()
+            .HasOne(c => c.Post)
+            .WithMany(p => p.Comments)
+            .HasForeignKey(c => c.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         base.OnModelCreating(modelBuilder);
     }

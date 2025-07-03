@@ -2,6 +2,7 @@ using Application.Abstractions.Persistence.Repositories.Blog;
 using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Domain.Models.Blog;
+using Domain.Models.Messaging;
 using Domain.Models.Users;
 using Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,7 @@ public class BlogRepository(ChatsDbContext dbContext) : BaseRepository<Post>(dbC
             .Include(c => c.CommentReactions)
             .Include(c => c.Author)
             .Include(c => c.Post)
+            .Include(c => c.Replies)
             .FirstOrDefaultAsync(c => c.Id == commentId, cancellationToken);
     }
 
@@ -54,8 +56,36 @@ public class BlogRepository(ChatsDbContext dbContext) : BaseRepository<Post>(dbC
             .AsNoTracking()
             .Include(c => c.CommentReactions)
             .Include(c => c.Author)
+            .Include(c => c.Replies)
             .Where(c => c.PostId == postId && !c.ParentCommentId.HasValue);
 
         return query.ToPagedList(sortExpressions, pageSettings.Skip, pageSettings.Take, cancellationToken);
+    }
+
+    public async Task AddCommentAsync(Comment comment, CancellationToken cancellationToken = default)
+    {
+        await dbContext.Set<Comment>().AddAsync(comment, cancellationToken);
+    }
+
+    public async Task AddPostReactionAsync(PostReaction reaction, CancellationToken cancellationToken = default)
+    {
+        await dbContext.Set<PostReaction>().AddAsync(reaction, cancellationToken);
+    }
+
+    public Task RemovePostReactionAsync(PostReaction reaction, CancellationToken cancellationToken = default)
+    {
+        dbContext.Set<PostReaction>().Remove(reaction);
+        return Task.CompletedTask;
+    }
+
+    public async Task AddCommentReactionAsync(CommentReaction reaction, CancellationToken cancellationToken = default)
+    {
+        await dbContext.Set<CommentReaction>().AddAsync(reaction, cancellationToken);
+    }
+
+    public Task RemoveCommentReactionAsync(CommentReaction reaction, CancellationToken cancellationToken = default)
+    {
+        dbContext.Set<CommentReaction>().Remove(reaction);
+        return Task.CompletedTask;
     }
 }
