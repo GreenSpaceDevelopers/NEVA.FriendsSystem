@@ -12,27 +12,31 @@ public class DenyPendingFriendRequestHandler(IChatUsersRepository chatUsersRepos
     public async Task<IOperationResult> HandleAsync(DenyPendingFriendRequest request, CancellationToken cancellationToken = default)
     {
         var user = await chatUsersRepository.GetByIdWithFriendsAsync(request.UserId, cancellationToken);
-
         if (user is null)
-        {
             return ResultsHelper.NotFound("User not found");
-        }
 
         var friendUser = await chatUsersRepository.GetByIdWithFriendsAsync(request.FriendId, cancellationToken);
-
         if (friendUser is null)
-        {
             return ResultsHelper.NotFound("Friend not found");
-        }
 
-        if (!user.WaitingFriendRequests.Contains(friendUser))
+        var changed = false;
+        if (user.WaitingFriendRequests.Contains(friendUser))
         {
-            return ResultsHelper.BadRequest("Friend request not found");
+            user.WaitingFriendRequests.Remove(friendUser);
+            friendUser.FriendRequests.Remove(user);
+            changed = true;
+        }
+        else if (user.FriendRequests.Contains(friendUser))
+        {
+            user.FriendRequests.Remove(friendUser);
+            friendUser.WaitingFriendRequests.Remove(user);
+            changed = true;
         }
 
-        user.FriendRequests.Remove(friendUser);
-        await chatUsersRepository.SaveChangesAsync(cancellationToken);
+        if (!changed)
+            return ResultsHelper.BadRequest("Friend request not found");
 
+        await chatUsersRepository.SaveChangesAsync(cancellationToken);
         return ResultsHelper.NoContent();
     }
 }

@@ -246,9 +246,67 @@ public static class Blog
             .WithTags("Blog")
             .Produces(200)
             .Produces(404);
+
+        app.MapGet("/blog/posts/{postId:guid}", async (
+            [FromRoute] Guid postId,
+            [FromServices] ISender sender,
+            HttpContext context,
+            CancellationToken cancellationToken) =>
+        {
+            var currentUserId = context.GetUserId();
+            var query = new GetPostByIdQuery(postId, currentUserId);
+            var result = await sender.SendAsync(query, cancellationToken);
+            return result.ToApiResult();
+        })
+        .WithName("GetPostById")
+        .WithOpenApi()
+        .WithTags("Blog")
+        .Produces<PostListItemDto>(200)
+        .Produces(404);
+
+        app.MapPut("/blog/{postId:guid}", async (
+            [FromRoute] Guid postId,
+            [FromForm] UpdatePostApiRequest request,
+            [FromServices] ISender sender,
+            HttpContext context,
+            CancellationToken cancellationToken) =>
+        {
+            var userId = context.GetUserId();
+            var command = new UpdatePostRequest
+            {
+                PostId = postId,
+                UserId = userId,
+                Title = request.Title,
+                Content = request.Content,
+                File = request.File
+            };
+            var result = await sender.SendAsync(command, cancellationToken);
+            return result.ToResult();
+        })
+        .WithName("UpdatePost")
+        .DisableAntiforgery()
+        .WithOpenApi()
+        .WithTags("Blog")
+        .Produces(204)
+        .Produces(400)
+        .Produces(403)
+        .Produces(404);
     }
 
-    private record AddPostApiRequest(IFormFile? File, string? Content, string? Title);
+    private class AddPostApiRequest
+    {
+        public IFormFile? File { get; set; }
+        public string? Content { get; set; }
+        public string? Title { get; set; }
+    }
+
     private record SendReactionApiRequest(Guid PostId, Guid ReactionTypeId);
     private record TogglePinPostApiRequest(Guid PostId);
+
+    private class UpdatePostApiRequest
+    {
+        public string? Title { get; set; }
+        public string Content { get; set; } = null!;
+        public IFormFile? File { get; set; }
+    }
 }
