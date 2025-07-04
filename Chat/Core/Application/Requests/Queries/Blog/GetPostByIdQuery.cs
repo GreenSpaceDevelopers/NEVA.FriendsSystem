@@ -1,4 +1,5 @@
 using Application.Abstractions.Persistence.Repositories.Blog;
+using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Dtos.Responses.Blog;
@@ -8,7 +9,7 @@ namespace Application.Requests.Queries.Blog;
 
 public record GetPostByIdQuery(Guid PostId, Guid? CurrentUserId = null) : IRequest;
 
-public class GetPostByIdQueryHandler(IBlogRepository blogRepository) : IRequestHandler<GetPostByIdQuery>
+public class GetPostByIdQueryHandler(IBlogRepository blogRepository, IChatUsersRepository chatUsersRepository) : IRequestHandler<GetPostByIdQuery>
 {
     public async Task<IOperationResult> HandleAsync(GetPostByIdQuery request, CancellationToken cancellationToken = default)
     {
@@ -16,6 +17,15 @@ public class GetPostByIdQueryHandler(IBlogRepository blogRepository) : IRequestH
         if (post is null)
         {
             return ResultsHelper.NotFound("Post not found");
+        }
+
+        if (request.CurrentUserId.HasValue)
+        {
+            var isBlocked = await chatUsersRepository.IsUserBlockedByAsync(request.CurrentUserId.Value, post.Author.Id, cancellationToken);
+            if (isBlocked)
+            {
+                return ResultsHelper.Forbidden("You are blocked by the author");
+            }
         }
 
         var currentUserId = request.CurrentUserId;

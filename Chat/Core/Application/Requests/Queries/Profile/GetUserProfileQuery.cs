@@ -4,13 +4,12 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Common.Mappers;
 using Application.Services.ApplicationInfrastructure.Results;
 using Domain.Models.Users;
-using Microsoft.Extensions.Logging;
 
 namespace Application.Requests.Queries.Profile;
 
 public record GetUserProfileQuery(Guid RequestedUserId, Guid CurrentUserId) : IRequest;
 
-public class GetUserProfileQueryHandler(IChatUsersRepository chatUsersRepository, ILogger<GetUserProfileQueryHandler> logger) : IRequestHandler<GetUserProfileQuery>
+public class GetUserProfileQueryHandler(IChatUsersRepository chatUsersRepository) : IRequestHandler<GetUserProfileQuery>
 {
     public async Task<IOperationResult> HandleAsync(GetUserProfileQuery request, CancellationToken cancellationToken = default)
     {
@@ -23,7 +22,15 @@ public class GetUserProfileQueryHandler(IChatUsersRepository chatUsersRepository
         var canViewFullProfile = request.RequestedUserId == request.CurrentUserId ||
                                 user.PrivacySettings.FriendsListVisibility == PrivacyLevel.Public;
 
-        var profileDto = user.ToProfileDto(canViewFullProfile);
+        var isBlockedByMe = await chatUsersRepository.IsUserBlockedByAsync(request.RequestedUserId, request.CurrentUserId, cancellationToken);
+        var hasBlockedMe = await chatUsersRepository.IsUserBlockedByAsync(request.CurrentUserId, request.RequestedUserId, cancellationToken);
+
+        if (hasBlockedMe)
+        {
+            canViewFullProfile = false;
+        }
+
+        var profileDto = user.ToProfileDto(canViewFullProfile, isBlockedByMe, hasBlockedMe);
 
         return ResultsHelper.Ok(profileDto);
     }

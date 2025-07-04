@@ -33,15 +33,18 @@ public static class Chats
         .Produces(404);
 
         app.MapPost("/chats/", async (
-            [FromBody] Guid[] users,
-            [FromServices] ISender sender,
-            CancellationToken cancellationToken
-        ) =>
-        {
-            var request = new CreateChatRequest(users);
-            var result = await sender.SendAsync(request, cancellationToken);
-            return result.ToResult();
-        });
+                [FromBody] Guid[] users,
+                [FromServices] ISender sender,
+                CancellationToken cancellationToken
+            ) =>
+            {
+                var request = new CreateChatRequest(users);
+                var result = await sender.SendAsync(request, cancellationToken);
+                return result.ToResult();
+            })
+            .WithName("CreateChat")
+            .WithOpenApi()
+            .WithTags("Chats");
 
         app.MapGet("/chats/{chatId:guid}/messages", async (
             [FromRoute] Guid chatId,

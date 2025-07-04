@@ -1,5 +1,6 @@
 using Application.Abstractions.Persistence.Repositories.Blog;
 using Application.Abstractions.Persistence.Repositories.Media;
+using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Services.ApplicationInfrastructure.Results;
@@ -10,7 +11,7 @@ namespace Application.Requests.Commands.Blog;
 
 public record TogglePostLikeRequest(Guid PostId, Guid UserId, Guid ReactionTypeId) : IRequest;
 
-public class TogglePostLikeRequestHandler(IBlogRepository blogRepository, IReactionsTypesRepository reactionsTypesRepository) : IRequestHandler<TogglePostLikeRequest>
+public class TogglePostLikeRequestHandler(IBlogRepository blogRepository, IReactionsTypesRepository reactionsTypesRepository, IChatUsersRepository chatUsersRepository) : IRequestHandler<TogglePostLikeRequest>
 {
     public async Task<IOperationResult> HandleAsync(TogglePostLikeRequest request, CancellationToken cancellationToken = default)
     {
@@ -18,6 +19,12 @@ public class TogglePostLikeRequestHandler(IBlogRepository blogRepository, IReact
         if (post is null)
         {
             return ResultsHelper.NotFound("Post not found");
+        }
+
+        var isBlocked = await chatUsersRepository.IsUserBlockedByAsync(request.UserId, post.AuthorId, cancellationToken);
+        if (isBlocked)
+        {
+            return ResultsHelper.Forbidden("You are blocked by the post author");
         }
 
         var existingLike = post.Reactions?.FirstOrDefault(r => r.UserId == request.UserId);

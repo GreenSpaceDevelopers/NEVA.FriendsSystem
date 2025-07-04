@@ -25,7 +25,7 @@ public static class BlackList
         })
         .WithName("SearchUsers")
         .WithOpenApi()
-        .WithTags("BlackList")
+        .WithTags("Users")
         .Produces<PagedList<UserSearchDto>>(200)
         .Produces(404);
     }

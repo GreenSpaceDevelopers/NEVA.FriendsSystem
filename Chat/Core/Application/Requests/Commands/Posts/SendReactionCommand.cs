@@ -35,6 +35,12 @@ public class SendReactionAsyncHandler(IBlogRepository blogRepository, IReactions
             return ResultsHelper.NotFound("User not found");
         }
 
+        var isBlocked = await chatUsersRepository.IsUserBlockedByAsync(request.UserId ?? Guid.Empty, post.AuthorId, cancellationToken);
+        if (isBlocked)
+        {
+            return ResultsHelper.Forbidden("You are blocked by the post author");
+        }
+
         if (post.Reactions.Any(reaction => reaction.UserId == request.UserId))
         {
             return ResultsHelper.BadRequest("User has already reacted");

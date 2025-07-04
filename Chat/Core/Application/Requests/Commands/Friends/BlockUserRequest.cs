@@ -12,19 +12,26 @@ public class BlockUserRequestHandler(IChatUsersRepository chatUsersRepository) :
 {
     public async Task<IOperationResult> HandleAsync(BlockUserRequest request, CancellationToken cancellationToken = default)
     {
-        var user = await chatUsersRepository.GetByIdWithBlockerUsersAsync(request.UserId, cancellationToken);
+        var user = await chatUsersRepository.GetByIdWithFriendsAsync(request.UserId, cancellationToken);
         if (user is null)
         {
             return ResultsHelper.NotFound("User not found");
         }
 
-        var blockedUser = await chatUsersRepository.GetByIdAsync(request.BlockedUserId, cancellationToken);
+        var blockedUser = await chatUsersRepository.GetByIdWithFriendsAsync(request.BlockedUserId, cancellationToken);
         if (blockedUser is null)
         {
             return ResultsHelper.NotFound("Blocked user not found");
         }
 
-        user.BlockedUsers.Add(blockedUser);
+        user.Friends.RemoveAll(f => f.Id == blockedUser.Id);
+        blockedUser.Friends.RemoveAll(f => f.Id == user.Id);
+
+        if (user.BlockedUsers.All(b => b.Id != blockedUser.Id))
+        {
+            user.BlockedUsers.Add(blockedUser);
+        }
+        
         await chatUsersRepository.SaveChangesAsync(cancellationToken);
 
         return ResultsHelper.NoContent();

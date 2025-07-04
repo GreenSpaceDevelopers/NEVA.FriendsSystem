@@ -1,6 +1,8 @@
 using Application.Abstractions.Persistence.Repositories.Blog;
+using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
+using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Application.Dtos.Responses.Blog;
 using Application.Services.ApplicationInfrastructure.Results;
@@ -9,7 +11,7 @@ namespace Application.Requests.Queries.Blog;
 
 public record GetUserPostsQuery(Guid UserId, PageSettings PageSettings, bool? Desc = true, Guid? CurrentUserId = null) : IRequest;
 
-public class GetUserPostsQueryHandler(IBlogRepository blogRepository) : IRequestHandler<GetUserPostsQuery>
+public class GetUserPostsQueryHandler(IBlogRepository blogRepository, IChatUsersRepository chatUsersRepository) : IRequestHandler<GetUserPostsQuery>
 {
     public async Task<IOperationResult> HandleAsync(GetUserPostsQuery request, CancellationToken cancellationToken = default)
     {
@@ -17,6 +19,15 @@ public class GetUserPostsQueryHandler(IBlogRepository blogRepository) : IRequest
         if (user is null)
         {
             return ResultsHelper.NotFound("User not found");
+        }
+
+        if (request.CurrentUserId.HasValue)
+        {
+            var isBlocked = await chatUsersRepository.IsUserBlockedByAsync(request.CurrentUserId.Value, request.UserId, cancellationToken);
+            if (isBlocked)
+            {
+                return ResultsHelper.Forbidden("You are blocked by the author");
+            }
         }
 
         var sortExpressions = new List<Common.Models.SortExpression>

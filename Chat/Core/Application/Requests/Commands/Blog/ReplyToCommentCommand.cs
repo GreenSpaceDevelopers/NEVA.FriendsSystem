@@ -1,5 +1,6 @@
 using Application.Abstractions.Persistence.Repositories.Blog;
 using Application.Abstractions.Persistence.Repositories.Media;
+using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
@@ -17,25 +18,38 @@ public class ReplyToCommentRequestHandler(
     IBlogRepository blogRepository,
     IAttachmentsRepository attachmentsRepository,
     IFilesStorage filesStorage,
-    IFilesValidator filesValidator) : IRequestHandler<ReplyToCommentRequest>
+    IFilesValidator filesValidator,
+    IChatUsersRepository chatUsersRepository) : IRequestHandler<ReplyToCommentRequest>
 {
     public async Task<IOperationResult> HandleAsync(ReplyToCommentRequest request, CancellationToken cancellationToken = default)
     {
-        var post = await blogRepository.GetByIdAsync(request.CommentId, cancellationToken);
-        if (post is null)
-        {
-            return ResultsHelper.NotFound("Post not found");
-        }
-
-        var parentComment = post.Comments.FirstOrDefault(c => c.Id == request.CommentId);
+        var parentComment = await blogRepository.GetCommentByIdAsync(request.CommentId, cancellationToken);
         if (parentComment is null)
         {
             return ResultsHelper.NotFound("Comment not found");
         }
 
+        var post = await blogRepository.GetByIdAsync(parentComment.PostId, cancellationToken);
+        if (post is null)
+        {
+            return ResultsHelper.NotFound("Post not found");
+        }
+
         if (!post.IsCommentsEnabled)
         {
             return ResultsHelper.BadRequest("Comments are disabled for this post");
+        }
+
+        var isBlockedByPostAuthor = await chatUsersRepository.IsUserBlockedByAsync(request.UserId, post.AuthorId, cancellationToken);
+        if (isBlockedByPostAuthor)
+        {
+            return ResultsHelper.Forbidden("You are blocked by the post author");
+        }
+
+        var isBlockedByCommentAuthor = await chatUsersRepository.IsUserBlockedByAsync(request.UserId, parentComment.AuthorId, cancellationToken);
+        if (isBlockedByCommentAuthor)
+        {
+            return ResultsHelper.Forbidden("You are blocked by the comment author");
         }
 
         Attachment? attachment = null;

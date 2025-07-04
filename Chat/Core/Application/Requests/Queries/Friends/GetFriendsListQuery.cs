@@ -17,45 +17,51 @@ public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository
 {
     public async Task<IOperationResult> HandleAsync(GetFriendsListQuery request, CancellationToken cancellationToken = default)
     {
-        var user = await chatUsersRepository.GetByIdWithFriendsAsync(request.UserId, cancellationToken);
+        var user = await chatUsersRepository.GetByIdAsync(request.UserId, cancellationToken);
         if (user is null)
         {
             return ResultsHelper.NotFound("User not found");
         }
 
-        var friends = user.Friends.OrderBy(f => f.Username).ToList();
+        var friendsWithBlockingInfo = await chatUsersRepository.GetFriendsWithBlockingInfoAsync(request.UserId, cancellationToken);
 
         if (request.DisciplineId.HasValue)
         {
-            var friendsInDiscipline = new List<Domain.Models.Users.ChatUser>();
+            var friendsInDiscipline = new List<UserWithBlockingInfo>();
             
-            foreach (var friend in friends)
+            foreach (var friendInfo in friendsWithBlockingInfo)
             {
-                var friendDisciplines = await GetUserDisciplinesFromMatchHistory(friend.Id, cancellationToken);
+                var friendDisciplines = await GetUserDisciplinesFromMatchHistory(friendInfo.User.Id, cancellationToken);
                 if (friendDisciplines.Contains(request.DisciplineId.Value))
                 {
-                    friendsInDiscipline.Add(friend);
+                    friendsInDiscipline.Add(friendInfo);
                 }
             }
             
-            friends = friendsInDiscipline;
+            friendsWithBlockingInfo = friendsInDiscipline;
         }
 
-        var totalCount = friends.Count;
-        var pagedFriends = friends
+        var totalCount = friendsWithBlockingInfo.Count;
+        var pagedFriends = friendsWithBlockingInfo
             .Skip(request.PageSettings.Skip)
             .Take(request.PageSettings.Take)
             .ToList();
+
+        var friendDtos = pagedFriends.Select(friendInfo => new FriendDto(
+            friendInfo.User.Id,
+            friendInfo.User.Username,
+            friendInfo.User.Avatar?.Url,
+            friendInfo.User.LastSeen,
+            friendInfo.IsBlockedByMe,
+            friendInfo.HasBlockedMe
+        )).ToList();
+
         var pagedResult = new PagedList<FriendDto>
         {
             TotalCount = totalCount,
-            Data = pagedFriends.Select(f => new FriendDto(
-                f.Id,
-                f.Username,
-                f.Avatar?.Url,
-                f.LastSeen
-            )).ToList()
+            Data = friendDtos
         };
+        
         return ResultsHelper.Ok(pagedResult);
     }
 

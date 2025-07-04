@@ -36,7 +36,11 @@ public record ProfileDto(
     [SwaggerSchema(Description = "URL обложки профиля (может быть null)")]
     string? CoverUrl,
     [SwaggerSchema(Description = "Настройки приватности пользователя")]
-    UserPrivacySettingsDto PrivacySettings
+    UserPrivacySettingsDto PrivacySettings,
+    [SwaggerSchema(Description = "Заблокирован ли этот пользователь текущим пользователем")]
+    bool IsBlockedByMe,
+    [SwaggerSchema(Description = "Заблокировал ли этот пользователь текущего пользователя")]
+    bool HasBlockedMe
 );
 
 /// <summary>

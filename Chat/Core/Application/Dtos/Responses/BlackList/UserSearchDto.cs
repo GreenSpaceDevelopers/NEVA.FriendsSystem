@@ -12,4 +12,9 @@ public record UserSearchDto(
     [SwaggerSchema(Description = "Имя пользователя")]
     string Username,
     [SwaggerSchema(Description = "URL аватара пользователя (может быть null)")]
-    string? AvatarUrl);
+    string? AvatarUrl,
+    [SwaggerSchema(Description = "Заблокирован ли этот пользователь текущим пользователем")]
+    bool IsBlockedByMe,
+    [SwaggerSchema(Description = "Заблокировал ли этот пользователь текущего пользователя")]
+    bool HasBlockedMe
+);

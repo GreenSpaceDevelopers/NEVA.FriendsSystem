@@ -1,5 +1,6 @@
 using Application.Abstractions.Persistence.Repositories.Blog;
 using Application.Abstractions.Persistence.Repositories.Media;
+using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
@@ -17,7 +18,8 @@ public class AddCommentRequestHandler(
     IBlogRepository blogRepository,
     IAttachmentsRepository attachmentsRepository,
     IFilesStorage filesStorage,
-    IFilesValidator filesValidator) : IRequestHandler<AddCommentRequest>
+    IFilesValidator filesValidator,
+    IChatUsersRepository chatUsersRepository) : IRequestHandler<AddCommentRequest>
 {
     public async Task<IOperationResult> HandleAsync(AddCommentRequest request, CancellationToken cancellationToken = default)
     {
@@ -30,6 +32,12 @@ public class AddCommentRequestHandler(
         if (!post.IsCommentsEnabled)
         {
             return ResultsHelper.BadRequest("Comments are disabled for this post");
+        }
+
+        var isBlocked = await chatUsersRepository.IsUserBlockedByAsync(request.UserId, post.AuthorId, cancellationToken);
+        if (isBlocked)
+        {
+            return ResultsHelper.Forbidden("You are blocked by the post author");
         }
 
         if (request.ParentCommentId.HasValue)

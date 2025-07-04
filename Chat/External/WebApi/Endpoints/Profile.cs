@@ -68,6 +68,22 @@ public static class Profile
         .WithTags("Profile")
         .Produces<Application.Dtos.Responses.Profile.ProfileValidationDto>(200)
         .Produces<ValidationErrorResponse>(400);
+
+        app.MapGet("/profile/{userId:guid}/permissions", async (
+            [FromRoute] Guid userId,
+            [FromServices] ISender sender,
+            HttpContext context,
+            CancellationToken cancellationToken) =>
+        {
+            var query = new GetUserInteractionPermissionsQuery(userId, context.GetUserId());
+            var result = await sender.SendAsync(query, cancellationToken);
+            return result.ToApiResult();
+        })
+        .WithName("GetUserInteractionPermissions")
+        .WithOpenApi()
+        .WithTags("Profile")
+        .Produces<Application.Dtos.Responses.Profile.UserInteractionPermissionsDto>(200)
+        .Produces<NotFoundErrorResponse>(404);
     }
 
     /// <summary>

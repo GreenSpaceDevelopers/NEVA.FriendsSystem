@@ -14,5 +14,9 @@ public record FriendDto(
     [SwaggerSchema(Description = "URL аватара друга (может быть null)")]
     string? AvatarUrl,
     [SwaggerSchema(Description = "Дата и время последнего посещения")]
-    DateTime LastSeen
+    DateTime LastSeen,
+    [SwaggerSchema(Description = "Заблокирован ли этот друг текущим пользователем")]
+    bool IsBlockedByMe,
+    [SwaggerSchema(Description = "Заблокировал ли этот друг текущего пользователя")]
+    bool HasBlockedMe
 );
