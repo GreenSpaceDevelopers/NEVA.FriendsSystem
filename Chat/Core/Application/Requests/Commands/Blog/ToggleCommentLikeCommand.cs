@@ -1,4 +1,5 @@
 using Application.Abstractions.Persistence.Repositories.Blog;
+using Application.Abstractions.Persistence.Repositories.Media;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Services.ApplicationInfrastructure.Results;
@@ -7,13 +8,14 @@ using FluentValidation;
 
 namespace Application.Requests.Commands.Blog;
 
-public record ToggleCommentLikeRequest(Guid CommentId, Guid UserId) : IRequest;
+public record ToggleCommentLikeRequest(Guid CommentId, Guid UserId, Guid ReactionTypeId) : IRequest;
 
-public class ToggleCommentLikeRequestHandler(IBlogRepository blogRepository) : IRequestHandler<ToggleCommentLikeRequest>
+public class ToggleCommentLikeRequestHandler(IBlogRepository blogRepository, IReactionsTypesRepository reactionsTypesRepository) : IRequestHandler<ToggleCommentLikeRequest>
 {
     public async Task<IOperationResult> HandleAsync(ToggleCommentLikeRequest request, CancellationToken cancellationToken = default)
     {
         var comment = await blogRepository.GetCommentByIdAsync(request.CommentId, cancellationToken);
+        
         if (comment is null)
         {
             return ResultsHelper.NotFound("Comment not found");
@@ -27,20 +29,25 @@ public class ToggleCommentLikeRequestHandler(IBlogRepository blogRepository) : I
             await blogRepository.SaveChangesAsync(cancellationToken);
             return ResultsHelper.Ok(new { Liked = false });
         }
-        else
-        {
-            var newLike = new CommentReaction
-            {
-                Id = Guid.NewGuid(),
-                CommentId = request.CommentId,
-                UserId = request.UserId,
-                CreatedAt = DateTime.UtcNow
-            };
 
-            await blogRepository.AddCommentReactionAsync(newLike, cancellationToken);
-            await blogRepository.SaveChangesAsync(cancellationToken);
-            return ResultsHelper.Ok(new { Liked = true });
+        var newLike = new CommentReaction
+        {
+            Id = Guid.NewGuid(),
+            CommentId = request.CommentId,
+            UserId = request.UserId,
+            CreatedAt = DateTime.UtcNow
+        };
+        
+        var reactionType = await reactionsTypesRepository.GetByIdAsync(request.ReactionTypeId, cancellationToken);
+
+        if (reactionType is null)
+        {
+            return ResultsHelper.BadRequest("Invalid reaction type");
         }
+
+        await blogRepository.AddCommentReactionAsync(newLike, cancellationToken);
+        await blogRepository.SaveChangesAsync(cancellationToken);
+        return ResultsHelper.Ok(new { Liked = true });
     }
 }
 

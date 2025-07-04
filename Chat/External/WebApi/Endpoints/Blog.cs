@@ -199,13 +199,13 @@ public static class Blog
         .Produces(400)
         .Produces(404);
 
-        app.MapPost("/blog/posts/{postId:guid}/toggle-like", async (
-            [FromRoute] Guid postId,
+        app.MapPost("/blog/posts/{postId:guid}/toggle-like/{reactionTypeId:guid}", async (
+            [FromRoute] Guid postId, [FromRoute] Guid reactionTypeId,
             [FromServices] ISender sender,
             HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            var command = new TogglePostLikeRequest(postId, context.GetUserId());
+            var command = new TogglePostLikeRequest(postId, context.GetUserId(), reactionTypeId);
             var result = await sender.SendAsync(command, cancellationToken);
             return result.ToApiResult();
         })
@@ -213,15 +213,16 @@ public static class Blog
         .WithOpenApi()
         .WithTags("Blog")
         .Produces(200)
+        .Produces(400)
         .Produces(404);
 
-        app.MapPost("/blog/comments/{commentId:guid}/toggle-like", async (
-            [FromRoute] Guid commentId,
+        app.MapPost("/blog/comments/{commentId:guid}/toggle-like/{reactionTypeId:guid}", async (
+            [FromRoute] Guid commentId, [FromRoute] Guid reactionTypeId,
             [FromServices] ISender sender,
             HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            var command = new ToggleCommentLikeRequest(commentId, context.GetUserId());
+            var command = new ToggleCommentLikeRequest(commentId, context.GetUserId(), reactionTypeId);
             var result = await sender.SendAsync(command, cancellationToken);
             return result.ToApiResult();
         })
@@ -229,6 +230,7 @@ public static class Blog
         .WithOpenApi()
         .WithTags("Blog")
         .Produces(200)
+        .Produces(400)
         .Produces(404);
 
         app.MapPatch("/blog/comments/toggle/{postId:guid}",

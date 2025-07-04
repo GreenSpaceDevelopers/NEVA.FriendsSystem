@@ -1,4 +1,5 @@
 using Application.Abstractions.Persistence.Repositories.Blog;
+using Application.Abstractions.Persistence.Repositories.Media;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Services.ApplicationInfrastructure.Results;
@@ -7,9 +8,9 @@ using FluentValidation;
 
 namespace Application.Requests.Commands.Blog;
 
-public record TogglePostLikeRequest(Guid PostId, Guid UserId) : IRequest;
+public record TogglePostLikeRequest(Guid PostId, Guid UserId, Guid ReactionTypeId) : IRequest;
 
-public class TogglePostLikeRequestHandler(IBlogRepository blogRepository) : IRequestHandler<TogglePostLikeRequest>
+public class TogglePostLikeRequestHandler(IBlogRepository blogRepository, IReactionsTypesRepository reactionsTypesRepository) : IRequestHandler<TogglePostLikeRequest>
 {
     public async Task<IOperationResult> HandleAsync(TogglePostLikeRequest request, CancellationToken cancellationToken = default)
     {
@@ -27,13 +28,21 @@ public class TogglePostLikeRequestHandler(IBlogRepository blogRepository) : IReq
             await blogRepository.SaveChangesAsync(cancellationToken);
             return ResultsHelper.Ok(new { Liked = false });
         }
+        
+        var reactionType = await reactionsTypesRepository.GetByIdAsync(request.ReactionTypeId, cancellationToken);
+
+        if (reactionType is null)
+        {
+            return ResultsHelper.BadRequest("Invalid reaction type");
+        }
 
         var newLike = new PostReaction
         {
             Id = Guid.NewGuid(),
             PostId = request.PostId,
             UserId = request.UserId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            ReactionType = reactionType
         };
 
         await blogRepository.AddPostReactionAsync(newLike, cancellationToken);
