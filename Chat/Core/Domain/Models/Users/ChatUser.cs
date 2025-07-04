@@ -33,6 +33,7 @@ public class ChatUser : IEntity
     public UserPrivacySettings PrivacySettings { get; set; } = null!;
 
     public List<ChatUser> Friends { get; set; } = [];
+    public List<UserChatSettings> ChatSettings { get; set; } = [];
 
     // Pending friend requests
     public List<ChatUser> FriendRequests { get; set; } = [];

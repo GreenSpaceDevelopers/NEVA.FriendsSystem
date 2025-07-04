@@ -116,6 +116,7 @@ public static class Program
         app.MapBlackListEndpoints();
         app.MapNotificationSettingsEndpoints();
         app.MapPrivacyEndpoints();
+        app.MapUserChatSettingsEndpoints();
         app.MapAdminEndpoints();
 
         await app.RunAsync();

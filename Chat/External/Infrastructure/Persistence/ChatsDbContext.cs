@@ -16,6 +16,7 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
     public DbSet<ReactionType> ReactionTypes { get; set; }
     public DbSet<Attachment> Attachments { get; set; }
     public DbSet<AttachmentType> AttachmentTypes { get; set; }
+    public DbSet<UserChatSettings> UserChatSettings { get; set; }
 
     // Users
     public DbSet<ChatUser> ChatUsers { get; set; }
@@ -116,6 +117,29 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
             .WithMany(p => p.Comments)
             .HasForeignKey(c => c.PostId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure UserChatSettings relationships
+        modelBuilder.Entity<UserChatSettings>()
+            .HasOne(ucs => ucs.User)
+            .WithMany(u => u.ChatSettings)
+            .HasForeignKey(ucs => ucs.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserChatSettings>()
+            .HasOne(ucs => ucs.Chat)
+            .WithMany()
+            .HasForeignKey(ucs => ucs.ChatId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure UserChatSettings many-to-many with ChatUser for DisabledUsers
+        modelBuilder.Entity<UserChatSettings>()
+            .HasMany(ucs => ucs.DisabledUsers)
+            .WithMany()
+            .UsingEntity(
+                "UserChatSettingsDisabledUsers",
+                l => l.HasOne(typeof(ChatUser)).WithMany().HasForeignKey("DisabledUserId"),
+                r => r.HasOne(typeof(UserChatSettings)).WithMany().HasForeignKey("UserChatSettingsId")
+            );
 
         base.OnModelCreating(modelBuilder);
     }
