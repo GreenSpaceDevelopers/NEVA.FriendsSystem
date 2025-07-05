@@ -41,7 +41,7 @@ public class SendReactionAsyncHandler(IBlogRepository blogRepository, IReactions
             return ResultsHelper.Forbidden("You are blocked by the post author");
         }
 
-        if (post.Reactions.Any(reaction => reaction.UserId == request.UserId))
+        if (post.Reactions.Any(reaction => reaction.ReactorId == request.UserId && reaction.ReactionTypeId == request.ReactionTypeId))
         {
             return ResultsHelper.BadRequest("User has already reacted");
         }
@@ -51,8 +51,9 @@ public class SendReactionAsyncHandler(IBlogRepository blogRepository, IReactions
             Id = Guid.NewGuid(),
             PostId = request.PostId,
             ReactionTypeId = request.ReactionTypeId,
-            UserId = (Guid)request.UserId!,
-            Reactor = user
+            ReactorId = (Guid)request.UserId!,
+            Reactor = user,
+            ReactionType = reactionType
         };
 
         await blogRepository.AddPostReactionAsync(reaction, cancellationToken);

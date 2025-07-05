@@ -32,6 +32,11 @@ public class FilesStorage : IFilesStorage
         {
             var objectName = $"{Guid.NewGuid()}/{fileName}";
 
+            if (stream.CanSeek)
+            {
+                stream.Seek(0, SeekOrigin.Begin);
+            }
+
             var putObjectArgs = new PutObjectArgs()
                 .WithBucket(_config.BucketName)
                 .WithObject(objectName)

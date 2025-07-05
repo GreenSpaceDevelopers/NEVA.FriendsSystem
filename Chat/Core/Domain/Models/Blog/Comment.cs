@@ -18,6 +18,6 @@ public class Comment : Entity<Comment>
     public Post Post { get; set; } = null!;
     public Attachment? Attachment { get; set; }
     public ChatUser Author { get; set; } = null!;
-    public List<Reaction> Reactions { get; set; } = [];
+    public List<MessageReaction> Reactions { get; set; } = [];
     public List<CommentReaction> CommentReactions { get; set; } = [];
 }

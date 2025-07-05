@@ -59,7 +59,7 @@ public class GetPostCommentsQueryHandler(IBlogRepository blogRepository) : IRequ
             comment.ParentCommentId,
             comment.Replies?.Count ?? 0,
             comment.CommentReactions?.Count ?? 0,
-            currentUserId.HasValue && comment.CommentReactions != null && comment.CommentReactions.Any(r => r.UserId == currentUserId.Value),
+            currentUserId.HasValue && comment.CommentReactions != null && comment.CommentReactions.Any(r => r.ReactorId == currentUserId.Value),
             (comment.Replies ?? []).Select(r => MapCommentToDto(r, allComments, currentUserId)).ToList()
         );
     }

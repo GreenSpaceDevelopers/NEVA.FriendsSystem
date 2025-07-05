@@ -28,20 +28,21 @@ public class ToggleCommentLikeRequestHandler(IBlogRepository blogRepository, IRe
             return ResultsHelper.Forbidden("You are blocked by the comment author");
         }
 
-        var existingLike = comment.CommentReactions?.FirstOrDefault(r => r.UserId == request.UserId);
+        var existingLike = comment.CommentReactions?.FirstOrDefault(r => r.ReactorId == request.UserId && r.ReactionTypeId == request.ReactionTypeId);
 
         if (existingLike is not null)
         {
             await blogRepository.RemoveCommentReactionAsync(existingLike, cancellationToken);
             await blogRepository.SaveChangesAsync(cancellationToken);
-            return ResultsHelper.Ok(new { Liked = false });
+            return ResultsHelper.Ok(new { Liked = false, ReactionTypeId = request.ReactionTypeId });
         }
 
         var newLike = new CommentReaction
         {
             Id = Guid.NewGuid(),
             CommentId = request.CommentId,
-            UserId = request.UserId,
+            ReactorId = request.UserId,
+            ReactionTypeId = request.ReactionTypeId,
             CreatedAt = DateTime.UtcNow
         };
         
@@ -52,9 +53,10 @@ public class ToggleCommentLikeRequestHandler(IBlogRepository blogRepository, IRe
             return ResultsHelper.BadRequest("Invalid reaction type");
         }
 
+        newLike.ReactionType = reactionType;
         await blogRepository.AddCommentReactionAsync(newLike, cancellationToken);
         await blogRepository.SaveChangesAsync(cancellationToken);
-        return ResultsHelper.Ok(new { Liked = true });
+        return ResultsHelper.Ok(new { Liked = true, ReactionTypeId = request.ReactionTypeId });
     }
 }
 

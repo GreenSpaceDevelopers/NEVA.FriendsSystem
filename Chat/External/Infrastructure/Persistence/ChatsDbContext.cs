@@ -12,7 +12,7 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
     // Messaging
     public DbSet<Chat> Chats { get; set; }
     public DbSet<Message> Messages { get; set; }
-    public DbSet<Reaction> Reactions { get; set; }
+    public DbSet<MessageReaction> MessageReactions { get; set; }
     public DbSet<ReactionType> ReactionTypes { get; set; }
     public DbSet<Attachment> Attachments { get; set; }
     public DbSet<AttachmentType> AttachmentTypes { get; set; }
@@ -140,6 +140,36 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
                 l => l.HasOne(typeof(ChatUser)).WithMany().HasForeignKey("DisabledUserId"),
                 r => r.HasOne(typeof(UserChatSettings)).WithMany().HasForeignKey("UserChatSettingsId")
             );
+
+        modelBuilder.Entity<PostReaction>()
+            .HasOne(pr => pr.Reactor)
+            .WithMany()
+            .HasForeignKey(pr => pr.ReactorId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CommentReaction>()
+            .HasOne(cr => cr.Reactor)
+            .WithMany()
+            .HasForeignKey(cr => cr.ReactorId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<MessageReaction>()
+            .HasOne(r => r.Reactor)
+            .WithMany()
+            .HasForeignKey(r => r.ReactorId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PostReaction>()
+            .HasIndex(pr => new { pr.PostId, pr.ReactorId, pr.ReactionTypeId })
+            .IsUnique();
+
+        modelBuilder.Entity<MessageReaction>()
+            .HasIndex(r => new { r.MessageId, r.ReactorId, r.ReactionTypeId })
+            .IsUnique();
+
+        modelBuilder.Entity<CommentReaction>()
+            .HasIndex(cr => new { cr.CommentId, cr.ReactorId, cr.ReactionTypeId })
+            .IsUnique();
 
         base.OnModelCreating(modelBuilder);
     }

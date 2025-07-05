@@ -5,6 +5,7 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Microsoft.EntityFrameworkCore;
 using Infrastructure.Persistence;
 using System.Text.Json;
+using Domain.Models.Messaging;
 using GS.IdentityServerApi.Constants;
 using WebApi.Common.Helpers;
 
@@ -27,6 +28,9 @@ public static class AdminEndpoints
             
         group.MapGet("/auth-diagnostics", GetAuthDiagnostics)
             .WithName("GetAuthDiagnostics");
+
+        group.MapPost("/seed-attachment-types", SeedAttachmentTypes)
+            .WithName("SeedAttachmentTypes");
     }
 
     private static async Task<IResult> CreatePrivacySettingsForAllUsers(
@@ -358,6 +362,42 @@ public static class AdminEndpoints
         }
         
         return Results.Ok(diagnosticsResult);
+    }
+
+    private static async Task<IResult> SeedAttachmentTypes(
+        ChatsDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var defaultTypes = new List<(string TypeName, string Extension)>
+        {
+            ("Image", ".png"),
+            ("Video", ".mp4"),
+            ("Audio", ".mp3"),
+            ("Sticker", ".webp")
+        };
+
+        var existing = await dbContext.AttachmentTypes
+            .ToListAsync(cancellationToken);
+
+        var toAdd = defaultTypes
+            .Where(t => existing.All(e => e.TypeName != t.TypeName))
+            .Select(t => new AttachmentType
+            {
+                Id = Guid.NewGuid(),
+                TypeName = t.TypeName,
+                Extension = t.Extension
+            })
+            .ToList();
+
+        if (toAdd.Count == 0)
+        {
+            return Results.Ok("AttachmentTypes already seeded");
+        }
+
+        await dbContext.AttachmentTypes.AddRangeAsync(toAdd, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Results.Ok(new { Added = toAdd.Count });
     }
 
     private static Task<IResult> GetAuthDiagnostics(HttpContext context)

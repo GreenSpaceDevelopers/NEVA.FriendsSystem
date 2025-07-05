@@ -27,13 +27,13 @@ public class TogglePostLikeRequestHandler(IBlogRepository blogRepository, IReact
             return ResultsHelper.Forbidden("You are blocked by the post author");
         }
 
-        var existingLike = post.Reactions?.FirstOrDefault(r => r.UserId == request.UserId);
+        var existingLike = post.Reactions?.FirstOrDefault(r => r.ReactorId == request.UserId && r.ReactionTypeId == request.ReactionTypeId);
 
         if (existingLike is not null)
         {
             await blogRepository.RemovePostReactionAsync(existingLike, cancellationToken);
             await blogRepository.SaveChangesAsync(cancellationToken);
-            return ResultsHelper.Ok(new { Liked = false });
+            return ResultsHelper.Ok(new { Liked = false, ReactionTypeId = request.ReactionTypeId });
         }
         
         var reactionType = await reactionsTypesRepository.GetByIdAsync(request.ReactionTypeId, cancellationToken);
@@ -47,14 +47,15 @@ public class TogglePostLikeRequestHandler(IBlogRepository blogRepository, IReact
         {
             Id = Guid.NewGuid(),
             PostId = request.PostId,
-            UserId = request.UserId,
+            ReactorId = request.UserId,
+            ReactionTypeId = request.ReactionTypeId,
             CreatedAt = DateTime.UtcNow,
             ReactionType = reactionType
         };
 
         await blogRepository.AddPostReactionAsync(newLike, cancellationToken);
         await blogRepository.SaveChangesAsync(cancellationToken);
-        return ResultsHelper.Ok(new { Liked = true });
+        return ResultsHelper.Ok(new { Liked = true, ReactionTypeId = request.ReactionTypeId });
     }
 }
 

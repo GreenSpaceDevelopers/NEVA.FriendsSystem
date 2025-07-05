@@ -4,12 +4,14 @@ using Domain.Models.Users;
 
 namespace Domain.Models.Messaging;
 
-public class Reaction : Entity<Reaction>
+public class MessageReaction : Entity<MessageReaction>
 {
     public Guid MessageId { get; set; }
-    public Guid UserId { get; set; }
+    public Guid ReactorId { get; set; }
+    public Guid ReactionTypeId { get; set; }
+    public DateTime CreatedAt { get; set; }
 
-    public ReactionType Type { get; set; } = null!;
+    public ReactionType ReactionType { get; set; } = null!;
     public Message Message { get; set; } = null!;
     public ChatUser Reactor { get; set; } = null!;
 }
@@ -26,7 +28,7 @@ public class ReactionType : IEntity
 public class PostReaction : Entity<PostReaction>
 {
     public Guid PostId { get; set; }
-    public Guid UserId { get; set; }
+    public Guid ReactorId { get; set; }
     public Guid ReactionTypeId { get; set; }
     public DateTime CreatedAt { get; set; }
     public ReactionType ReactionType { get; set; } = null!;
@@ -37,7 +39,7 @@ public class PostReaction : Entity<PostReaction>
 public class CommentReaction : Entity<CommentReaction>
 {
     public Guid CommentId { get; set; }
-    public Guid UserId { get; set; }
+    public Guid ReactorId { get; set; }
     public Guid ReactionTypeId { get; set; }
     public DateTime CreatedAt { get; set; }
     public ReactionType ReactionType { get; set; } = null!;

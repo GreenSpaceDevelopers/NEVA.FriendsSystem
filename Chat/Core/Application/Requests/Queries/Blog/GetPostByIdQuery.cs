@@ -42,7 +42,7 @@ public class GetPostByIdQueryHandler(IBlogRepository blogRepository, IChatUsersR
             post.Author.Id,
             post.Author.Username,
             post.Author.Avatar?.Url,
-            currentUserId.HasValue && (post.Reactions?.Any(r => r.UserId == currentUserId.Value) ?? false)
+            currentUserId.HasValue && (post.Reactions?.Any(r => r.ReactorId == currentUserId.Value) ?? false)
         );
 
         return ResultsHelper.Ok(dto);

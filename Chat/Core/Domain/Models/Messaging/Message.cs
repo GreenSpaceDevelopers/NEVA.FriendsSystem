@@ -16,5 +16,5 @@ public class Message : Entity<Message>
     public Chat Chat { get; set; } = null!;
     public ChatUser Sender { get; set; } = null!;
     public Attachment? Attachment { get; set; }
-    public List<Reaction> Reactions { get; set; } = [];
+    public List<MessageReaction> Reactions { get; set; } = [];
 }

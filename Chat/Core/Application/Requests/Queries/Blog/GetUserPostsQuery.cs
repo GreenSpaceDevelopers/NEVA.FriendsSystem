@@ -59,7 +59,7 @@ public class GetUserPostsQueryHandler(IBlogRepository blogRepository, IChatUsers
             p.Author.Id,
             p.Author.Username,
             p.Author.Avatar?.Url,
-            currentUserId.HasValue && (p.Reactions?.Any(r => r.UserId == currentUserId.Value) ?? false)
+            currentUserId.HasValue && (p.Reactions?.Any(r => r.ReactorId == currentUserId.Value) ?? false)
         ));
 
         return ResultsHelper.Ok(pagedResult);
