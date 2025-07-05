@@ -13,11 +13,14 @@ public class GetUserProfileQueryHandler(IChatUsersRepository chatUsersRepository
 {
     public async Task<IOperationResult> HandleAsync(GetUserProfileQuery request, CancellationToken cancellationToken = default)
     {
-        var user = await chatUsersRepository.GetByIdWithProfileDataAsync(request.RequestedUserId, cancellationToken);
+        var user = await chatUsersRepository.GetByIdWithFriendsAsync(request.RequestedUserId, cancellationToken);
         if (user is null)
         {
             return ResultsHelper.NotFound($"User not found. RequestedUserId: {request.RequestedUserId}");
         }
+
+        var isFriend = user.Friends.Any(f => f.Id == request.CurrentUserId);
+        var isFriendRequestSentByMe = user.FriendRequests.Any(fr => fr.Id == request.CurrentUserId);
 
         var canViewFullProfile = request.RequestedUserId == request.CurrentUserId ||
                                 user.PrivacySettings.FriendsListVisibility == PrivacyLevel.Public;
@@ -30,7 +33,13 @@ public class GetUserProfileQueryHandler(IChatUsersRepository chatUsersRepository
             canViewFullProfile = false;
         }
 
-        var profileDto = user.ToProfileDto(canViewFullProfile, isBlockedByMe, hasBlockedMe);
+        var profileDto = user.ToProfileDto(
+            canViewFullProfile,
+            includePrivacySettings: !hasBlockedMe,
+            isBlockedByMe: isBlockedByMe,
+            hasBlockedMe: hasBlockedMe,
+            isFriend: isFriend,
+            isFriendRequestSentByMe: isFriendRequestSentByMe);
 
         return ResultsHelper.Ok(profileDto);
     }

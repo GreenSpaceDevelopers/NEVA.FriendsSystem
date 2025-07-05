@@ -32,6 +32,9 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
             .Include(user => user.FriendRequests)
             .Include(user => user.BlockedUsers)
             .Include(user => user.WaitingFriendRequests)
+            .Include(user => user.Avatar)
+            .Include(user => user.Cover)
+            .Include(user => user.PrivacySettings)
             .SingleOrDefaultAsync(user => user.Id == requestUserId, cancellationToken: cancellationToken);
     }
 

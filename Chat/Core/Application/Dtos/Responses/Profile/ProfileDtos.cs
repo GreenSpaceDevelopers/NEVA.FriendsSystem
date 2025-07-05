@@ -40,7 +40,11 @@ public record ProfileDto(
     [SwaggerSchema(Description = "Заблокирован ли этот пользователь текущим пользователем")]
     bool IsBlockedByMe,
     [SwaggerSchema(Description = "Заблокировал ли этот пользователь текущего пользователя")]
-    bool HasBlockedMe
+    bool HasBlockedMe,
+    [SwaggerSchema(Description = "Отправил ли текущий пользователь заявку в друзья этому пользователю")]
+    bool IsFriendRequestSentByMe,
+    [SwaggerSchema(Description = "Является ли пользователь другом текущего пользователя")]
+    bool IsFriend
 );
 
 /// <summary>
