@@ -1,9 +1,9 @@
 using Application;
 using Infrastructure;
-using MessageRouterWorker;
+using MessageReceiverWorker;
 
 var builder = Host.CreateApplicationBuilder(args);
-builder.Services.AddHostedService<MessageSenderWorker>();
+builder.Services.AddHostedService<MessageReceiverWorker.MessageReceiverWorker>();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 

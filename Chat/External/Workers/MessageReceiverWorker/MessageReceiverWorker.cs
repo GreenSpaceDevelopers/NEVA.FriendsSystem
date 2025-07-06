@@ -1,7 +1,7 @@
 using Application.Abstractions.Services.Communications;
 using Application.Common.Helpers;
 
-namespace MessageValidatorWorker;
+namespace MessageReceiverWorker;
 
 public class MessageReceiverWorker(ILogger<MessageReceiverWorker> logger, IMessagesReceiver messagesReceiver) : IHostedService
 {

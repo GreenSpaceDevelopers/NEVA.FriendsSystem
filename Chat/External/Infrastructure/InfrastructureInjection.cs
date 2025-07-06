@@ -1,3 +1,4 @@
+using System.Net;
 using Application.Abstractions.Persistence.Repositories.Blog;
 using Application.Abstractions.Persistence.Repositories.Media;
 using Application.Abstractions.Persistence.Repositories.Messaging;
@@ -40,6 +41,7 @@ public static class InfrastructureInjection
         services.AddScoped<IFilesStorage, FilesStorage>();
         services.AddScoped<IFilesValidator, FilesValidator>();
         services.AddScoped<IFilesSigningService, FilesSigningService>();
+        services.AddHttpListener(configuration);
 
         services.AddSingleton<ITelegramBotClient>(provider =>
         {
@@ -59,6 +61,16 @@ public static class InfrastructureInjection
                     maxRetryDelay: TimeSpan.FromSeconds(5),
                     errorCodesToAdd: null);
             }));
+    }
+
+    private static IServiceCollection AddHttpListener(this IServiceCollection services, IConfiguration configuration)
+    {
+        var connectionString = configuration.GetSection("WebSocketHost").Value;
+
+        var httpListener = new HttpListener();
+        httpListener.Prefixes.Add(connectionString ?? throw new Exception("WebSocketHost is not configured"));
+        
+        return services.AddSingleton<HttpListener>(provider => httpListener);
     }
 
 

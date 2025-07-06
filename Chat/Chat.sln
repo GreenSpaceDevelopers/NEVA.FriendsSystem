@@ -14,7 +14,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApi", "External\WebApi\W
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workers", "Workers", "{481AD24E-11EC-4404-9E02-46AE8A738E21}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageValidatorWorker", "External\Workers\MessageValidatorWorker\MessageValidatorWorker.csproj", "{32156056-6AD8-4AA7-9811-B3DA674A9133}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageValidatorWorker", "External\Workers\MessageReceiverWorker\MessageReceiverWorker.csproj", "{32156056-6AD8-4AA7-9811-B3DA674A9133}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageRouterWorker", "External\Workers\MessageRouterWorker\MessageRouterWorker.csproj", "{053923DA-56D9-4E81-9A3B-13067B7519BE}"
 EndProject

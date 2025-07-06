@@ -31,7 +31,6 @@
 
     <ItemGroup>
         <Folder Include="Abstractions\" />
-        <Folder Include="Common\" />
         <Folder Include="Migrations\" />
         <Folder Include="Persistence\Configurations\" />
         <Folder Include="Services\ApplicationInfrastructure\Data\" />

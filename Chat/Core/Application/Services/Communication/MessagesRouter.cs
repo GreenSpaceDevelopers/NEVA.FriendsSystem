@@ -52,7 +52,7 @@ file class RoutingMessageHandle(
         {
             var userIdsFromChat = await chatsRepository.GetUserIdsFromChatNoTrackingAsync(message.ChatId);
             userIdsFromChat = userIdsFromChat.Where(id => id.ToString().Equals(message.UserId) is false).ToArray();
-
+            
             var connections = await userConnections.GetConnectionsForUsersAsync(userIdsFromChat);
 
             var messageToSend = Messages.MessageToSend(message);
