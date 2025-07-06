@@ -37,6 +37,46 @@ public static class QueryableExtensions
             sortExpressions,
             cancellationToken);
     }
+    
+    private static async Task<PagedList<T>> ToSearchResultCore<T>(
+        this IQueryable<T> query,
+        int skip,
+        int take,
+        bool includeTotalCount,
+        CancellationToken cancellationToken
+    )
+        where T : class
+    {
+        var result = new PagedList<T>();
+
+        if (includeTotalCount)
+        {
+            result.TotalCount = await query.CountAsync(cancellationToken);
+        }
+
+        if (take > 0)
+        {
+            result.Data = await query
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync(cancellationToken);
+        }
+
+        return result;
+    }
+    
+    public static async Task<PagedList<T>> ToSearchResultWithoutOrder<T>(this IQueryable<T> query,
+        int skip,
+        int take,
+        CancellationToken cancellationToken = default)
+        where T : class
+    {
+        return await query.ToSearchResultCore(
+            skip,
+            take,
+            true,
+            cancellationToken);
+    }
 
     public static Task<PagedList<T>> ToPagedList<T>(
         this IQueryable<T> query,
