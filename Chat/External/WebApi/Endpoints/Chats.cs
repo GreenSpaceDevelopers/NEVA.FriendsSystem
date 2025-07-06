@@ -35,10 +35,12 @@ public static class Chats
         app.MapPost("/chats/", async (
                 [FromBody] Guid[] users,
                 [FromServices] ISender sender,
+                HttpContext context,
                 CancellationToken cancellationToken
             ) =>
             {
-                var request = new CreateChatRequest(users);
+                var currentUserId = context.GetUserId();
+                var request = new CreateChatRequest(currentUserId, users);
                 var result = await sender.SendAsync(request, cancellationToken);
                 return result.ToResult();
             })

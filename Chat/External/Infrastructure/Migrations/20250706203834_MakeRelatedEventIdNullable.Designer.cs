@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ChatsDbContext))]
-    partial class ChatsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250706203834_MakeRelatedEventIdNullable")]
+    partial class MakeRelatedEventIdNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -228,10 +231,10 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("AdminId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("ChatPictureId")
+                    b.Property<Guid>("ChatPictureId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("LastMessageDate")
+                    b.Property<DateTime>("LastMessageDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
@@ -799,7 +802,8 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Models.Media.Picture", "ChatPicture")
                         .WithMany()
                         .HasForeignKey("ChatPictureId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Domain.Models.Service.Event", "RelatedEvent")
                         .WithMany()

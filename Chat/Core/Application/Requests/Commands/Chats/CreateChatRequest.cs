@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using Application.Abstractions.Persistence.Repositories.Messaging;
 using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
@@ -10,13 +9,14 @@ using FluentValidation;
 
 namespace Application.Requests.Commands.Chats;
 
-public record CreateChatRequest(Guid[] UserIds) : IRequest;
+public record CreateChatRequest(Guid CurrentUserId, Guid[] UserIds) : IRequest;
 
 public class CreateChatRequestValidator : AbstractValidator<CreateChatRequest>
 {
     public CreateChatRequestValidator()
     {
-        RuleFor(x => x.UserIds).NotEmpty();
+        RuleFor(x => x.CurrentUserId).NotEmpty();
+        RuleFor(x => x.UserIds).NotNull();
         RuleFor(x => x.UserIds.Length).Must(c => c < 100);
     }
 }
@@ -25,23 +25,38 @@ public class CreateChatRequestHandler(IChatUsersRepository chatUsersRepository, 
 {
     public async Task<IOperationResult> HandleAsync(CreateChatRequest request, CancellationToken cancellationToken = default)
     {
-        ConcurrentBag<ChatUser> chatUsers = [];
+        var chatUsers = new List<ChatUser>();
 
-        await Parallel.ForEachAsync(request.UserIds, cancellationToken, async  (userId, ct) =>
+        foreach (var userId in request.UserIds)
         {
-            var user = await chatUsersRepository.GetByIdAsync(userId, ct);
-            
-            if (user is null)
-            {
-                return;
-            }
+            var user = await chatUsersRepository.GetByIdAsync(userId, cancellationToken);
 
-            chatUsers.Add(user);
-        });
+            if (user is not null)
+            {
+                chatUsers.Add(user);
+            }
+        }
+
+        var currentUser = await chatUsersRepository.GetByIdAsync(request.CurrentUserId, cancellationToken);
+        if (currentUser is not null && chatUsers.All(u => u.Id != currentUser.Id))
+        {
+            chatUsers.Add(currentUser);
+        }
         
+        if (chatUsers.Count == 0)
+        {
+            return ResultsHelper.NotFound("No valid users found to create a chat.");
+        }
+
+        var adminId = request.CurrentUserId;
+
+        var chatName = string.Join(", ", chatUsers.Select(u => u.Username));
+
         var chat = new Chat
         {
             Id = Guid.NewGuid(),
+            Name = chatName,
+            AdminId = adminId,
             Users = chatUsers.ToList()
         };
         

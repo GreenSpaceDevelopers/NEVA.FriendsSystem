@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ChatsDbContext))]
-    partial class ChatsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250706204229_MakeChatFieldNullable")]
+    partial class MakeChatFieldNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -798,8 +801,7 @@ namespace Infrastructure.Migrations
 
                     b.HasOne("Domain.Models.Media.Picture", "ChatPicture")
                         .WithMany()
-                        .HasForeignKey("ChatPictureId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("ChatPictureId");
 
                     b.HasOne("Domain.Models.Service.Event", "RelatedEvent")
                         .WithMany()

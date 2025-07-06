@@ -34,11 +34,17 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
     {
         modelBuilder
             .Entity<Chat>()
-            .HasOne(c => c.RelatedEvent);
+            .HasOne(c => c.RelatedEvent)
+            .WithMany()
+            .HasForeignKey(c => c.RelatedEventId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder
             .Entity<Chat>()
-            .HasOne(c => c.ChatPicture);
+            .HasOne(c => c.ChatPicture)
+            .WithMany()
+            .HasForeignKey(c => c.ChatPictureId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder
             .Entity<Chat>()
