@@ -288,7 +288,7 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("AttachmentId")
+                    b.Property<Guid?>("AttachmentId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("ChatId")
@@ -844,9 +844,7 @@ namespace Infrastructure.Migrations
                 {
                     b.HasOne("Domain.Models.Messaging.Attachment", "Attachment")
                         .WithMany()
-                        .HasForeignKey("AttachmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("AttachmentId");
 
                     b.HasOne("Domain.Models.Messaging.Chat", "Chat")
                         .WithMany("Messages")

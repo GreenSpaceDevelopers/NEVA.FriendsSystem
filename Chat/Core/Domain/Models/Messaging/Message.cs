@@ -7,7 +7,7 @@ public class Message : Entity<Message>
 {
     public Guid ChatId { get; set; }
     public Guid SenderId { get; set; }
-    public Guid AttachmentId { get; set; } = Guid.Empty;
+    public Guid? AttachmentId { get; set; }
     public string? Content { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
 
