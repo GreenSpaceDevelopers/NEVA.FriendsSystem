@@ -7,6 +7,7 @@ using WebApi.Swagger;
 using System.Reflection;
 using WebApi.Middlewares;
 using GS.IdentityServerApi.Extensions;
+using Infrastructure.Services.Communications;
 using Microsoft.OpenApi.Models;
 
 public static class Program
@@ -121,7 +122,7 @@ public static class Program
         app.MapUserChatSettingsEndpoints();
         app.MapAdminEndpoints();
 
-        app.MapHub<Infrastructure.Services.Communications.ChatHub>("/chatHub");
+        app.MapHub<ChatHub>("/chatHub");
 
         await app.RunAsync();
     }

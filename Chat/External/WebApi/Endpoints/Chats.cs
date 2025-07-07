@@ -34,14 +34,14 @@ public static class Chats
         .Produces(404);
 
         app.MapPost("/chats/", async (
-                [FromBody] Guid[] users,
+                [FromBody] CreateChatForm form,
                 [FromServices] ISender sender,
                 HttpContext context,
                 CancellationToken cancellationToken
             ) =>
             {
                 var currentUserId = context.GetUserId();
-                var request = new CreateChatRequest(currentUserId, users);
+                var request = new CreateChatRequest(currentUserId, form.Users, form.Name);
                 var result = await sender.SendAsync(request, cancellationToken);
                 return result.ToResult();
             })
@@ -88,5 +88,24 @@ public static class Chats
         .Produces(400)
         .Produces(403)
         .Produces(404);
+
+        app.MapGet("/users/chats/{chatId:guid}", async (
+            [FromRoute] Guid chatId,
+            [FromServices] ISender sender,
+            HttpContext context,
+            CancellationToken cancellationToken) =>
+        {
+            var query = new GetChatPreviewQuery(context.GetUserId(), chatId);
+            var result = await sender.SendAsync(query, cancellationToken);
+            return result.ToResult();
+        })
+        .WithName("GetUserChatById")
+        .WithOpenApi()
+        .WithTags("Chats")
+        .Produces<ChatDetailsDto>(200)
+        .Produces(403)
+        .Produces(404);
     }
+
+    private record CreateChatForm(Guid[] Users, string? Name);
 }

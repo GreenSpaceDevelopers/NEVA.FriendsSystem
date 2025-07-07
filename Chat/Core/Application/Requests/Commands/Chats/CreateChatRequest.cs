@@ -9,7 +9,7 @@ using FluentValidation;
 
 namespace Application.Requests.Commands.Chats;
 
-public record CreateChatRequest(Guid CurrentUserId, Guid[] UserIds) : IRequest;
+public record CreateChatRequest(Guid CurrentUserId, Guid[] UserIds, string? ChatName = null) : IRequest;
 
 public class CreateChatRequestValidator : AbstractValidator<CreateChatRequest>
 {
@@ -18,6 +18,10 @@ public class CreateChatRequestValidator : AbstractValidator<CreateChatRequest>
         RuleFor(x => x.CurrentUserId).NotEmpty();
         RuleFor(x => x.UserIds).NotNull();
         RuleFor(x => x.UserIds.Length).Must(c => c < 100);
+        When(x => x.ChatName is not null, () =>
+        {
+            RuleFor(x => x.ChatName).MaximumLength(100);
+        });
     }
 }
 
@@ -50,7 +54,20 @@ public class CreateChatRequestHandler(IChatUsersRepository chatUsersRepository, 
 
         var adminId = request.CurrentUserId;
 
-        var chatName = string.Join(", ", chatUsers.Select(u => u.Username));
+        string chatName;
+        if (!string.IsNullOrWhiteSpace(request.ChatName))
+        {
+            chatName = request.ChatName.Trim();
+        }
+        else if (chatUsers.Count == 2)
+        {
+            var interlocutor = chatUsers.First(u => u.Id != request.CurrentUserId);
+            chatName = interlocutor.Username;
+        }
+        else
+        {
+            chatName = string.Join(", ", chatUsers.Select(u => u.Username));
+        }
 
         var chat = new Chat
         {

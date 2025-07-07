@@ -2,11 +2,9 @@ using Microsoft.AspNetCore.SignalR;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Requests.Commands.Messaging;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Authorization;
 
 namespace Infrastructure.Services.Communications;
 
-[Authorize]
 public class ChatHub(ISender sender, ILogger<ChatHub> logger) : Hub
 {
     private Guid GetCurrentUserId()

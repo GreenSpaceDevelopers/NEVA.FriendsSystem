@@ -11,4 +11,6 @@ public interface IChatsRepository : IBaseRepository<Chat>
     public Task<List<Message>> GetMessagesByChatIdNoTrackingAsync(Guid chatId, int take, int skip, CancellationToken cancellationToken = default);
     
     Task<Chat?> GetByIdWithUsersAsync(Guid chatId, CancellationToken cancellationToken = default);
+
+    Task<Chat?> GetChatPreviewAsync(Guid chatId, CancellationToken cancellationToken = default);
 }
