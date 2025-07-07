@@ -1,7 +1,11 @@
+using Application;
+using Infrastructure;
 using MessageRouterWorker;
 
 var builder = Host.CreateApplicationBuilder(args);
-builder.Services.AddHostedService<MessageRouterWorker.MessageSenderWorker>();
+builder.Services.AddHostedService<MessageSenderWorker>();
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 var host = builder.Build();
-host.Run();
+await host.RunAsync();

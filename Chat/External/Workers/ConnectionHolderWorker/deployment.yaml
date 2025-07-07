@@ -1,0 +1,123 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: connection-holder-worker
+  labels:
+    app: connection-holder-worker
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: connection-holder-worker
+  template:
+    metadata:
+      labels:
+        app: connection-holder-worker
+        version: v1
+    spec:
+      containers:
+      - name: connection-holder-worker
+        image: connection-holder-worker:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 11001
+          name: http
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Production"
+        - name: WebSocketHost
+          value: "https://chat.greenspacegg.ru:11001/ws/"
+        - name: RawMessageQueueConfig__ConnectionString
+          value: "greenspacegg.ru"
+        - name: RawMessageQueueConfig__Port
+          value: "5672"
+        - name: RawMessageQueueConfig__HMACKey
+          valueFrom:
+            secretKeyRef:
+              name: chat-secrets
+              key: hmac-key
+        - name: IdentityClient__BaseUrl
+          value: "https://identity.greenspacegg.ru"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 11001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 11001
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+      restartPolicy: Always
+      securityContext:
+        fsGroup: 1000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: connection-holder-worker-service
+  labels:
+    app: connection-holder-worker
+spec:
+  type: ClusterIP
+  ports:
+  - port: 11001
+    targetPort: 11001
+    protocol: TCP
+    name: http
+  selector:
+    app: connection-holder-worker
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: chat-secrets
+type: Opaque
+data:
+  hmac-key: UFhjWnRxdkhDUHhDWHBmS2V4M2JITXR0NFNRbVVnczA=  # Base64 encoded HMAC key
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: connection-holder-worker-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: connection-holder-worker
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80 

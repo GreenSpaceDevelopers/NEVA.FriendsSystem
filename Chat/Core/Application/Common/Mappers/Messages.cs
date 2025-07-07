@@ -36,7 +36,7 @@ public static class Messages
             connectionRequestMessage.Hash);
     }
 
-    public static object MessageToSend(MessageToRoute messageToRoute)
+    public static object MessageToSend(MessageToRoute? messageToRoute)
     {
         return new object();
     }

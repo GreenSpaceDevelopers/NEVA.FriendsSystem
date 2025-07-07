@@ -8,14 +8,14 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Services.Communication;
 
-public class MessagesesReceiver(
+public class MessagesReceiver(
     IRawMessagesQueue rawMessagesQueue,
     ITokenValidator tokenValidator,
     ISigningService signingService,
     IUserConnectionsCache userConnections,
     IMessagesToRouteQueue messagesToRouteQueue,
     IMessagesToProcessQueue messagesToProcessQueue,
-    ILogger<MessagesesReceiver> logger) : IMessagesReceiver
+    ILogger<MessagesReceiver> logger) : IMessagesReceiver
 {
     private bool isStopRequested;
 
@@ -26,6 +26,13 @@ public class MessagesesReceiver(
         while (cancellationToken.IsCancellationRequested is false && isStopRequested is false)
         {
             var message = await rawMessagesQueue.ReadAsync(cancellationToken);
+
+            if (message is null)
+            {
+                await Task.Delay(100, cancellationToken);
+                continue;
+            }
+            
             logger.LogInformation("Message received at: {time}", DateHelper.GetCurrentDateTime());
             ThreadPool.UnsafeQueueUserWorkItem(new ReceivedMessageHandle(message, tokenValidator, signingService, userConnections, messagesToRouteQueue, messagesToProcessQueue, logger), false);
         }
@@ -48,31 +55,34 @@ file class ReceivedMessageHandle(
     IUserConnectionsCache userConnections,
     IMessagesToRouteQueue messagesToRouteQueue,
     IMessagesToProcessQueue messagesToProcessQueue,
-    ILogger<MessagesesReceiver> logger) : IThreadPoolWorkItem
+    ILogger<MessagesReceiver> logger) : IThreadPoolWorkItem
 {
     public async void Execute()
     {
         try
         {
-            if (signingService.Verify(message, message.Hash) is false)
+            if (signingService.Verify(message, message?.Hash ?? string.Empty) is false && !string.IsNullOrWhiteSpace(message.Hash))
             {
                 var unverifiedMessageResponse = message.Unverified();
                 await messagesToRouteQueue.WriteAsync(unverifiedMessageResponse, CancellationToken.None);
+                
                 return;
             }
 
-            if (tokenValidator.ValidateToken(message.AccessToken) is false)
+            if (await tokenValidator.ValidateToken(message?.AccessToken) is false)
             {
                 var unauthorizedMessageResponse = message.Unauthorized();
                 await messagesToRouteQueue.WriteAsync(unauthorizedMessageResponse, CancellationToken.None);
+                
                 return;
             }
 
-            var userId = tokenValidator.GetUserIdFromToken(message.AccessToken);
+            var userId = await tokenValidator.GetUserIdFromToken(message?.AccessToken);
 
-            if (message.MessageType == RequestType.ConnectionRequest)
+            if (message?.MessageType == RequestType.ConnectionRequest)
             {
                 await userConnections.AddOrUpdateAsync(userId, message.ConnectionId!);
+                return;
             }
 
             var messageToProcess = new MessageToProcess(userId, message.MessageId, message.Type, message.Message, message.StickerId, message.ReactionId, message.ChatId!);
@@ -80,11 +90,11 @@ file class ReceivedMessageHandle(
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Failed to verify message at: {time}, {MessageId}", DateHelper.GetCurrentDateTime(), message.MessageId);
+            logger.LogError(e, "Failed to verify message - {MessageId} at: {time}", message.MessageId, DateHelper.GetCurrentDateTime());
         }
         finally
         {
-            logger.LogInformation("Message validated at: {time}, {MessageId}", DateHelper.GetCurrentDateTime(), message.MessageId);
+            logger.LogInformation("Message - {MessageId} validated at: {time},", message.MessageId, DateHelper.GetCurrentDateTime());
         }
     }
 }
