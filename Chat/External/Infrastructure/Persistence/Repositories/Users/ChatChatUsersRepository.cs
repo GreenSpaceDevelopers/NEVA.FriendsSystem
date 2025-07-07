@@ -84,21 +84,38 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
             .SingleOrDefaultAsync(user => user.Id == userId, cancellationToken);
     }
 
-    public Task<PagedList<ChatUser>> GetBlockedUsersPagedAsync(Guid requestUserId, string? queryString, PageSettings requestPageSettings, CancellationToken cancellationToken = default)
+    public async Task<PagedList<ChatUser>> GetBlockedUsersPagedAsync(
+        Guid requestUserId,
+        string? queryString,
+        PageSettings requestPageSettings,
+        CancellationToken cancellationToken = default)
     {
-        IQueryable<ChatUser> query = dbContext.Set<ChatUser>()
-            .Where(u => u.BlockedUsers.Any(b => b.Id == requestUserId))
-            .Include(u => u.AspNetUser)
-            .Include(u => u.Avatar);
+        var user = await dbContext.Set<ChatUser>()
+            .Include(u => u.BlockedUsers)
+            .SingleOrDefaultAsync(u => u.Id == requestUserId, cancellationToken);
+
+        if (user == null)
+            return new PagedList<ChatUser> { Data = new List<ChatUser>(), TotalCount = 0 };
+
+        var query = user.BlockedUsers.AsQueryable();
 
         if (!string.IsNullOrEmpty(queryString))
         {
             query = query.Where(u => u.Username.Contains(queryString));
         }
 
-        return query
+        var totalCount = query.Count();
+        var data = query
             .OrderBy(u => u.Username)
-            .ToPagedList(requestPageSettings, cancellationToken);
+            .Skip(requestPageSettings.Skip)
+            .Take(requestPageSettings.Take)
+            .ToList();
+
+        return new PagedList<ChatUser>
+        {
+            Data = data,
+            TotalCount = totalCount
+        };
     }
 
     public Task<List<ChatUser>> GetAllUsersAsync(CancellationToken cancellationToken = default)
