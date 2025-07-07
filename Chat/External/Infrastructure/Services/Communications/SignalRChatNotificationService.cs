@@ -18,6 +18,20 @@ public class SignalRChatNotificationService(IHubContext<ChatHub> hubContext) : I
             });
     }
 
+    public async Task NotifyNewMessageWithAttachmentAsync(Guid chatId, Guid senderId, string senderName, string message, string? attachmentUrl, DateTime sentAt)
+    {
+        await hubContext.Clients.Group($"Chat_{chatId}")
+            .SendAsync("ReceiveMessage", new
+            {
+                ChatId = chatId,
+                SenderId = senderId,
+                SenderName = senderName,
+                Content = message,
+                AttachmentUrl = attachmentUrl,
+                SentAt = sentAt
+            });
+    }
+
     public async Task NotifyUserJoinedChatAsync(Guid chatId, Guid userId, string userName)
     {
         await hubContext.Clients.Group($"Chat_{chatId}")

@@ -117,7 +117,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.ToTable("Comment");
+                    b.ToTable("Comment", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Blog.Post", b =>
@@ -162,7 +162,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("OriginalPostId");
 
-                    b.ToTable("Post");
+                    b.ToTable("Post", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Media.Picture", b =>
@@ -177,7 +177,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Services");
+                    b.ToTable("Services", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.Attachment", b =>
@@ -197,7 +197,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("TypeId");
 
-                    b.ToTable("Attachments");
+                    b.ToTable("Attachments", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.AttachmentType", b =>
@@ -216,7 +216,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AttachmentTypes");
+                    b.ToTable("AttachmentTypes", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.Chat", b =>
@@ -249,7 +249,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("RelatedEventId");
 
-                    b.ToTable("Chats");
+                    b.ToTable("Chats", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.CommentReaction", b =>
@@ -279,7 +279,7 @@ namespace Infrastructure.Migrations
                     b.HasIndex("CommentId", "ReactorId", "ReactionTypeId")
                         .IsUnique();
 
-                    b.ToTable("CommentReaction");
+                    b.ToTable("CommentReaction", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.Message", b =>
@@ -316,7 +316,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("Messages");
+                    b.ToTable("Messages", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.MessageReaction", b =>
@@ -351,7 +351,7 @@ namespace Infrastructure.Migrations
                     b.HasIndex("MessageId", "ReactorId", "ReactionTypeId")
                         .IsUnique();
 
-                    b.ToTable("MessageReactions");
+                    b.ToTable("MessageReactions", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.PostReaction", b =>
@@ -381,7 +381,7 @@ namespace Infrastructure.Migrations
                     b.HasIndex("PostId", "ReactorId", "ReactionTypeId")
                         .IsUnique();
 
-                    b.ToTable("PostReaction");
+                    b.ToTable("PostReaction", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.ReactionType", b =>
@@ -408,7 +408,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("AttachmentId");
 
-                    b.ToTable("ReactionTypes");
+                    b.ToTable("ReactionTypes", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.UserChatSettings", b =>
@@ -435,7 +435,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserChatSettings");
+                    b.ToTable("UserChatSettings", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Service.Event", b =>
@@ -450,7 +450,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Events");
+                    b.ToTable("Events", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Service.NotificationSettings", b =>
@@ -524,7 +524,7 @@ namespace Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("NotificationSettings");
+                    b.ToTable("NotificationSettings", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Users.AspNetUser", b =>
@@ -554,7 +554,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetUser");
+                    b.ToTable("AspNetUser", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Users.ChatRole", b =>
@@ -569,7 +569,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ChatRoles");
+                    b.ToTable("ChatRoles", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Users.ChatUser", b =>
@@ -612,7 +612,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("CoverId");
 
-                    b.ToTable("ChatUsers");
+                    b.ToTable("ChatUsers", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Users.UserPrivacySettings", b =>
@@ -644,7 +644,7 @@ namespace Infrastructure.Migrations
                     b.HasIndex("ChatUserId")
                         .IsUnique();
 
-                    b.ToTable("UserPrivacySettings");
+                    b.ToTable("UserPrivacySettings", (string)null);
                 });
 
             modelBuilder.Entity("UserChatSettingsDisabledUsers", b =>
@@ -659,7 +659,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("UserChatSettingsId");
 
-                    b.ToTable("UserChatSettingsDisabledUsers");
+                    b.ToTable("UserChatSettingsDisabledUsers", (string)null);
                 });
 
             modelBuilder.Entity("ChatChatUser", b =>

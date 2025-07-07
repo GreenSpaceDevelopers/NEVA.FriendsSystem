@@ -51,4 +51,11 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
             .Take(take)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<Chat?> GetByIdWithUsersAsync(Guid chatId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Set<Chat>()
+            .Include(c => c.Users)
+            .FirstOrDefaultAsync(c => c.Id == chatId, cancellationToken);
+    }
 }

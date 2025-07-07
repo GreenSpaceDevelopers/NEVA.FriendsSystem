@@ -69,24 +69,24 @@ public static class Chats
 
         app.MapPost("/chats/{chatId:guid}/messages", async (
             [FromRoute] Guid chatId,
-            [FromBody] SendMessageRequest request,
+            [FromForm] string content,
+            [FromForm] IFormFile? attachment,
             [FromServices] ISender sender,
             HttpContext context,
             CancellationToken cancellationToken) =>
         {
             var currentUserId = context.GetUserId();
-            var command = new SendMessageCommand(chatId, currentUserId, request.Content);
+            var command = new SendMessageCommand(chatId, currentUserId, content, attachment);
             var result = await sender.SendAsync(command, cancellationToken);
             return result.ToApiResult();
         })
         .WithName("SendMessage")
         .WithOpenApi()
         .WithTags("Chats")
+        .DisableAntiforgery()
         .Produces(200)
         .Produces(400)
         .Produces(403)
         .Produces(404);
     }
-
-    public record SendMessageRequest(string Content);
 }

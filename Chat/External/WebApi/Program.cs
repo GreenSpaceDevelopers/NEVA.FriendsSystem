@@ -74,7 +74,7 @@ public static class Program
             o.AddPolicy(CorsName, builder =>
             {
                 builder
-                    .WithOrigins("http://localhost:5173", "http://localhost:3000")
+                    .WithOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:9000")
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials()

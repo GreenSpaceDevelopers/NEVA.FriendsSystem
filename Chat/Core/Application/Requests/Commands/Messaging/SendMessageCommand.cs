@@ -1,16 +1,17 @@
+using Application.Abstractions.Persistence.Repositories.Media;
 using Application.Abstractions.Persistence.Repositories.Messaging;
+using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Abstractions.Services.Communications;
-using Application.Abstractions.Services.Communications.Data;
 using Application.Services.ApplicationInfrastructure.Results;
-using Application.Dtos.Messaging;
 using Domain.Models.Messaging;
 using FluentValidation;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Requests.Commands.Messaging;
 
-public record SendMessageCommand(Guid ChatId, Guid SenderId, string Content) : IRequest;
+public record SendMessageCommand(Guid ChatId, Guid SenderId, string Content, IFormFile? Attachment = null) : IRequest;
 
 public class SendMessageCommandValidator : AbstractValidator<SendMessageCommand>
 {
@@ -26,12 +27,14 @@ public class SendMessageCommandValidator : AbstractValidator<SendMessageCommand>
 public class SendMessageCommandHandler(
     IChatsRepository chatsRepository,
     IMessagesRepository messagesRepository,
-    IMessagesToRouteQueue messagesToRouteQueue,
-    IChatNotificationService notificationService) : IRequestHandler<SendMessageCommand>
+    IChatNotificationService notificationService,
+    IFilesStorage filesStorage,
+    IFilesValidator filesValidator,
+    IAttachmentsRepository attachmentsRepository) : IRequestHandler<SendMessageCommand>
 {
     public async Task<IOperationResult> HandleAsync(SendMessageCommand request, CancellationToken cancellationToken = default)
     {
-        var chat = await chatsRepository.GetByIdAsync(request.ChatId, cancellationToken);
+        var chat = await chatsRepository.GetByIdWithUsersAsync(request.ChatId, cancellationToken);
         if (chat is null)
         {
             return ResultsHelper.NotFound("Чат не найден");
@@ -42,12 +45,47 @@ public class SendMessageCommandHandler(
             return ResultsHelper.Forbidden("Вы не являетесь участником данного чата");
         }
 
+        Attachment? attachment = null;
+        if (request.Attachment is not null)
+        {
+            using var memoryStream = new MemoryStream();
+            await request.Attachment.CopyToAsync(memoryStream, cancellationToken);
+
+            if (!filesValidator.ValidateFile(memoryStream, request.Attachment.FileName))
+            {
+                return ResultsHelper.BadRequest("Недопустимый файл");
+            }
+
+            var uploadResult = await filesStorage.UploadAsync(memoryStream, request.Attachment.FileName, cancellationToken);
+            if (!uploadResult.IsSuccess)
+            {
+                return ResultsHelper.BadRequest("Ошибка загрузки файла");
+            }
+
+            var attachmentType = await attachmentsRepository.GetAttachmentTypeAsync(
+                GetAttachmentTypeFromFileName(request.Attachment.FileName), 
+                cancellationToken);
+
+            attachment = new Attachment
+            {
+                Id = Guid.NewGuid(),
+                Url = uploadResult.GetValue<string>(),
+                Type = attachmentType,
+                TypeId = attachmentType.Id
+            };
+
+            await attachmentsRepository.AddAsync(attachment, cancellationToken);
+            await attachmentsRepository.SaveChangesAsync(cancellationToken);
+        }
+
         var message = new Message
         {
             Id = Guid.NewGuid(),
             ChatId = request.ChatId,
             SenderId = request.SenderId,
             Content = request.Content,
+            AttachmentId = attachment?.Id,
+            Attachment = attachment,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -61,21 +99,38 @@ public class SendMessageCommandHandler(
         var sender = chat.Users.FirstOrDefault(u => u.Id == request.SenderId);
         var senderName = sender?.Username ?? "Unknown";
 
-        await notificationService.NotifyNewMessageAsync(
-            request.ChatId, 
-            request.SenderId, 
-            senderName, 
-            request.Content, 
-            message.CreatedAt);
-
-        var messageToRoute = new MessageToRoute(
-            ChatId: request.ChatId.ToString(),
-            UserId: request.SenderId.ToString(),
-            MessageId: message.Id.ToString()
-        );
-
-        await messagesToRouteQueue.WriteAsync(messageToRoute, cancellationToken);
+        if (attachment != null)
+        {
+            await notificationService.NotifyNewMessageWithAttachmentAsync(
+                request.ChatId, 
+                request.SenderId, 
+                senderName, 
+                request.Content, 
+                attachment.Url,
+                message.CreatedAt);
+        }
+        else
+        {
+            await notificationService.NotifyNewMessageAsync(
+                request.ChatId, 
+                request.SenderId, 
+                senderName, 
+                request.Content, 
+                message.CreatedAt);
+        }
 
         return ResultsHelper.Ok(new { MessageId = message.Id, SentAt = message.CreatedAt });
+    }
+
+    private static AttachmentTypes GetAttachmentTypeFromFileName(string fileName)
+    {
+        var extension = Path.GetExtension(fileName).ToLowerInvariant();
+        return extension switch
+        {
+            ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".webp" => AttachmentTypes.Image,
+            ".mp4" or ".avi" or ".mov" or ".wmv" or ".flv" or ".webm" => AttachmentTypes.Video,
+            ".mp3" or ".wav" or ".flac" or ".aac" or ".ogg" => AttachmentTypes.Audio,
+            _ => AttachmentTypes.File
+        };
     }
 } 
