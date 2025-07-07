@@ -29,7 +29,7 @@ public class MessageHandler(IMessagesToProcessQueue messagesToProcessQueue, ICha
     }
 }
 
-file class ProcessMessageHandle(MessageToProcess message, IChatsRepository chatsRepository, ILogger<MessageHandler> logger,
+file class ProcessMessageHandle(MessageToProcess? message, IChatsRepository chatsRepository, ILogger<MessageHandler> logger,
     IMessagesToRouteQueue messagesToSendQueue, IChatUsersRepository chatUsersRepository) : IThreadPoolWorkItem
 {
     public async void Execute()
@@ -84,6 +84,20 @@ file class ProcessMessageHandle(MessageToProcess message, IChatsRepository chats
             
             sender.LastSeen = DateHelper.GetCurrentDateTime();
             chatUsersRepository.Update(sender);
+            
+            if (chat.Users.All(x => x.Id != Guid.Parse(message.UserId)) || chat.Admin?.Id != Guid.Parse(message.UserId))
+            {
+                var messageToSend = new MessageToRoute
+                {
+                    Text = "Sender not in chat",
+                    MessageId = message.messageMessageId.ToString(),
+                    UserId = message.UserId,
+                    Status = Status.Unauthorized,
+                };
+                
+                await messagesToSendQueue.WriteAsync(messageToSend, CancellationToken.None);
+                return;
+            }
             
             chat.Messages.Add(new Message
             {

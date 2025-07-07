@@ -28,6 +28,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Deploy", "Deploy", "{4D37E8
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConnectionHolderWorker", "External\Workers\ConnectionHolderWorker\ConnectionHolderWorker.csproj", "{20A92346-71F2-40D5-8B2D-BD59250DAD6C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GS.CommonLibrary", "..\..\..\NEVA.Common\GS.CommonLibrary\GS.CommonLibrary.csproj", "{D96F4BE9-D45C-41EF-B372-1C2035ED6556}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,5 +79,9 @@ Global
 		{20A92346-71F2-40D5-8B2D-BD59250DAD6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{20A92346-71F2-40D5-8B2D-BD59250DAD6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{20A92346-71F2-40D5-8B2D-BD59250DAD6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D96F4BE9-D45C-41EF-B372-1C2035ED6556}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D96F4BE9-D45C-41EF-B372-1C2035ED6556}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D96F4BE9-D45C-41EF-B372-1C2035ED6556}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D96F4BE9-D45C-41EF-B372-1C2035ED6556}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -41,7 +41,6 @@ public static class InfrastructureInjection
         services.AddScoped<IFilesStorage, FilesStorage>();
         services.AddScoped<IFilesValidator, FilesValidator>();
         services.AddScoped<IFilesSigningService, FilesSigningService>();
-        services.AddHttpListener(configuration);
 
         services.AddSingleton<ITelegramBotClient>(provider =>
         {
@@ -63,7 +62,7 @@ public static class InfrastructureInjection
             }));
     }
 
-    private static IServiceCollection AddHttpListener(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddHttpListener(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetSection("WebSocketHost").Value;
 

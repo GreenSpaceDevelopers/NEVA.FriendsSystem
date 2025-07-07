@@ -40,7 +40,7 @@ public class MessagesRouter(
 }
 
 file class RoutingMessageHandle(
-    MessageToRoute message,
+    MessageToRoute? message,
     IChatsRepository chatsRepository,
     IUserConnectionsCache userConnections,
     IMessagesToSendQueue messagesToSendQueue,

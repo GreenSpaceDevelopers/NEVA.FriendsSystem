@@ -36,11 +36,11 @@ public static class Messages
             connectionRequestMessage.Hash);
     }
 
-    public static object MessageToSend(MessageToRoute messageToRoute)
+    public static object MessageToSend(MessageToRoute? messageToRoute)
     {
         return new object();
     }
 
-    public static MessageToRoute Unverified(this RawMessage? message) => new(message.ConnectionId!, Status: Status.Unverified);
-    public static MessageToRoute Unauthorized(this RawMessage? message) => new(message.ConnectionId!, Status: Status.Unauthorized);
+    public static MessageToRoute Unverified(this RawMessage message) => new(message.ConnectionId!, Status: Status.Unverified);
+    public static MessageToRoute Unauthorized(this RawMessage message) => new(message.ConnectionId!, Status: Status.Unauthorized);
 }
