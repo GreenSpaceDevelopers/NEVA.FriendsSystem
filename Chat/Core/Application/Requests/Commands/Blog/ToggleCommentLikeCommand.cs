@@ -7,7 +7,7 @@ using Application.Services.ApplicationInfrastructure.Results;
 using Domain.Models.Messaging;
 using FluentValidation;
 using Application.Abstractions.Services.Notifications;
-using NEVA.BackendApi.Constants;
+using Application.Notifications;
 
 namespace Application.Requests.Commands.Blog;
 
@@ -67,7 +67,7 @@ public class ToggleCommentLikeRequestHandler(IBlogRepository blogRepository, IRe
             {
                 var receiverParams = new List<string> { "#", reactor.Username ?? reactor.AspNetUser.UserName, "комментарий" };
                 await notificationService.SendNotificationAsync(
-                    NotificationTemplatesConsts.PostReaction.Id,
+                    NotificationTemplateIds.PostReaction,
                     comment.AuthorId,
                     request.UserId,
                     false,

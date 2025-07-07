@@ -3,7 +3,7 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Services.ApplicationInfrastructure.Results;
 using Application.Abstractions.Services.Notifications;
-using NEVA.BackendApi.Constants;
+using Application.Notifications;
 
 namespace Application.Requests.Commands.Friends;
 
@@ -48,7 +48,7 @@ public class DenyPendingFriendRequestHandler(IChatUsersRepository chatUsersRepos
         {
             var receiverParams = new List<string> { "#", user.Username ?? user.AspNetUser.UserName };
             await notificationService.SendNotificationAsync(
-                NotificationTemplatesConsts.FriendDeclined.Id,
+                NotificationTemplateIds.FriendDeclined,
                 request.FriendId,
                 request.UserId,
                 false,

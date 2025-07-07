@@ -7,7 +7,7 @@ using Application.Services.ApplicationInfrastructure.Results;
 using Domain.Models.Messaging;
 using FluentValidation;
 using Application.Abstractions.Services.Notifications;
-using NEVA.BackendApi.Constants;
+using Application.Notifications;
 
 namespace Application.Requests.Commands.Blog;
 
@@ -74,7 +74,7 @@ public class TogglePostLikeRequestHandler(IBlogRepository blogRepository, IReact
         
         var receiverParams = new List<string> { "#", reactor.Username ?? reactor.AspNetUser.UserName, "пост" };
         await notificationService.SendNotificationAsync(
-            NotificationTemplatesConsts.PostReaction.Id,
+            NotificationTemplateIds.PostReaction,
             post.AuthorId,
             request.UserId,
             false,

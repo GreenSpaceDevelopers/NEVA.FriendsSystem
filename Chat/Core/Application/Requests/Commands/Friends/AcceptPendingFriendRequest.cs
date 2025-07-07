@@ -4,7 +4,7 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Services.ApplicationInfrastructure.Results;
 using FluentValidation;
 using Application.Abstractions.Services.Notifications;
-using NEVA.BackendApi.Constants;
+using Application.Notifications;
 
 namespace Application.Requests.Commands.Friends;
 
@@ -39,10 +39,9 @@ public class AcceptPendingFriendRequestHandler(IChatUsersRepository chatUsersRep
 
         await chatUsersRepository.SaveChangesAsync(cancellationToken);
 
-        // Notify original requester that their friend request was accepted
         var receiverParams = new List<string> { "#", user.Username ?? user.AspNetUser.UserName };
         await notificationService.SendNotificationAsync(
-            NotificationTemplatesConsts.FriendAccepted.Id,
+            NotificationTemplateIds.FriendAccepted,
             request.FriendId,
             request.UserId,
             false,

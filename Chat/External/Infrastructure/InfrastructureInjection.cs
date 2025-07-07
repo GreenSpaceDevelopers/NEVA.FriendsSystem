@@ -15,7 +15,6 @@ using Infrastructure.Persistence.Repositories.Messaging;
 using Infrastructure.Persistence.Repositories.Users;
 using Infrastructure.Services.ApplicationInfrastructure.Data;
 using Infrastructure.Services.Communications;
-using Infrastructure.Services.Notifications;
 using Infrastructure.Services.Reporting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

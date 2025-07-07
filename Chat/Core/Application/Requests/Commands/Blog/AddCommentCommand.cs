@@ -10,7 +10,7 @@ using Domain.Models.Messaging;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Application.Abstractions.Services.Notifications;
-using NEVA.BackendApi.Constants;
+using Application.Notifications;
 
 namespace Application.Requests.Commands.Blog;
 
@@ -103,7 +103,7 @@ public class AddCommentRequestHandler(
             {
                 var receiverParams = new List<string> { "#", commenter.Username ?? commenter.AspNetUser.UserName };
                 await notificationService.SendNotificationAsync(
-                    NotificationTemplatesConsts.PostComment.Id,
+                    NotificationTemplateIds.PostComment,
                     post.AuthorId,
                     request.UserId,
                     false,

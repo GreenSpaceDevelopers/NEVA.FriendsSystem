@@ -4,7 +4,7 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Services.ApplicationInfrastructure.Results;
 using FluentValidation;
 using Application.Abstractions.Services.Notifications;
-using NEVA.BackendApi.Constants;
+using Application.Notifications;
 
 namespace Application.Requests.Commands.Friends;
 
@@ -46,10 +46,9 @@ public class AddFriendRequestHandler(IChatUsersRepository chatUsersRepository, I
         friend.FriendRequests.Add(user);
         await chatUsersRepository.SaveChangesAsync(cancellationToken);
 
-        // Send notification to the receiver about new friend request
         var receiverParams = new List<string> { "#", user.Username ?? user.AspNetUser.UserName };
         await notificationService.SendNotificationAsync(
-            NotificationTemplatesConsts.FriendRequest.Id,
+            NotificationTemplateIds.FriendRequest,
             request.FriendId,
             request.UserId,
             false,
