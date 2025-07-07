@@ -3,6 +3,7 @@ using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Application.Dtos.Responses.Chats;
 using Application.Requests.Commands.Chats;
+using Application.Requests.Commands.Messaging;
 using Application.Requests.Queries.Messaging;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Common.Helpers;
@@ -65,5 +66,27 @@ public static class Chats
         .WithTags("Chats")
         .Produces<PagedList<MessageDto>>(200)
         .Produces(404);
+
+        app.MapPost("/chats/{chatId:guid}/messages", async (
+            [FromRoute] Guid chatId,
+            [FromBody] SendMessageRequest request,
+            [FromServices] ISender sender,
+            HttpContext context,
+            CancellationToken cancellationToken) =>
+        {
+            var currentUserId = context.GetUserId();
+            var command = new SendMessageCommand(chatId, currentUserId, request.Content);
+            var result = await sender.SendAsync(command, cancellationToken);
+            return result.ToApiResult();
+        })
+        .WithName("SendMessage")
+        .WithOpenApi()
+        .WithTags("Chats")
+        .Produces(200)
+        .Produces(400)
+        .Produces(403)
+        .Produces(404);
     }
+
+    public record SendMessageRequest(string Content);
 }

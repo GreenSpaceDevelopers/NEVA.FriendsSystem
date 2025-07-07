@@ -27,6 +27,7 @@ public static class Program
         builder.Services.AddHttpClient();
 
         builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSignalR();
         builder.Services.AddSwaggerGen(c =>
         {
             c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
@@ -97,6 +98,7 @@ public static class Program
         }
         app.UseMiddleware<ExceptionHandlesMiddleware>();
         app.UseCors(CorsName);
+        app.UseStaticFiles();
         app.UseMiddleware<SessionValidationMiddleware>();
 
         app.UseSwagger();
@@ -118,6 +120,8 @@ public static class Program
         app.MapPrivacyEndpoints();
         app.MapUserChatSettingsEndpoints();
         app.MapAdminEndpoints();
+
+        app.MapHub<Infrastructure.Services.Communications.ChatHub>("/chatHub");
 
         await app.RunAsync();
     }
