@@ -9,6 +9,8 @@ using Domain.Models.Blog;
 using Domain.Models.Messaging;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Application.Abstractions.Services.Notifications;
+using NEVA.BackendApi.Constants;
 
 namespace Application.Requests.Commands.Blog;
 
@@ -19,7 +21,8 @@ public class AddCommentRequestHandler(
     IAttachmentsRepository attachmentsRepository,
     IFilesStorage filesStorage,
     IFilesValidator filesValidator,
-    IChatUsersRepository chatUsersRepository) : IRequestHandler<AddCommentRequest>
+    IChatUsersRepository chatUsersRepository,
+    IBackendNotificationService notificationService) : IRequestHandler<AddCommentRequest>
 {
     public async Task<IOperationResult> HandleAsync(AddCommentRequest request, CancellationToken cancellationToken = default)
     {
@@ -91,6 +94,23 @@ public class AddCommentRequestHandler(
 
         await blogRepository.AddCommentAsync(comment, cancellationToken);
         await blogRepository.SaveChangesAsync(cancellationToken);
+
+        // Notify post author about new comment, if author is not the commenter
+        if (post.AuthorId != request.UserId)
+        {
+            var commenter = await chatUsersRepository.GetByIdWithProfileDataAsync(request.UserId, cancellationToken);
+            if (commenter is not null)
+            {
+                var receiverParams = new List<string> { "#", commenter.Username ?? commenter.AspNetUser.UserName };
+                await notificationService.SendNotificationAsync(
+                    NotificationTemplatesConsts.PostComment.Id,
+                    post.AuthorId,
+                    request.UserId,
+                    false,
+                    receiverParams,
+                    null);
+            }
+        }
 
         return ResultsHelper.Created(comment.Id);
     }

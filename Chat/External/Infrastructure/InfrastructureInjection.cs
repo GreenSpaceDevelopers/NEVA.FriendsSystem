@@ -5,6 +5,7 @@ using Application.Abstractions.Persistence.Repositories.Messaging;
 using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Abstractions.Services.Communications;
+using Application.Abstractions.Services.Notifications;
 using Application.Abstractions.Services.Reporting;
 using Infrastructure.Configs;
 using Infrastructure.Persistence;
@@ -14,6 +15,7 @@ using Infrastructure.Persistence.Repositories.Messaging;
 using Infrastructure.Persistence.Repositories.Users;
 using Infrastructure.Services.ApplicationInfrastructure.Data;
 using Infrastructure.Services.Communications;
+using Infrastructure.Services.Notifications;
 using Infrastructure.Services.Reporting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -39,6 +41,7 @@ public static class InfrastructureInjection
         services.AddScoped<IAttachmentsRepository, AttachmentsRepository>();
         services.AddScoped<IReactionsTypesRepository, ReactionsTypesRepository>();
         services.AddScoped<IMessagesRepository, MessagesRepository>();
+        services.AddScoped<IBackendNotificationService, BackendNotificationService>();
 
         services.AddScoped<IFilesStorage, FilesStorage>();
         services.AddScoped<IFilesValidator, FilesValidator>();

@@ -6,12 +6,14 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Services.ApplicationInfrastructure.Results;
 using Domain.Models.Messaging;
 using FluentValidation;
+using Application.Abstractions.Services.Notifications;
+using NEVA.BackendApi.Constants;
 
 namespace Application.Requests.Commands.Blog;
 
 public record ToggleCommentLikeRequest(Guid CommentId, Guid UserId, Guid ReactionTypeId) : IRequest;
 
-public class ToggleCommentLikeRequestHandler(IBlogRepository blogRepository, IReactionsTypesRepository reactionsTypesRepository, IChatUsersRepository chatUsersRepository) : IRequestHandler<ToggleCommentLikeRequest>
+public class ToggleCommentLikeRequestHandler(IBlogRepository blogRepository, IReactionsTypesRepository reactionsTypesRepository, IChatUsersRepository chatUsersRepository, IBackendNotificationService notificationService) : IRequestHandler<ToggleCommentLikeRequest>
 {
     public async Task<IOperationResult> HandleAsync(ToggleCommentLikeRequest request, CancellationToken cancellationToken = default)
     {
@@ -56,6 +58,24 @@ public class ToggleCommentLikeRequestHandler(IBlogRepository blogRepository, IRe
         newLike.ReactionType = reactionType;
         await blogRepository.AddCommentReactionAsync(newLike, cancellationToken);
         await blogRepository.SaveChangesAsync(cancellationToken);
+
+        // Send notification to comment author if not self
+        if (comment.AuthorId != request.UserId)
+        {
+            var reactor = await chatUsersRepository.GetByIdWithProfileDataAsync(request.UserId, cancellationToken);
+            if (reactor is not null)
+            {
+                var receiverParams = new List<string> { "#", reactor.Username ?? reactor.AspNetUser.UserName, "комментарий" };
+                await notificationService.SendNotificationAsync(
+                    NotificationTemplatesConsts.PostReaction.Id,
+                    comment.AuthorId,
+                    request.UserId,
+                    false,
+                    receiverParams,
+                    null);
+            }
+        }
+
         return ResultsHelper.Ok(new { Liked = true, ReactionTypeId = request.ReactionTypeId });
     }
 }

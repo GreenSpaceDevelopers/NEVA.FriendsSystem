@@ -27,6 +27,7 @@
       <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.4" />
+      <PackageReference Include="NEVA.BackendApi" Version="2.0.8" />
       <PackageReference Include="NEVA.CommonLibrary" Version="2.3.0" />
       <PackageReference Include="Quartz" Version="3.14.0" />
       <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.14.0" />

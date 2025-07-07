@@ -3,12 +3,14 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Services.ApplicationInfrastructure.Results;
 using FluentValidation;
+using Application.Abstractions.Services.Notifications;
+using NEVA.BackendApi.Constants;
 
 namespace Application.Requests.Commands.Friends;
 
 public record AcceptPendingFriendRequest(Guid UserId, Guid FriendId) : IRequest;
 
-public class AcceptPendingFriendRequestHandler(IChatUsersRepository chatUsersRepository) : IRequestHandler<AcceptPendingFriendRequest>
+public class AcceptPendingFriendRequestHandler(IChatUsersRepository chatUsersRepository, IBackendNotificationService notificationService) : IRequestHandler<AcceptPendingFriendRequest>
 {
     public async Task<IOperationResult> HandleAsync(AcceptPendingFriendRequest request, CancellationToken cancellationToken = default)
     {
@@ -36,6 +38,16 @@ public class AcceptPendingFriendRequestHandler(IChatUsersRepository chatUsersRep
         friendUser.WaitingFriendRequests.Remove(user);
 
         await chatUsersRepository.SaveChangesAsync(cancellationToken);
+
+        // Notify original requester that their friend request was accepted
+        var receiverParams = new List<string> { "#", user.Username ?? user.AspNetUser.UserName };
+        await notificationService.SendNotificationAsync(
+            NotificationTemplatesConsts.FriendAccepted.Id,
+            request.FriendId,
+            request.UserId,
+            false,
+            receiverParams,
+            null);
 
         return ResultsHelper.NoContent();
     }

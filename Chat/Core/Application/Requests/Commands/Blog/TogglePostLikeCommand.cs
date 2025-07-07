@@ -6,14 +6,17 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Services.ApplicationInfrastructure.Results;
 using Domain.Models.Messaging;
 using FluentValidation;
+using Application.Abstractions.Services.Notifications;
+using NEVA.BackendApi.Constants;
 
 namespace Application.Requests.Commands.Blog;
 
 public record TogglePostLikeRequest(Guid PostId, Guid UserId, Guid ReactionTypeId) : IRequest;
 
-public class TogglePostLikeRequestHandler(IBlogRepository blogRepository, IReactionsTypesRepository reactionsTypesRepository, IChatUsersRepository chatUsersRepository) : IRequestHandler<TogglePostLikeRequest>
+public class TogglePostLikeRequestHandler(IBlogRepository blogRepository, IReactionsTypesRepository reactionsTypesRepository, IChatUsersRepository chatUsersRepository, IBackendNotificationService notificationService) : IRequestHandler<TogglePostLikeRequest>
 {
-    public async Task<IOperationResult> HandleAsync(TogglePostLikeRequest request, CancellationToken cancellationToken = default)
+    public async Task<IOperationResult> HandleAsync(TogglePostLikeRequest request,
+        CancellationToken cancellationToken = default)
     {
         var post = await blogRepository.GetByIdAsync(request.PostId, cancellationToken);
         if (post is null)
@@ -21,13 +24,15 @@ public class TogglePostLikeRequestHandler(IBlogRepository blogRepository, IReact
             return ResultsHelper.NotFound("Post not found");
         }
 
-        var isBlocked = await chatUsersRepository.IsUserBlockedByAsync(request.UserId, post.AuthorId, cancellationToken);
+        var isBlocked =
+            await chatUsersRepository.IsUserBlockedByAsync(request.UserId, post.AuthorId, cancellationToken);
         if (isBlocked)
         {
             return ResultsHelper.Forbidden("You are blocked by the post author");
         }
 
-        var existingLike = post.Reactions?.FirstOrDefault(r => r.ReactorId == request.UserId && r.ReactionTypeId == request.ReactionTypeId);
+        var existingLike = post.Reactions?.FirstOrDefault(r =>
+            r.ReactorId == request.UserId && r.ReactionTypeId == request.ReactionTypeId);
 
         if (existingLike is not null)
         {
@@ -35,7 +40,7 @@ public class TogglePostLikeRequestHandler(IBlogRepository blogRepository, IReact
             await blogRepository.SaveChangesAsync(cancellationToken);
             return ResultsHelper.Ok(new { Liked = false, ReactionTypeId = request.ReactionTypeId });
         }
-        
+
         var reactionType = await reactionsTypesRepository.GetByIdAsync(request.ReactionTypeId, cancellationToken);
 
         if (reactionType is null)
@@ -55,6 +60,27 @@ public class TogglePostLikeRequestHandler(IBlogRepository blogRepository, IReact
 
         await blogRepository.AddPostReactionAsync(newLike, cancellationToken);
         await blogRepository.SaveChangesAsync(cancellationToken);
+
+        if (post.AuthorId == request.UserId)
+        {
+            return ResultsHelper.Ok(new { Liked = true, ReactionTypeId = request.ReactionTypeId });
+        }
+
+        var reactor = await chatUsersRepository.GetByIdWithProfileDataAsync(request.UserId, cancellationToken);
+        if (reactor is null)
+        {
+            return ResultsHelper.Ok(new { Liked = true, ReactionTypeId = request.ReactionTypeId });
+        }
+        
+        var receiverParams = new List<string> { "#", reactor.Username ?? reactor.AspNetUser.UserName, "пост" };
+        await notificationService.SendNotificationAsync(
+            NotificationTemplatesConsts.PostReaction.Id,
+            post.AuthorId,
+            request.UserId,
+            false,
+            receiverParams,
+            null);
+
         return ResultsHelper.Ok(new { Liked = true, ReactionTypeId = request.ReactionTypeId });
     }
 }
