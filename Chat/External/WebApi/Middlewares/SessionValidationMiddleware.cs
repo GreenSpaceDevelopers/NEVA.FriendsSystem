@@ -19,13 +19,23 @@ public class SessionValidationMiddleware(
 
         try
         {
+            string? sessionId = null;
+
             var authHeader = context.Request.Headers.Authorization.ToString();
-            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                sessionId = authHeader["Bearer ".Length..].Trim();
+            }
+            else if (context.Request.Query.TryGetValue("access_token", out var accessTokenValues))
+            {
+                sessionId = accessTokenValues.FirstOrDefault();
+            }
+
+            if (string.IsNullOrEmpty(sessionId))
             {
                 throw new UnauthorizedException("Authorization header is required");
             }
 
-            var sessionId = authHeader["Bearer ".Length..].Trim();
             if (!Guid.TryParse(sessionId, out var sessionGuid))
             {
                 throw new UnauthorizedException("Invalid session ID format");
