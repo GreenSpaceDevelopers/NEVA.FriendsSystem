@@ -5,6 +5,7 @@ using Application.Dtos.Responses.Chats;
 using Application.Requests.Commands.Chats;
 using Application.Requests.Commands.Messaging;
 using Application.Requests.Queries.Messaging;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Common.Helpers;
 using WebApi.Common.Mappers;
@@ -34,20 +35,21 @@ public static class Chats
         .Produces(404);
 
         app.MapPost("/chats/", async (
-                [FromBody] CreateChatForm form,
+                [FromForm] CreateChatForm form,
                 [FromServices] ISender sender,
                 HttpContext context,
                 CancellationToken cancellationToken
             ) =>
             {
                 var currentUserId = context.GetUserId();
-                var request = new CreateChatRequest(currentUserId, form.Users, form.Name);
+                var request = new CreateChatRequest(currentUserId, form.Users, form.Name, form.Picture);
                 var result = await sender.SendAsync(request, cancellationToken);
                 return result.ToResult();
             })
             .WithName("CreateChat")
             .WithOpenApi()
-            .WithTags("Chats");
+            .WithTags("Chats")
+            .DisableAntiforgery();
 
         app.MapGet("/chats/{chatId:guid}/messages", async (
             [FromRoute] Guid chatId,
@@ -107,5 +109,5 @@ public static class Chats
         .Produces(404);
     }
 
-    private record CreateChatForm(Guid[] Users, string? Name);
+    private record CreateChatForm(Guid[] Users, string? Name, IFormFile? Picture);
 }

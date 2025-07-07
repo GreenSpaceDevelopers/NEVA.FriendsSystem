@@ -6,10 +6,17 @@ using Application.Services.ApplicationInfrastructure.Results;
 using Domain.Models.Messaging;
 using Domain.Models.Users;
 using FluentValidation;
+using Microsoft.AspNetCore.Http;
+using Domain.Models.Media;
+using Application.Abstractions.Services.ApplicationInfrastructure.Data; // For IFilesStorage / Validator
 
 namespace Application.Requests.Commands.Chats;
 
-public record CreateChatRequest(Guid CurrentUserId, Guid[] UserIds, string? ChatName = null) : IRequest;
+public record CreateChatRequest(
+    Guid CurrentUserId,
+    Guid[] UserIds,
+    string? ChatName = null,
+    IFormFile? ChatPicture = null) : IRequest;
 
 public class CreateChatRequestValidator : AbstractValidator<CreateChatRequest>
 {
@@ -25,7 +32,11 @@ public class CreateChatRequestValidator : AbstractValidator<CreateChatRequest>
     }
 }
 
-public class CreateChatRequestHandler(IChatUsersRepository chatUsersRepository, IChatsRepository chatsRepository) : IRequestHandler<CreateChatRequest>
+public class CreateChatRequestHandler(
+    IChatUsersRepository chatUsersRepository,
+    IChatsRepository chatsRepository,
+    IFilesStorage filesStorage,
+    IFilesValidator filesValidator) : IRequestHandler<CreateChatRequest>
 {
     public async Task<IOperationResult> HandleAsync(CreateChatRequest request, CancellationToken cancellationToken = default)
     {
@@ -69,12 +80,39 @@ public class CreateChatRequestHandler(IChatUsersRepository chatUsersRepository, 
             chatName = string.Join(", ", chatUsers.Select(u => u.Username));
         }
 
+        Picture? chatPicture = null;
+
+        if (request.ChatPicture is not null)
+        {
+            using var memoryStream = new MemoryStream();
+            await request.ChatPicture.CopyToAsync(memoryStream, cancellationToken);
+
+            if (!filesValidator.ValidateFile(memoryStream, request.ChatPicture.FileName))
+            {
+                return ResultsHelper.BadRequest("Недопустимый файл изображения");
+            }
+
+            var uploadResult = await filesStorage.UploadAsync(memoryStream, request.ChatPicture.FileName, cancellationToken);
+            if (!uploadResult.IsSuccess)
+            {
+                return ResultsHelper.BadRequest("Ошибка загрузки изображения");
+            }
+
+            chatPicture = new Picture
+            {
+                Id = Guid.NewGuid(),
+                Url = uploadResult.GetValue<string>()
+            };
+        }
+
         var chat = new Chat
         {
             Id = Guid.NewGuid(),
             Name = chatName,
             AdminId = adminId,
-            Users = chatUsers.ToList()
+            Users = chatUsers.ToList(),
+            ChatPicture = chatPicture,
+            ChatPictureId = chatPicture?.Id
         };
         
         await chatsRepository.AddAsync(chat, cancellationToken);
