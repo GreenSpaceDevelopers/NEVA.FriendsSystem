@@ -4,6 +4,7 @@ using Application.Abstractions.Persistence.Repositories.Media;
 using Application.Abstractions.Persistence.Repositories.Messaging;
 using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Data;
+using Application.Abstractions.Services.Communications;
 using Application.Abstractions.Services.Reporting;
 using Infrastructure.Configs;
 using Infrastructure.Persistence;
@@ -12,6 +13,7 @@ using Infrastructure.Persistence.Repositories.Media;
 using Infrastructure.Persistence.Repositories.Messaging;
 using Infrastructure.Persistence.Repositories.Users;
 using Infrastructure.Services.ApplicationInfrastructure.Data;
+using Infrastructure.Services.Communications;
 using Infrastructure.Services.Reporting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -41,6 +43,7 @@ public static class InfrastructureInjection
         services.AddScoped<IFilesStorage, FilesStorage>();
         services.AddScoped<IFilesValidator, FilesValidator>();
         services.AddScoped<IFilesSigningService, FilesSigningService>();
+        services.AddScoped<IChatNotificationService, SignalRChatNotificationService>();
 
         services.AddSingleton<ITelegramBotClient>(provider =>
         {

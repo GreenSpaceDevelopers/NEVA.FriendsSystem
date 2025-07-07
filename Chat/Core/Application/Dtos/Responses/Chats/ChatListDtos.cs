@@ -20,8 +20,10 @@ public record UserChatListItemDto(
     [SwaggerSchema(Description = "Дата и время последнего сообщения (может быть null)")]
     DateTime? LastMessageTime,
     [SwaggerSchema(Description = "Роль текущего пользователя в чате")]
-    string UserRole);
+    string UserRole,
+    [SwaggerSchema(Description = "Является ли чат групповым")]
+    bool IsGroup);
 
-public record UserChatListItem(Guid UserId, Guid ChatId, string ChatName, string? photoUrl, LastChatMessagePreview LastMessagePreview);
+public record UserChatListItem(Guid UserId, Guid ChatId, string ChatName, string? photoUrl, LastChatMessagePreview LastMessagePreview, bool IsGroup);
 
 public record LastChatMessagePreview(string Username, string Text, bool HasAttachment, DateTime CreatedAt);

@@ -51,4 +51,22 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
             .Take(take)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<Chat?> GetByIdWithUsersAsync(Guid chatId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Set<Chat>()
+            .Include(c => c.Users)
+            .FirstOrDefaultAsync(c => c.Id == chatId, cancellationToken);
+    }
+
+    public async Task<Chat?> GetChatPreviewAsync(Guid chatId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Set<Chat>()
+            .AsNoTracking()
+            .Include(c => c.ChatPicture)
+            .Include(c => c.Users)
+            .Include(c => c.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
+                .ThenInclude(m => m.Sender)
+            .FirstOrDefaultAsync(c => c.Id == chatId, cancellationToken);
+    }
 }

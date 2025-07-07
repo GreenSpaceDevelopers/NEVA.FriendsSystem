@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories.Messaging;
 
-public class MessagesRepository(ChatsDbContext dbContext) : IMessagesRepository
+public class MessagesRepository(ChatsDbContext dbContext) : BaseRepository<Message>(dbContext), IMessagesRepository
 {
     public Task<PagedList<Message>> GetChatMessagesPagedAsync(
         Guid chatId,

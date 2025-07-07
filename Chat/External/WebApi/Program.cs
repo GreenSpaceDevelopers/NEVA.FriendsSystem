@@ -7,6 +7,7 @@ using WebApi.Swagger;
 using System.Reflection;
 using WebApi.Middlewares;
 using GS.IdentityServerApi.Extensions;
+using Infrastructure.Services.Communications;
 using Microsoft.OpenApi.Models;
 
 public static class Program
@@ -27,6 +28,7 @@ public static class Program
         builder.Services.AddHttpClient();
 
         builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSignalR();
         builder.Services.AddSwaggerGen(c =>
         {
             c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
@@ -73,7 +75,7 @@ public static class Program
             o.AddPolicy(CorsName, builder =>
             {
                 builder
-                    .WithOrigins("http://localhost:5173", "http://localhost:3000")
+                    .WithOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:9000")
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials()
@@ -97,6 +99,7 @@ public static class Program
         }
         app.UseMiddleware<ExceptionHandlesMiddleware>();
         app.UseCors(CorsName);
+        app.UseStaticFiles();
         app.UseMiddleware<SessionValidationMiddleware>();
 
         app.UseSwagger();
@@ -118,6 +121,8 @@ public static class Program
         app.MapPrivacyEndpoints();
         app.MapUserChatSettingsEndpoints();
         app.MapAdminEndpoints();
+
+        app.MapHub<ChatHub>("/chatHub");
 
         await app.RunAsync();
     }

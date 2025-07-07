@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ChatsDbContext))]
-    partial class ChatsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250707101359_MakeAttachmentIdNullableInMessages")]
+    partial class MakeAttachmentIdNullableInMessages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -117,7 +120,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.ToTable("Comment", (string)null);
+                    b.ToTable("Comment");
                 });
 
             modelBuilder.Entity("Domain.Models.Blog.Post", b =>
@@ -162,7 +165,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("OriginalPostId");
 
-                    b.ToTable("Post", (string)null);
+                    b.ToTable("Post");
                 });
 
             modelBuilder.Entity("Domain.Models.Media.Picture", b =>
@@ -177,7 +180,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Services", (string)null);
+                    b.ToTable("Services");
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.Attachment", b =>
@@ -197,7 +200,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("TypeId");
 
-                    b.ToTable("Attachments", (string)null);
+                    b.ToTable("Attachments");
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.AttachmentType", b =>
@@ -216,7 +219,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AttachmentTypes", (string)null);
+                    b.ToTable("AttachmentTypes");
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.Chat", b =>
@@ -249,7 +252,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("RelatedEventId");
 
-                    b.ToTable("Chats", (string)null);
+                    b.ToTable("Chats");
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.CommentReaction", b =>
@@ -279,7 +282,7 @@ namespace Infrastructure.Migrations
                     b.HasIndex("CommentId", "ReactorId", "ReactionTypeId")
                         .IsUnique();
 
-                    b.ToTable("CommentReaction", (string)null);
+                    b.ToTable("CommentReaction");
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.Message", b =>
@@ -316,7 +319,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("Messages", (string)null);
+                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.MessageReaction", b =>
@@ -351,7 +354,7 @@ namespace Infrastructure.Migrations
                     b.HasIndex("MessageId", "ReactorId", "ReactionTypeId")
                         .IsUnique();
 
-                    b.ToTable("MessageReactions", (string)null);
+                    b.ToTable("MessageReactions");
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.PostReaction", b =>
@@ -381,7 +384,7 @@ namespace Infrastructure.Migrations
                     b.HasIndex("PostId", "ReactorId", "ReactionTypeId")
                         .IsUnique();
 
-                    b.ToTable("PostReaction", (string)null);
+                    b.ToTable("PostReaction");
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.ReactionType", b =>
@@ -408,7 +411,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("AttachmentId");
 
-                    b.ToTable("ReactionTypes", (string)null);
+                    b.ToTable("ReactionTypes");
                 });
 
             modelBuilder.Entity("Domain.Models.Messaging.UserChatSettings", b =>
@@ -435,7 +438,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserChatSettings", (string)null);
+                    b.ToTable("UserChatSettings");
                 });
 
             modelBuilder.Entity("Domain.Models.Service.Event", b =>
@@ -450,7 +453,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Events", (string)null);
+                    b.ToTable("Events");
                 });
 
             modelBuilder.Entity("Domain.Models.Service.NotificationSettings", b =>
@@ -524,7 +527,7 @@ namespace Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("NotificationSettings", (string)null);
+                    b.ToTable("NotificationSettings");
                 });
 
             modelBuilder.Entity("Domain.Models.Users.AspNetUser", b =>
@@ -554,7 +557,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetUser", (string)null);
+                    b.ToTable("AspNetUser");
                 });
 
             modelBuilder.Entity("Domain.Models.Users.ChatRole", b =>
@@ -569,7 +572,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ChatRoles", (string)null);
+                    b.ToTable("ChatRoles");
                 });
 
             modelBuilder.Entity("Domain.Models.Users.ChatUser", b =>
@@ -612,7 +615,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("CoverId");
 
-                    b.ToTable("ChatUsers", (string)null);
+                    b.ToTable("ChatUsers");
                 });
 
             modelBuilder.Entity("Domain.Models.Users.UserPrivacySettings", b =>
@@ -644,7 +647,7 @@ namespace Infrastructure.Migrations
                     b.HasIndex("ChatUserId")
                         .IsUnique();
 
-                    b.ToTable("UserPrivacySettings", (string)null);
+                    b.ToTable("UserPrivacySettings");
                 });
 
             modelBuilder.Entity("UserChatSettingsDisabledUsers", b =>
@@ -659,7 +662,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("UserChatSettingsId");
 
-                    b.ToTable("UserChatSettingsDisabledUsers", (string)null);
+                    b.ToTable("UserChatSettingsDisabledUsers");
                 });
 
             modelBuilder.Entity("ChatChatUser", b =>
