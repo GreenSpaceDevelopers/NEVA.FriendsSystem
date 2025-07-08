@@ -28,6 +28,27 @@ public static class Profile
         .Produces<Application.Dtos.Responses.Profile.ProfileDto>(200)
         .Produces<NotFoundErrorResponse>(404);
 
+        app.MapGet("/profile", async (
+            [FromServices] ISender sender,
+            HttpContext context,
+            CancellationToken cancellationToken) =>
+        {
+            var currentUserId = context.GetUserId();
+            if (currentUserId == Guid.Empty)
+            {
+                return Results.Unauthorized();
+            }
+
+            var query = new GetOwnProfileQuery(currentUserId);
+            var result = await sender.SendAsync(query, cancellationToken);
+            return result.ToApiResult();
+        })
+        .WithName("GetCurrentUserProfileNoSlash")
+        .WithOpenApi()
+        .WithTags("Profile")
+        .Produces<Application.Dtos.Responses.Profile.OwnProfileDto>(200)
+        .Produces<NotFoundErrorResponse>(404);
+
         app.MapPut("/profile/", async (
             [FromForm] UpdateProfileForm form,
             [FromServices] ISender sender, HttpContext context,

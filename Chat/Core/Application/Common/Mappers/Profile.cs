@@ -37,4 +37,22 @@ public static class Profile
             isFriend
         );
     }
+
+    public static OwnProfileDto ToOwnProfileDto(this ChatUser user)
+    {
+        return new OwnProfileDto(
+            user.Id,
+            user.Username,
+            user.Name,
+            user.Surname,
+            user.MiddleName,
+            user.DateOfBirth,
+            user.Avatar?.Url,
+            user.Cover?.Url,
+            new UserPrivacySettingsDto(
+                user.PrivacySettings.Id,
+                user.PrivacySettings.FriendsListVisibility,
+                user.PrivacySettings.CommentsPermission,
+                user.PrivacySettings.DirectMessagesPermission));
+    }
 }
