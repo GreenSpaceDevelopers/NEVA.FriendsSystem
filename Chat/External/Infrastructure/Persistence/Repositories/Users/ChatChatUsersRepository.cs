@@ -30,6 +30,25 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
     {
         return dbContext.Set<ChatUser>()
             .AsSplitQuery()
+            .Include(user => user.AspNetUser)
+            .Include(user => user.Friends)
+            .ThenInclude(f => f.Avatar)
+            .Include(user => user.FriendRequests)
+            .ThenInclude(fr => fr.Avatar)
+            .Include(user => user.BlockedUsers)
+            .Include(user => user.WaitingFriendRequests)
+            .Include(user => user.Avatar)
+            .Include(user => user.Cover)
+            .Include(user => user.PrivacySettings)
+            .SingleOrDefaultAsync(user => user.Id == requestUserId, cancellationToken: cancellationToken);
+    }
+
+    public Task<ChatUser?> GetByIdWithFriendsAsNoTrackingAsync(Guid requestUserId, CancellationToken cancellationToken)
+    {
+        return dbContext.Set<ChatUser>()
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(user => user.AspNetUser)
             .Include(user => user.Friends)
             .ThenInclude(f => f.Avatar)
             .Include(user => user.FriendRequests)

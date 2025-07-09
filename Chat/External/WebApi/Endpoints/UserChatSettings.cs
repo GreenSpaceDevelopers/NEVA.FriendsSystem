@@ -1,6 +1,7 @@
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Dtos.Requests.Messaging;
 using Application.Dtos.Responses.Messaging;
+using Application.Requests.Commands.Messaging;
 using Application.Requests.Queries.Messaging;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Common.Helpers;
@@ -50,8 +51,8 @@ public static class UserChatSettings
             HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            request = request with { UserId = context.GetUserId(), ChatId = chatId };
-            var result = await sender.SendAsync(request, cancellationToken);
+            var command = new UpdateUserChatSettingsCommand(context.GetUserId(), chatId, request);
+            var result = await sender.SendAsync(command, cancellationToken);
             return result.ToApiResult();
         })
         .WithName("UpdateUserChatSettings")

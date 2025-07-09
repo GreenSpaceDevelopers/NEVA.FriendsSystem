@@ -13,7 +13,7 @@ public class GetUserProfileQueryHandler(IChatUsersRepository chatUsersRepository
 {
     public async Task<IOperationResult> HandleAsync(GetUserProfileQuery request, CancellationToken cancellationToken = default)
     {
-        var user = await chatUsersRepository.GetByIdWithFriendsAsync(request.RequestedUserId, cancellationToken);
+        var user = await chatUsersRepository.GetByIdWithFriendsAsNoTrackingAsync(request.RequestedUserId, cancellationToken);
         if (user is null)
         {
             return ResultsHelper.NotFound($"User not found. RequestedUserId: {request.RequestedUserId}");

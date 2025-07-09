@@ -20,6 +20,7 @@ public static class Profile
         return new ProfileDto(
             user.Id,
             user.Username,
+            canViewFullProfile ? user.AspNetUser.Email : null,
             canViewFullProfile ? user.Name : null,
             canViewFullProfile ? user.Surname : null,
             canViewFullProfile ? user.MiddleName : null,
@@ -47,6 +48,7 @@ public static class Profile
         return new OwnProfileDto(
             user.Id,
             user.Username,
+            user.AspNetUser.Email,
             user.Name,
             user.Surname,
             user.MiddleName,

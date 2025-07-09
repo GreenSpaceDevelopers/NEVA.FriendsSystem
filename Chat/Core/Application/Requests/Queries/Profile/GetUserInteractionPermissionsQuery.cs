@@ -13,7 +13,7 @@ public class GetUserInteractionPermissionsQueryHandler(IChatUsersRepository chat
 {
     public async Task<IOperationResult> HandleAsync(GetUserInteractionPermissionsQuery request, CancellationToken cancellationToken = default)
     {
-        var targetUser = await chatUsersRepository.GetByIdWithFriendsAsync(request.TargetUserId, cancellationToken);
+        var targetUser = await chatUsersRepository.GetByIdWithFriendsAsNoTrackingAsync(request.TargetUserId, cancellationToken);
         if (targetUser is null)
         {
             return ResultsHelper.NotFound("User not found");

@@ -12,6 +12,7 @@ public interface IChatUsersRepository : IBaseRepository<ChatUser>
 {
     public Task<PagedList<ChatUser>> GetByUsernamePagedAsync(string? username, PageSettings requestPageSettings, Guid currentUserId, IEnumerable<Guid> blockedUserIds, CancellationToken cancellationToken = default);
     public Task<ChatUser?> GetByIdWithFriendsAsync(Guid requestUserId, CancellationToken cancellationToken);
+    public Task<ChatUser?> GetByIdWithFriendsAsNoTrackingAsync(Guid requestUserId, CancellationToken cancellationToken);
     public Task<ChatUser?> GetByIdWithBlockerUsersAsync(Guid requestUserId, CancellationToken cancellationToken);
     public Task<List<ChatUser>> GetBlockedUsersAsync(Guid requestUserId, string queryString, PageSettings requestPageSettings, CancellationToken cancellationToken);
     public Task<bool> IsUsernameUniqueAsync(string username, CancellationToken cancellationToken = default);
@@ -22,5 +23,5 @@ public interface IChatUsersRepository : IBaseRepository<ChatUser>
     public Task<PagedList<ChatUser>> SearchUsersWithBlockingLogicAsync(string? username, PageSettings requestPageSettings, Guid currentUserId, CancellationToken cancellationToken = default);
     public Task<PagedList<UserWithBlockingInfo>> SearchUsersWithBlockingInfoAsync(string? username, PageSettings requestPageSettings, Guid currentUserId, CancellationToken cancellationToken = default);
     public Task<List<UserWithBlockingInfo>> GetFriendsWithBlockingInfoAsync(Guid userId, CancellationToken cancellationToken = default);
-    public Task<UserChatInfo> GetChatInfoBetweenUsersAsync(Guid userId1, Guid userId2, CancellationToken cancellationToken = default);
+    public Task<UserChatInfo?> GetChatInfoBetweenUsersAsync(Guid currentUserId, Guid targetUserId, CancellationToken cancellationToken = default);
 }

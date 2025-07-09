@@ -6,6 +6,7 @@ namespace Application.Dtos.Responses.Profile;
 public record OwnProfileDto(
     [property: SwaggerSchema(Description = "Уникальный идентификатор пользователя")] Guid Id,
     [property: SwaggerSchema(Description = "Имя пользователя")] string Username,
+    [property: SwaggerSchema(Description = "Email пользователя")] string Email,
     [property: SwaggerSchema(Description = "Имя")] string? Name,
     [property: SwaggerSchema(Description = "Фамилия")] string? Surname,
     [property: SwaggerSchema(Description = "Отчество")] string? MiddleName,

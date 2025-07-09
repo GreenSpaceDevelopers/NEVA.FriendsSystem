@@ -15,10 +15,8 @@ public record UserChatListItemDto(
     string? ImageUrl,
     [SwaggerSchema(Description = "Количество непрочитанных сообщений в чате")]
     int UnreadCount,
-    [SwaggerSchema(Description = "Текст последнего сообщения в чате (может быть null)")]
-    string? LastMessage,
-    [SwaggerSchema(Description = "Дата и время последнего сообщения (может быть null)")]
-    DateTime? LastMessageTime,
+    [SwaggerSchema(Description = "Превью последнего сообщения в чате")]
+    LastChatMessagePreview? LastMessagePreview,
     [SwaggerSchema(Description = "Роль текущего пользователя в чате")]
     string UserRole,
     [SwaggerSchema(Description = "Является ли чат групповым")]

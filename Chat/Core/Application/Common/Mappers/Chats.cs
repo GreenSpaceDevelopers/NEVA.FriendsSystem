@@ -36,6 +36,17 @@ public static class Chats
         var isGroup = chat.Users.Count > 2;
         var userRole = chat.AdminId == userId ? "Creator" : "Member";
 
+        LastChatMessagePreview? lastMessagePreview = null;
+        if (lastMessage != null)
+        {
+            lastMessagePreview = new LastChatMessagePreview(
+                lastMessage.Sender?.Username ?? string.Empty,
+                lastMessage.Content ?? string.Empty,
+                lastMessage.Attachment != null,
+                lastMessage.CreatedAt
+            );
+        }
+
         var displayName = chat.Name;
         if (isGroup || chat.Users.Count != 2)
             return new UserChatListItemDto(
@@ -43,8 +54,7 @@ public static class Chats
                 displayName,
                 chat.ChatPicture?.Url,
                 unreadCount,
-                lastMessage?.Content,
-                lastMessage?.CreatedAt,
+                lastMessagePreview,
                 userRole,
                 isGroup
             );
@@ -57,8 +67,7 @@ public static class Chats
             displayName,
             chat.ChatPicture?.Url,
             unreadCount,
-            lastMessage?.Content,
-            lastMessage?.CreatedAt,
+            lastMessagePreview,
             userRole,
             isGroup
         );

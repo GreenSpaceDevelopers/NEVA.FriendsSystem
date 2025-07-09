@@ -16,7 +16,7 @@ public class GetUserSentRequestsQueryHandler(IChatUsersRepository chatUsersRepos
 {
     public async Task<IOperationResult> HandleAsync(GetUserSentRequests request, CancellationToken cancellationToken = default)
     {
-        var user = await chatUsersRepository.GetByIdWithFriendsAsync(request.RequestedUserId, cancellationToken);
+        var user = await chatUsersRepository.GetByIdWithFriendsAsNoTrackingAsync(request.RequestedUserId, cancellationToken);
         if (user is null)
         {
             return ResultsHelper.NotFound("User not found");
@@ -45,7 +45,7 @@ public class GetUserPendingRequestsQueryHandler(IChatUsersRepository chatUsersRe
 {
     public async Task<IOperationResult> HandleAsync(GetUserPendingRequests request, CancellationToken cancellationToken = default)
     {
-        var user = await chatUsersRepository.GetByIdWithFriendsAsync(request.RequestedUserId, cancellationToken);
+        var user = await chatUsersRepository.GetByIdWithFriendsAsNoTrackingAsync(request.RequestedUserId, cancellationToken);
         if (user is null)
         {
             return ResultsHelper.NotFound("User not found");
