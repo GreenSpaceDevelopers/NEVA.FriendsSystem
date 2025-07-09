@@ -1,11 +1,28 @@
-using Application.Abstractions.Services.Communications.Data;
 using Application.Dtos.Messaging;
+using Application.Dtos.Responses.Chats;
 using Application.Messaging.Proto.Messages;
+using Domain.Models.Messaging;
 
 namespace Application.Common.Mappers;
 
 public static class Messages
 {
+    public static MessageDto ToMessageDto(this Message message)
+    {
+        return new MessageDto(
+            message.Id,
+            message.ChatId,
+            message.SenderId,
+            message.Sender.Username,
+            message.Sender.Avatar?.Url,
+            message.Content,
+            message.Attachment?.Url,
+            message.CreatedAt,
+            message.Replies.Count,
+            message.Reactions.Count
+        );
+    }
+
     public static RawMessage ToRawMessage(this ReceivedMessage receivedMessage)
     {
         return new RawMessage(

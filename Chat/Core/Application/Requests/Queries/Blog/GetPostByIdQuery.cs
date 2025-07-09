@@ -13,7 +13,7 @@ public class GetPostByIdQueryHandler(IBlogRepository blogRepository, IChatUsersR
 {
     public async Task<IOperationResult> HandleAsync(GetPostByIdQuery request, CancellationToken cancellationToken = default)
     {
-        var post = await blogRepository.GetByIdAsync(request.PostId, cancellationToken);
+        var post = await blogRepository.GetPostByIdWithDetailsAsync(request.PostId, cancellationToken);
         if (post is null)
         {
             return ResultsHelper.NotFound("Post not found");

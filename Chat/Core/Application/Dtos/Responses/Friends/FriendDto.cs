@@ -18,5 +18,11 @@ public record FriendDto(
     [SwaggerSchema(Description = "Заблокирован ли этот друг текущим пользователем")]
     bool IsBlockedByMe,
     [SwaggerSchema(Description = "Заблокировал ли этот друг текущего пользователя")]
-    bool HasBlockedMe
+    bool HasBlockedMe,
+    [SwaggerSchema(Description = "ID чата между пользователями (может быть null если чата нет)")]
+    Guid? ChatId,
+    [SwaggerSchema(Description = "Отключен ли чат с этим пользователем")]
+    bool IsChatDisabled,
+    [SwaggerSchema(Description = "Отключены ли уведомления от этого чата")]
+    bool IsChatMuted
 );

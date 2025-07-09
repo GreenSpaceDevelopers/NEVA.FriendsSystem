@@ -31,7 +31,9 @@ public class GetUserSentRequestsQueryHandler(IChatUsersRepository chatUsersRepos
                 .Take(request.PageSettings.Take)
                 .Select(f => new FriendRequestsDto(
                     user.Id,
-                    f.Id
+                    f.Id,
+                    f.Username,
+                    f.Avatar?.Url
                 ))
                 .ToList()
         };
@@ -58,7 +60,9 @@ public class GetUserPendingRequestsQueryHandler(IChatUsersRepository chatUsersRe
                 .Take(request.PageSettings.Take)
                 .Select(f => new FriendRequestsDto(
                     f.Id,
-                    user.Id
+                    user.Id,
+                    f.Username,
+                    f.Avatar?.Url
                 ))
                 .ToList()
         };

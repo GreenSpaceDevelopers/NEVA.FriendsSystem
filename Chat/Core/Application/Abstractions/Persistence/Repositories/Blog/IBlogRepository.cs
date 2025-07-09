@@ -25,4 +25,5 @@ public interface IBlogRepository : IBaseRepository<Post>
     public Task RemovePostReactionAsync(PostReaction reaction, CancellationToken cancellationToken = default);
     public Task AddCommentReactionAsync(CommentReaction reaction, CancellationToken cancellationToken = default);
     public Task RemoveCommentReactionAsync(CommentReaction reaction, CancellationToken cancellationToken = default);
+    public Task<Post?> GetPostByIdWithDetailsAsync(Guid postId, CancellationToken cancellationToken = default);
 }

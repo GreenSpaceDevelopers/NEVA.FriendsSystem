@@ -2,6 +2,7 @@ using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Domain.Models.Users;
+using Domain.Models.Messaging;
 using Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,8 +29,11 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
     public Task<ChatUser?> GetByIdWithFriendsAsync(Guid requestUserId, CancellationToken cancellationToken)
     {
         return dbContext.Set<ChatUser>()
+            .AsSplitQuery()
             .Include(user => user.Friends)
+            .ThenInclude(f => f.Avatar)
             .Include(user => user.FriendRequests)
+            .ThenInclude(fr => fr.Avatar)
             .Include(user => user.BlockedUsers)
             .Include(user => user.WaitingFriendRequests)
             .Include(user => user.Avatar)
@@ -52,6 +56,8 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
         CancellationToken cancellationToken)
     {
         IQueryable<ChatUser> query = dbContext.Set<ChatUser>()
+            .AsNoTracking()
+            .AsSplitQuery()
             .Where(u => u.BlockedUsers.Any(b => b.Id == requestUserId))
             .Include(u => u.AspNetUser)
             .Include(u => u.Avatar)
@@ -78,6 +84,7 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
     public Task<ChatUser?> GetByIdWithProfileDataAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         return dbContext.Set<ChatUser>()
+            .AsNoTracking()
             .Include(user => user.Avatar)
             .Include(user => user.Cover)
             .Include(user => user.PrivacySettings)
@@ -209,5 +216,29 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
             x.IsBlockedByMe,
             x.HasBlockedMe
         )).ToList();
+    }
+
+    public async Task<UserChatInfo> GetChatInfoBetweenUsersAsync(Guid userId1, Guid userId2, CancellationToken cancellationToken = default)
+    {
+        var chat = await dbContext.Set<Chat>()
+            .Where(c => c.Users.Count == 2 && 
+                       c.Users.Any(u => u.Id == userId1) && 
+                       c.Users.Any(u => u.Id == userId2))
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (chat == null)
+        {
+            return new UserChatInfo(null, false, false);
+        }
+
+        var userChatSettings = await dbContext.Set<UserChatSettings>()
+            .Where(ucs => ucs.UserId == userId1 && ucs.ChatId == chat.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return new UserChatInfo(
+            chat.Id,
+            userChatSettings?.IsDisabled ?? false,
+            userChatSettings?.IsMuted ?? false
+        );
     }
 }

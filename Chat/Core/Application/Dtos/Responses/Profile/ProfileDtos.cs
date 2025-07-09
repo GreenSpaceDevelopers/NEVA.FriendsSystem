@@ -44,7 +44,13 @@ public record ProfileDto(
     [SwaggerSchema(Description = "Отправил ли текущий пользователь заявку в друзья этому пользователю")]
     bool IsFriendRequestSentByMe,
     [SwaggerSchema(Description = "Является ли пользователь другом текущего пользователя")]
-    bool IsFriend
+    bool IsFriend,
+    [SwaggerSchema(Description = "ID чата между пользователями (может быть null если чата нет или это свой профиль)")]
+    Guid? ChatId,
+    [SwaggerSchema(Description = "Отключен ли чат с этим пользователем")]
+    bool IsChatDisabled,
+    [SwaggerSchema(Description = "Отключены ли уведомления от этого чата")]
+    bool IsChatMuted
 );
 
 /// <summary>

@@ -17,7 +17,9 @@ public class MessagesRepository(ChatsDbContext dbContext) : BaseRepository<Messa
     {
         var query = dbContext.Set<Message>()
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(m => m.Sender)
+            .ThenInclude(s => s.Avatar)
             .Include(m => m.Attachment)
             .Include(m => m.Replies)
             .Include(m => m.Reactions)

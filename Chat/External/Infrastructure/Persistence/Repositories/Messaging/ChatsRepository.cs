@@ -12,17 +12,29 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
     public Task<PagedList<Chat>> GetUserChatsNoTrackingAsync(
         Guid userId,
         PageSettings pageSettings,
+        string? searchQuery = null,
         CancellationToken cancellationToken = default)
     {
-        return dbContext.Set<Chat>()
+        var query = dbContext.Set<Chat>()
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(c => c.ChatPicture)
             .Include(c => c.Users)
             .Include(c => c.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
             .ThenInclude(m => m.Sender)
             .Include(c => c.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
             .ThenInclude(m => m.Attachment)
-            .Where(c => c.Users.Any(u => u.Id == userId))
+            .Where(c => c.Users.Any(u => u.Id == userId));
+
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            query = query.Where(c => 
+                c.Name.Contains(searchQuery) || 
+                c.Users.Any(u => u.Username.Contains(searchQuery))
+            );
+        }
+
+        return query
             .OrderByDescending(c => c.LastMessageDate)
             .ToPagedList(pageSettings, cancellationToken);
     }
@@ -41,7 +53,9 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
     {
         return dbContext.Set<Message>()
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(m => m.Sender)
+            .ThenInclude(s => s.Avatar)
             .Include(m => m.Attachment)
             .Include(m => m.Replies)
             .Include(m => m.Reactions)
@@ -63,10 +77,104 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
     {
         return await dbContext.Set<Chat>()
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(c => c.ChatPicture)
             .Include(c => c.Users)
+            .ThenInclude(u => u.Avatar)
             .Include(c => c.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
-                .ThenInclude(m => m.Sender)
+            .ThenInclude(m => m.Sender)
             .FirstOrDefaultAsync(c => c.Id == chatId, cancellationToken);
+    }
+
+    public async Task<PagedList<ChatWithUnreadCount>> GetUserChatsWithUnreadCountAsync(
+        Guid userId,
+        PageSettings pageSettings,
+        string? searchQuery = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.Set<Chat>()
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(c => c.ChatPicture)
+            .Include(c => c.Users)
+            .ThenInclude(u => u.Avatar)
+            .Include(c => c.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
+            .ThenInclude(m => m.Sender)
+            .Include(c => c.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
+            .ThenInclude(m => m.Attachment)
+            .Where(c => c.Users.Any(u => u.Id == userId));
+
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            query = query.Where(c => 
+                c.Name.Contains(searchQuery) || 
+                c.Users.Any(u => u.Username.Contains(searchQuery)));
+        }
+
+        var orderedQuery = query.OrderByDescending(c => c.LastMessageDate ?? DateTime.MinValue);
+        var totalCount = await orderedQuery.CountAsync(cancellationToken);
+
+        var chats = await orderedQuery
+            .Skip(pageSettings.Skip)
+            .Take(pageSettings.Take)
+            .ToListAsync(cancellationToken);
+
+        // Получаем количество непрочитанных сообщений для каждого чата
+        var chatsWithUnreadCount = new List<ChatWithUnreadCount>();
+        foreach (var chat in chats)
+        {
+            var unreadCount = await GetUnreadMessagesCountAsync(userId, chat.Id, cancellationToken);
+            chatsWithUnreadCount.Add(new ChatWithUnreadCount(chat, unreadCount));
+        }
+
+        return new PagedList<ChatWithUnreadCount>
+        {
+            Data = chatsWithUnreadCount,
+            TotalCount = totalCount
+        };
+    }
+
+    public async Task<int> GetUnreadMessagesCountAsync(Guid userId, Guid chatId, CancellationToken cancellationToken = default)
+    {
+        // Получаем настройки пользователя для данного чата
+        var userChatSettings = await dbContext.Set<UserChatSettings>()
+            .FirstOrDefaultAsync(ucs => ucs.UserId == userId && ucs.ChatId == chatId, cancellationToken);
+
+        // Если настроек нет или LastReadMessageId не установлен, считаем все сообщения непрочитанными
+        if (userChatSettings?.LastReadMessageId == null)
+        {
+            return await dbContext.Set<Message>()
+                .Where(m => m.ChatId == chatId && m.SenderId != userId) // Исключаем собственные сообщения
+                .CountAsync(cancellationToken);
+        }
+
+        // Получаем дату последнего прочитанного сообщения
+        var lastReadMessage = await dbContext.Set<Message>()
+            .Where(m => m.Id == userChatSettings.LastReadMessageId.Value)
+            .Select(m => m.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (lastReadMessage == default)
+        {
+            // Если последнее прочитанное сообщение не найдено, считаем все сообщения непрочитанными
+            return await dbContext.Set<Message>()
+                .Where(m => m.ChatId == chatId && m.SenderId != userId)
+                .CountAsync(cancellationToken);
+        }
+
+        // Считаем сообщения после последнего прочитанного
+        return await dbContext.Set<Message>()
+            .Where(m => m.ChatId == chatId && 
+                       m.SenderId != userId && 
+                       m.CreatedAt > lastReadMessage)
+            .CountAsync(cancellationToken);
+    }
+
+    public Task<Message?> GetLastMessageInChatAsync(Guid chatId, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Set<Message>()
+            .Where(m => m.ChatId == chatId)
+            .OrderByDescending(m => m.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 }

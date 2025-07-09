@@ -1,5 +1,6 @@
 using Application.Dtos.Responses.Profile;
 using Domain.Models.Users;
+using Application.Abstractions.Persistence.Repositories.Users;
 
 namespace Application.Common.Mappers;
 
@@ -14,7 +15,7 @@ public static class Profile
             hasBlockedMe: hasBlockedMe);
     }
 
-    public static ProfileDto ToProfileDto(this ChatUser user, bool canViewFullProfile, bool includePrivacySettings, bool isBlockedByMe = false, bool hasBlockedMe = false, bool isFriend = false, bool isFriendRequestSentByMe = false)
+    public static ProfileDto ToProfileDto(this ChatUser user, bool canViewFullProfile, bool includePrivacySettings, bool isBlockedByMe = false, bool hasBlockedMe = false, bool isFriend = false, bool isFriendRequestSentByMe = false, UserChatInfo? chatInfo = null)
     {
         return new ProfileDto(
             user.Id,
@@ -34,7 +35,10 @@ public static class Profile
             isBlockedByMe,
             hasBlockedMe,
             isFriendRequestSentByMe,
-            isFriend
+            isFriend,
+            chatInfo?.ChatId,
+            chatInfo?.IsChatDisabled ?? false,
+            chatInfo?.IsChatMuted ?? false
         );
     }
 
@@ -53,6 +57,8 @@ public static class Profile
                 user.PrivacySettings.Id,
                 user.PrivacySettings.FriendsListVisibility,
                 user.PrivacySettings.CommentsPermission,
-                user.PrivacySettings.DirectMessagesPermission));
+                user.PrivacySettings.DirectMessagesPermission
+            )
+        );
     }
 }

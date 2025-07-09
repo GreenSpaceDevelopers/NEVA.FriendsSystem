@@ -1,5 +1,6 @@
 using Application.Dtos.Responses.Chats;
 using Domain.Models.Messaging;
+using Application.Abstractions.Persistence.Repositories.Messaging;
 
 namespace Application.Common.Mappers;
 
@@ -24,5 +25,42 @@ public static class Chats
         var chatPreview = new UserChatListItem(userId, chat.Id, displayName, chat.ChatPicture?.Url ?? string.Empty, lastMessageDto, isGroup);
 
         return chatPreview;
+    }
+
+    public static UserChatListItemDto ToUserChatListItemDto(this ChatWithUnreadCount chatWithUnreadCount, Guid userId)
+    {
+        var chat = chatWithUnreadCount.Chat;
+        var unreadCount = chatWithUnreadCount.UnreadCount;
+
+        var lastMessage = chat.Messages.FirstOrDefault();
+        var isGroup = chat.Users.Count > 2;
+        var userRole = chat.AdminId == userId ? "Creator" : "Member";
+
+        var displayName = chat.Name;
+        if (isGroup || chat.Users.Count != 2)
+            return new UserChatListItemDto(
+                chat.Id,
+                displayName,
+                chat.ChatPicture?.Url,
+                unreadCount,
+                lastMessage?.Content,
+                lastMessage?.CreatedAt,
+                userRole,
+                isGroup
+            );
+        
+        var interlocutor = chat.Users.First(u => u.Id != userId);
+        displayName = interlocutor.Username;
+
+        return new UserChatListItemDto(
+            chat.Id,
+            displayName,
+            chat.ChatPicture?.Url,
+            unreadCount,
+            lastMessage?.Content,
+            lastMessage?.CreatedAt,
+            userRole,
+            isGroup
+        );
     }
 }

@@ -47,14 +47,26 @@ public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository
             .Take(request.PageSettings.Take)
             .ToList();
 
-        var friendDtos = pagedFriends.Select(friendInfo => new FriendDto(
-            friendInfo.User.Id,
-            friendInfo.User.Username,
-            friendInfo.User.Avatar?.Url,
-            friendInfo.User.LastSeen,
-            friendInfo.IsBlockedByMe,
-            friendInfo.HasBlockedMe
-        )).ToList();
+        var friendDtos = new List<FriendDto>();
+        
+        foreach (var friendInfo in pagedFriends)
+        {
+            var chatInfo = await chatUsersRepository.GetChatInfoBetweenUsersAsync(request.UserId, friendInfo.User.Id, cancellationToken);
+            
+            var friendDto = new FriendDto(
+                friendInfo.User.Id,
+                friendInfo.User.Username,
+                friendInfo.User.Avatar?.Url,
+                friendInfo.User.LastSeen,
+                friendInfo.IsBlockedByMe,
+                friendInfo.HasBlockedMe,
+                chatInfo.ChatId,
+                chatInfo.IsChatDisabled,
+                chatInfo.IsChatMuted
+            );
+            
+            friendDtos.Add(friendDto);
+        }
 
         var pagedResult = new PagedList<FriendDto>
         {

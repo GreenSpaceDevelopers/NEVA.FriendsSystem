@@ -100,6 +100,7 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
         modelBuilder.Entity<ChatUser>().Navigation(ch => ch.AspNetUser).AutoInclude();
         modelBuilder.Entity<Post>().Navigation(p => p.Author).AutoInclude();
         modelBuilder.Entity<Post>().Navigation(p => p.Comments).AutoInclude();
+        modelBuilder.Entity<Post>().Navigation(p => p.Attachment).AutoInclude();
         modelBuilder.Entity<Comment>().Navigation(c => c.Author).AutoInclude();
         modelBuilder.Entity<Comment>().Navigation(c => c.Post).AutoInclude();
         // modelBuilder.Entity<Comment>().Navigation(m => m.Parent).AutoInclude();
@@ -136,6 +137,13 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
             .WithMany()
             .HasForeignKey(ucs => ucs.ChatId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure LastReadMessage relationship
+        modelBuilder.Entity<UserChatSettings>()
+            .HasOne(ucs => ucs.LastReadMessage)
+            .WithMany()
+            .HasForeignKey(ucs => ucs.LastReadMessageId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // Configure UserChatSettings many-to-many with ChatUser for DisabledUsers
         modelBuilder.Entity<UserChatSettings>()

@@ -19,11 +19,12 @@ public static class Chats
         app.MapGet("/users/chats", async (
             [FromQuery] int skip,
             [FromQuery] int take,
+            [FromQuery] string? searchQuery,
             [FromServices] ISender sender,
             HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetAllChatsForUserQuery(context.GetUserId(), new PageSettings(skip, take));
+            var query = new GetAllChatsForUserQuery(context.GetUserId(), new PageSettings(skip, take), searchQuery);
             var result = await sender.SendAsync(query, cancellationToken);
 
             return result.ToResult();
@@ -56,10 +57,11 @@ public static class Chats
             [FromQuery] int skip,
             [FromQuery] int take,
             [FromServices] ISender sender,
+            HttpContext context,
             CancellationToken cancellationToken,
             [FromQuery] bool desc = true) =>
         {
-            var query = new GetChatMessagesQuery(chatId, new PageSettings(skip, take), desc);
+            var query = new GetChatMessagesQuery(chatId, context.GetUserId(), new PageSettings(skip, take), desc);
             var result = await sender.SendAsync(query, cancellationToken);
             return result.ToApiResult();
         })
@@ -91,6 +93,28 @@ public static class Chats
         .Produces(403)
         .Produces(404);
 
+        app.MapPost("/chats/{chatId:guid}/mark-as-read", async (
+            [FromRoute] Guid chatId,
+            [FromBody] MarkAsReadRequest? request,
+            [FromServices] ISender sender,
+            HttpContext context,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new MarkMessagesAsReadCommand(
+                context.GetUserId(), 
+                chatId, 
+                request?.LastReadMessageId);
+            var result = await sender.SendAsync(command, cancellationToken);
+            return result.ToApiResult();
+        })
+        .WithName("MarkChatAsRead")
+        .WithOpenApi()
+        .WithTags("Chats")
+        .Produces(204)
+        .Produces(400)
+        .Produces(403)
+        .Produces(404);
+
         app.MapGet("/users/chats/{chatId:guid}", async (
             [FromRoute] Guid chatId,
             [FromServices] ISender sender,
@@ -109,5 +133,12 @@ public static class Chats
         .Produces(404);
     }
 
-    private record CreateChatForm(Guid[] Users, string? Name, IFormFile? Picture);
+    private class CreateChatForm
+    {
+        public Guid[] Users { get; set; } = [];
+        public string? Name { get; set; }
+        public IFormFile? Picture { get; set; }
+    }
+    
+    private record MarkAsReadRequest(Guid? LastReadMessageId);
 }

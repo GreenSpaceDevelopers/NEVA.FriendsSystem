@@ -22,6 +22,7 @@ public class GetUserChatSettingsQueryHandler(IUserChatSettingsRepository userCha
             settings.ChatId,
             settings.IsMuted,
             settings.IsDisabled,
+            settings.LastReadMessageId,
             settings.DisabledUsers?.Select(u => u.Id).ToList() ?? new List<Guid>()
         );
         

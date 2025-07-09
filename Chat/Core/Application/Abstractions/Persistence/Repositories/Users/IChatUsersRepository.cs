@@ -6,6 +6,8 @@ namespace Application.Abstractions.Persistence.Repositories.Users;
 
 public record UserWithBlockingInfo(ChatUser User, bool IsBlockedByMe, bool HasBlockedMe);
 
+public record UserChatInfo(Guid? ChatId, bool IsChatDisabled, bool IsChatMuted);
+
 public interface IChatUsersRepository : IBaseRepository<ChatUser>
 {
     public Task<PagedList<ChatUser>> GetByUsernamePagedAsync(string? username, PageSettings requestPageSettings, Guid currentUserId, IEnumerable<Guid> blockedUserIds, CancellationToken cancellationToken = default);
@@ -20,4 +22,5 @@ public interface IChatUsersRepository : IBaseRepository<ChatUser>
     public Task<PagedList<ChatUser>> SearchUsersWithBlockingLogicAsync(string? username, PageSettings requestPageSettings, Guid currentUserId, CancellationToken cancellationToken = default);
     public Task<PagedList<UserWithBlockingInfo>> SearchUsersWithBlockingInfoAsync(string? username, PageSettings requestPageSettings, Guid currentUserId, CancellationToken cancellationToken = default);
     public Task<List<UserWithBlockingInfo>> GetFriendsWithBlockingInfoAsync(Guid userId, CancellationToken cancellationToken = default);
+    public Task<UserChatInfo> GetChatInfoBetweenUsersAsync(Guid userId1, Guid userId2, CancellationToken cancellationToken = default);
 }

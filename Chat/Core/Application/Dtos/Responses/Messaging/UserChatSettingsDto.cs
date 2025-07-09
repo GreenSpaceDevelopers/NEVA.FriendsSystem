@@ -19,6 +19,9 @@ public record UserChatSettingsDto(
     [SwaggerSchema(Description = "Чат отключен")]
     bool IsDisabled,
     
+    [SwaggerSchema(Description = "ID последнего прочитанного сообщения")]
+    Guid? LastReadMessageId,
+    
     [SwaggerSchema(Description = "Список отключенных пользователей")]
     List<Guid> DisabledUserIds
 ); 

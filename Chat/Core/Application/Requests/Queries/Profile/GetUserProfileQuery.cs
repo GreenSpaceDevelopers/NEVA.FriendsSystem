@@ -33,13 +33,20 @@ public class GetUserProfileQueryHandler(IChatUsersRepository chatUsersRepository
             canViewFullProfile = false;
         }
 
+        UserChatInfo? chatInfo = null;
+        if (request.RequestedUserId != request.CurrentUserId)
+        {
+            chatInfo = await chatUsersRepository.GetChatInfoBetweenUsersAsync(request.CurrentUserId, request.RequestedUserId, cancellationToken);
+        }
+
         var profileDto = user.ToProfileDto(
             canViewFullProfile,
             includePrivacySettings: !hasBlockedMe,
             isBlockedByMe: isBlockedByMe,
             hasBlockedMe: hasBlockedMe,
             isFriend: isFriend,
-            isFriendRequestSentByMe: isFriendRequestSentByMe);
+            isFriendRequestSentByMe: isFriendRequestSentByMe,
+            chatInfo: chatInfo);
 
         return ResultsHelper.Ok(profileDto);
     }
