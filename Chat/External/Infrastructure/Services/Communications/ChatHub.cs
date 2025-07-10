@@ -96,15 +96,4 @@ public class ChatHub(ISender sender, ILogger<ChatHub> logger) : Hub
         
         await base.OnDisconnectedAsync(exception);
     }
-
-    public async Task GetGroupInfo(string chatId)
-    {
-        await Clients.Caller.SendAsync("GroupInfo", new
-        {
-            ChatId = chatId,
-            YourConnectionId = Context.ConnectionId,
-            Message = $"Вы подключены к группе Chat_{chatId}. Ваш ConnectionId: {Context.ConnectionId}",
-            Timestamp = DateTime.UtcNow
-        });
-    }
 } 

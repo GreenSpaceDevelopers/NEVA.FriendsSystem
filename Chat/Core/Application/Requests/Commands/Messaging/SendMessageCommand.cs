@@ -99,6 +99,13 @@ public class SendMessageCommandHandler(
         var sender = chat.Users.FirstOrDefault(u => u.Id == request.SenderId);
         var senderName = sender?.Username ?? "Unknown";
 
+        var recipientUserIds = chat.Users
+            .Where(u => u.Id != request.SenderId)
+            .Select(u => u.Id)
+            .ToList();
+
+        var chatName = GetChatDisplayName(chat, request.SenderId);
+
         if (attachment != null)
         {
             await notificationService.NotifyNewMessageWithAttachmentAsync(
@@ -108,6 +115,16 @@ public class SendMessageCommandHandler(
                 request.Content, 
                 attachment.Url,
                 message.CreatedAt);
+
+            await notificationService.NotifyUsersAboutNewMessageWithAttachmentAsync(
+                recipientUserIds,
+                request.ChatId,
+                request.SenderId,
+                senderName,
+                request.Content,
+                attachment.Url,
+                message.CreatedAt,
+                chatName);
         }
         else
         {
@@ -117,6 +134,15 @@ public class SendMessageCommandHandler(
                 senderName, 
                 request.Content, 
                 message.CreatedAt);
+
+            await notificationService.NotifyUsersAboutNewMessageAsync(
+                recipientUserIds,
+                request.ChatId,
+                request.SenderId,
+                senderName,
+                request.Content,
+                message.CreatedAt,
+                chatName);
         }
 
         return ResultsHelper.Ok(new { MessageId = message.Id, SentAt = message.CreatedAt });
@@ -132,5 +158,38 @@ public class SendMessageCommandHandler(
             ".mp3" or ".wav" or ".flac" or ".aac" or ".ogg" => AttachmentTypes.Audio,
             _ => AttachmentTypes.File
         };
+    }
+
+    private static string GetChatDisplayName(Chat chat, Guid currentUserId)
+    {
+        if (!string.IsNullOrEmpty(chat.Name))
+        {
+            return chat.Name;
+        }
+
+        if (chat.Users.Count == 2)
+        {
+            var interlocutor = chat.Users.FirstOrDefault(u => u.Id != currentUserId);
+            return interlocutor?.Username ?? "Неизвестный пользователь";
+        }
+
+        var participants = chat.Users
+            .Where(u => u.Id != currentUserId)
+            .Take(3)
+            .Select(u => u.Username)
+            .ToList();
+
+        if (participants.Count == 0)
+        {
+            return "Групповой чат";
+        }
+
+        var chatName = string.Join(", ", participants);
+        if (chat.Users.Count > 4)
+        {
+            chatName += $" и ещё {chat.Users.Count - 4}";
+        }
+
+        return chatName;
     }
 } 
