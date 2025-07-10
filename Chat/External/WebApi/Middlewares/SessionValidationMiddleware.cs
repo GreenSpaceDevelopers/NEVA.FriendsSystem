@@ -11,7 +11,7 @@ public class SessionValidationMiddleware(
     public async Task InvokeAsync(HttpContext context)
     {
         var path = context.Request.Path.Value?.ToLower();
-        if (path != null && path.Contains("/swagger"))
+        if (path != null && (path.Contains("/swagger") || path.StartsWith("/internal")))
         {
             await next(context);
             return;

@@ -58,19 +58,27 @@ public class FilesSigningService : IFilesSigningService
 
         try
         {
-            var uri = new Uri(urlOrObjectName);
-            var path = uri.AbsolutePath;
+            var schemeIndex = urlOrObjectName.IndexOf("://");
+            if (schemeIndex == -1) return urlOrObjectName;
+            
+            var urlWithoutScheme = urlOrObjectName[(schemeIndex + 3)..];
+            
+            var firstSlashIndex = urlWithoutScheme.IndexOf('/');
+            if (firstSlashIndex == -1) return string.Empty;
+            
+            var pathPart = urlWithoutScheme[firstSlashIndex..];
             
             var bucketPrefix = $"/{_config.BucketName}/";
-            var bucketIndex = path.IndexOf(bucketPrefix, StringComparison.OrdinalIgnoreCase);
+            var bucketIndex = pathPart.IndexOf(bucketPrefix, StringComparison.OrdinalIgnoreCase);
             
             if (bucketIndex == -1)
             {
-                return path.TrimStart('/');
+                return pathPart.TrimStart('/');
             }
 
-            var objectName = path[(bucketIndex + bucketPrefix.Length)..];
-            return objectName;
+            var objectName = pathPart[(bucketIndex + bucketPrefix.Length)..];
+            
+            return Uri.UnescapeDataString(objectName);
         }
         catch
         {

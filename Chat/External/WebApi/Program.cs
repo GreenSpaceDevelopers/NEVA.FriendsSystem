@@ -121,6 +121,7 @@ public static class Program
         app.MapPrivacyEndpoints();
         app.MapUserChatSettingsEndpoints();
         app.MapAdminEndpoints();
+        app.MapInternalEndpoints();
 
         app.MapHub<ChatHub>("/chatHub");
 

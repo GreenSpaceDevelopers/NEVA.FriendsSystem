@@ -95,22 +95,25 @@ public class AddCommentRequestHandler(
         await blogRepository.AddCommentAsync(comment, cancellationToken);
         await blogRepository.SaveChangesAsync(cancellationToken);
 
-        // Notify post author about new comment, if author is not the commenter
-        if (post.AuthorId != request.UserId)
+        if (post.AuthorId == request.UserId)
         {
-            var commenter = await chatUsersRepository.GetByIdWithProfileDataAsync(request.UserId, cancellationToken);
-            if (commenter is not null)
-            {
-                var receiverParams = new List<string> { "#", commenter.Username ?? commenter.AspNetUser.UserName };
-                await notificationService.SendNotificationAsync(
-                    NotificationTemplateIds.PostComment,
-                    post.AuthorId,
-                    request.UserId,
-                    false,
-                    receiverParams,
-                    null);
-            }
+            return ResultsHelper.Created(comment.Id);
         }
+        
+        var commenter = await chatUsersRepository.GetByIdWithProfileDataAsync(request.UserId, cancellationToken);
+        if (commenter is null)
+        {
+            return ResultsHelper.Created(comment.Id);
+        }
+        
+        var receiverParams = new List<string> { "#", commenter.Username ?? commenter.AspNetUser.UserName };
+        await notificationService.SendNotificationAsync(
+            NotificationTemplateIds.PostComment,
+            post.AuthorId,
+            request.UserId,
+            false,
+            receiverParams,
+            null);
 
         return ResultsHelper.Created(comment.Id);
     }

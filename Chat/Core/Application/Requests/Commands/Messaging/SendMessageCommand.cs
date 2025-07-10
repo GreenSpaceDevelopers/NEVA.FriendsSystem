@@ -19,8 +19,14 @@ public class SendMessageCommandValidator : AbstractValidator<SendMessageCommand>
     {
         RuleFor(x => x.ChatId).NotEmpty().WithMessage("ID чата обязателен");
         RuleFor(x => x.SenderId).NotEmpty().WithMessage("ID отправителя обязателен");
-        RuleFor(x => x.Content).NotEmpty().WithMessage("Содержимое сообщения обязательно")
-            .MaximumLength(2000).WithMessage("Сообщение не может быть длиннее 2000 символов");
+        
+        RuleFor(x => x)
+            .Must(x => !string.IsNullOrWhiteSpace(x.Content) || x.Attachment != null)
+            .WithMessage("Сообщение должно содержать либо текст, либо вложение");
+            
+        RuleFor(x => x.Content)
+            .MaximumLength(2000).WithMessage("Сообщение не может быть длиннее 2000 символов")
+            .When(x => !string.IsNullOrWhiteSpace(x.Content));
     }
 }
 
@@ -106,13 +112,15 @@ public class SendMessageCommandHandler(
 
         var chatName = GetChatDisplayName(chat, request.SenderId);
 
+        var notificationContent = GetNotificationContent(request.Content, attachment);
+
         if (attachment != null)
         {
             await notificationService.NotifyNewMessageWithAttachmentAsync(
                 request.ChatId, 
                 request.SenderId, 
                 senderName, 
-                request.Content, 
+                notificationContent, 
                 attachment.Url,
                 message.CreatedAt);
 
@@ -121,7 +129,7 @@ public class SendMessageCommandHandler(
                 request.ChatId,
                 request.SenderId,
                 senderName,
-                request.Content,
+                notificationContent,
                 attachment.Url,
                 message.CreatedAt,
                 chatName);
@@ -132,7 +140,7 @@ public class SendMessageCommandHandler(
                 request.ChatId, 
                 request.SenderId, 
                 senderName, 
-                request.Content, 
+                notificationContent, 
                 message.CreatedAt);
 
             await notificationService.NotifyUsersAboutNewMessageAsync(
@@ -140,7 +148,7 @@ public class SendMessageCommandHandler(
                 request.ChatId,
                 request.SenderId,
                 senderName,
-                request.Content,
+                notificationContent,
                 message.CreatedAt,
                 chatName);
         }
@@ -191,5 +199,27 @@ public class SendMessageCommandHandler(
         }
 
         return chatName;
+    }
+
+    private static string GetNotificationContent(string content, Attachment? attachment)
+    {
+        if (!string.IsNullOrWhiteSpace(content))
+        {
+            return content;
+        }
+
+        if (attachment != null)
+        {
+            return GetAttachmentTypeFromFileName(attachment.Url) switch
+            {
+                AttachmentTypes.Image => "📷 Фото",
+                AttachmentTypes.Video => "🎥 Видео", 
+                AttachmentTypes.Audio => "🎵 Аудио",
+                AttachmentTypes.Sticker => "✨ Стикер",
+                AttachmentTypes.File or _ => "📎 Файл"
+            };
+        }
+
+        return "📝 Сообщение";
     }
 } 

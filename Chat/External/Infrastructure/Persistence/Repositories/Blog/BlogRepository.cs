@@ -31,7 +31,6 @@ public class BlogRepository(ChatsDbContext dbContext) : BaseRepository<Post>(dbC
     public async Task<Comment?> GetCommentByIdAsync(Guid commentId, CancellationToken cancellationToken = default)
     {
         return await dbContext.Set<Comment>()
-            .AsNoTracking()
             .AsSplitQuery()
             .Include(c => c.CommentReactions)
             .Include(c => c.Author)
