@@ -38,6 +38,10 @@ public class BlogRepository(ChatsDbContext dbContext) : BaseRepository<Post>(dbC
             .Include(c => c.Attachment)
             .Include(c => c.Post)
             .Include(c => c.Replies)
+            .ThenInclude(r => r.CommentReactions)
+            .Include(c => c.Replies)
+            .ThenInclude(r => r.Author)
+            .ThenInclude(a => a.Avatar)
             .FirstOrDefaultAsync(c => c.Id == commentId, cancellationToken);
     }
 
@@ -72,6 +76,10 @@ public class BlogRepository(ChatsDbContext dbContext) : BaseRepository<Post>(dbC
             .ThenInclude(a => a.Avatar)
             .Include(c => c.Attachment)
             .Include(c => c.Replies)
+            .ThenInclude(r => r.CommentReactions)
+            .Include(c => c.Replies)
+            .ThenInclude(r => r.Author)
+            .ThenInclude(a => a.Avatar)
             .Where(c => c.PostId == postId && !c.ParentCommentId.HasValue);
 
         return query.ToPagedList(sortExpressions, pageSettings.Skip, pageSettings.Take, cancellationToken);

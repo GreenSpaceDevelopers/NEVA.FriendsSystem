@@ -127,9 +127,9 @@ public static class Blog
             [FromRoute] Guid userId,
             [FromQuery] int skip,
             [FromQuery] int take,
-            [FromQuery] bool? desc,
             [FromServices] ISender sender, HttpContext context,
-            CancellationToken cancellationToken) =>
+            CancellationToken cancellationToken,
+            [FromQuery] bool? desc = true) =>
         {
             var currentUserId = context.GetUserId();
             var query = new GetUserPostsQuery(userId, new PageSettings(skip, take), desc, currentUserId);

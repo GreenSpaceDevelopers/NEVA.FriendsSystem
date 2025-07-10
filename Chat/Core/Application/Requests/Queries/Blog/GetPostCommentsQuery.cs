@@ -94,8 +94,8 @@ public class GetPostCommentsQueryHandler(IBlogRepository blogRepository, IChatUs
             authorAvatarUrl,
             comment.ParentCommentId,
             comment.Replies?.Count ?? 0,
-            comment.Reactions?.Count ?? 0,
-            currentUserId.HasValue && (comment.Reactions?.Any(r => r.ReactorId == currentUserId.Value) ?? false),
+            comment.CommentReactions?.Count ?? 0,
+            currentUserId.HasValue && (comment.CommentReactions?.Any(r => r.ReactorId == currentUserId.Value) ?? false),
             replies
         );
     }

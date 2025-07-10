@@ -31,12 +31,17 @@ public class GetUserPostsQueryHandler(IBlogRepository blogRepository, IChatUsers
             }
         }
 
-        var sortExpressions = new List<Common.Models.SortExpression>
+        var sortExpressions = new List<SortExpression>
         {
             new()
             {
+                PropertyName = nameof(Domain.Models.Blog.Post.IsPinned),
+                Direction = SortDirection.Desc
+            },
+            new()
+            {
                 PropertyName = nameof(Domain.Models.Blog.Post.CreatedAt),
-                Direction = request.Desc == true ? Common.Models.SortDirection.Desc : Common.Models.SortDirection.Asc
+                Direction = request.Desc == true ? SortDirection.Desc : SortDirection.Asc
             }
         };
 
