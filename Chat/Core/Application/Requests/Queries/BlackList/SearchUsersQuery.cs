@@ -1,6 +1,7 @@
 using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
+using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Application.Dtos.Responses.BlackList;
@@ -10,7 +11,7 @@ namespace Application.Requests.Queries.BlackList;
 
 public record SearchUsersQuery(Guid CurrentUserId, string? Query, PageSettings PageSettings) : IRequest;
 
-public class SearchUsersQueryHandler(IChatUsersRepository chatUsersRepository) : IRequestHandler<SearchUsersQuery>
+public class SearchUsersQueryHandler(IChatUsersRepository chatUsersRepository, IFilesSigningService filesSigningService) : IRequestHandler<SearchUsersQuery>
 {
     public async Task<IOperationResult> HandleAsync(SearchUsersQuery request, CancellationToken cancellationToken = default)
     {
@@ -20,13 +21,24 @@ public class SearchUsersQueryHandler(IChatUsersRepository chatUsersRepository) :
             request.CurrentUserId,
             cancellationToken);
 
-        var userDtos = usersWithBlockingInfo.Data.Select(userInfo => new UserSearchDto(
-            userInfo.User.Id,
-            userInfo.User.Username,
-            userInfo.User.Avatar?.Url,
-            userInfo.IsBlockedByMe,
-            userInfo.HasBlockedMe
-        )).ToList();
+        var userDtos = new List<UserSearchDto>();
+        foreach (var userInfo in usersWithBlockingInfo.Data)
+        {
+            string? avatarUrl = null;
+            if (!string.IsNullOrEmpty(userInfo.User.Avatar?.Url))
+            {
+                avatarUrl = await filesSigningService.GetSignedUrlAsync(userInfo.User.Avatar.Url, cancellationToken);
+            }
+
+            var userDto = new UserSearchDto(
+                userInfo.User.Id,
+                userInfo.User.Username,
+                avatarUrl,
+                userInfo.IsBlockedByMe,
+                userInfo.HasBlockedMe
+            );
+            userDtos.Add(userDto);
+        }
 
         var pagedResult = new PagedList<UserSearchDto>
         {

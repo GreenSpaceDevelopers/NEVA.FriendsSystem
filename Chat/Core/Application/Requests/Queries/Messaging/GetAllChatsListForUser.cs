@@ -2,6 +2,7 @@ using Application.Abstractions.Persistence.Repositories.Messaging;
 using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
+using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Common.Mappers;
 using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
@@ -12,7 +13,7 @@ namespace Application.Requests.Queries.Messaging;
 
 public record GetAllChatsForUserQuery(Guid UserId, PageSettings PageSettings, string? SearchQuery = null) : IRequest;
 
-public class GetAllChatsForUserQueryHandler(IChatUsersRepository chatUsersRepository, IChatsRepository chatsRepository) : IRequestHandler<GetAllChatsForUserQuery>
+public class GetAllChatsForUserQueryHandler(IChatUsersRepository chatUsersRepository, IChatsRepository chatsRepository, IFilesSigningService filesSigningService) : IRequestHandler<GetAllChatsForUserQuery>
 {
     public async Task<IOperationResult> HandleAsync(GetAllChatsForUserQuery request, CancellationToken cancellationToken = default)
     {
@@ -29,9 +30,12 @@ public class GetAllChatsForUserQueryHandler(IChatUsersRepository chatUsersReposi
             request.SearchQuery, 
             cancellationToken);
 
-        var chatDtos = chatsWithUnreadCount.Data
-            .Select(chatWithUnreadCount => chatWithUnreadCount.ToUserChatListItemDto(request.UserId))
-            .ToList();
+        var chatDtos = new List<UserChatListItemDto>();
+        foreach (var chatWithUnreadCount in chatsWithUnreadCount.Data)
+        {
+            var chatDto = await chatWithUnreadCount.ToUserChatListItemDtoAsync(request.UserId, filesSigningService, cancellationToken);
+            chatDtos.Add(chatDto);
+        }
 
         var result = new PagedList<UserChatListItemDto>
         {

@@ -50,7 +50,11 @@ public static class Chats
             .WithName("CreateChat")
             .WithOpenApi()
             .WithTags("Chats")
-            .DisableAntiforgery();
+            .DisableAntiforgery()
+            .Produces(201)
+            .Produces(400)
+            .Produces(404)
+            .Produces(409);
 
         app.MapGet("/chats/{chatId:guid}/messages", async (
             [FromRoute] Guid chatId,

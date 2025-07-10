@@ -63,6 +63,18 @@ public class CreateChatRequestHandler(
             return ResultsHelper.NotFound("No valid users found to create a chat.");
         }
 
+        if (chatUsers.Count == 2)
+        {
+            var user1Id = chatUsers[0].Id;
+            var user2Id = chatUsers[1].Id;
+            
+            var existingChatInfo = await chatUsersRepository.GetChatInfoBetweenUsersAsync(user1Id, user2Id, cancellationToken);
+            if (existingChatInfo?.ChatId is not null)
+            {
+                return ResultsHelper.Conflict("A private chat between these users already exists.");
+            }
+        }
+
         var adminId = request.CurrentUserId;
 
         string chatName;

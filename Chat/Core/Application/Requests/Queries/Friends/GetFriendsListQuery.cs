@@ -1,6 +1,7 @@
 using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
+using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Dtos.Requests.Shared;
 using Application.Dtos.Responses.Friends;
 using System.Text.Json;
@@ -11,9 +12,9 @@ using Application.Services.ApplicationInfrastructure.Results;
 
 namespace Application.Requests.Queries.Friends;
 
-public record GetFriendsListQuery(Guid UserId, PageSettings PageSettings, Guid? DisciplineId) : IRequest;
+public record GetFriendsListQuery(Guid UserId, PageSettings PageSettings, Guid? DisciplineId, string? SearchQuery = null) : IRequest;
 
-public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository, IConfiguration configuration, HttpClient httpClient) : IRequestHandler<GetFriendsListQuery>
+public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository, IConfiguration configuration, HttpClient httpClient, IFilesSigningService filesSigningService) : IRequestHandler<GetFriendsListQuery>
 {
     public async Task<IOperationResult> HandleAsync(GetFriendsListQuery request, CancellationToken cancellationToken = default)
     {
@@ -23,7 +24,7 @@ public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository
             return ResultsHelper.NotFound("User not found");
         }
 
-        var friendsWithBlockingInfo = await chatUsersRepository.GetFriendsWithBlockingInfoAsync(request.UserId, cancellationToken);
+        var friendsWithBlockingInfo = await chatUsersRepository.GetFriendsWithBlockingInfoAsync(request.UserId, request.SearchQuery, cancellationToken);
 
         if (request.DisciplineId.HasValue)
         {
@@ -53,10 +54,16 @@ public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository
         {
             var chatInfo = await chatUsersRepository.GetChatInfoBetweenUsersAsync(request.UserId, friendInfo.User.Id, cancellationToken);
             
+            string? avatarUrl = null;
+            if (!string.IsNullOrEmpty(friendInfo.User.Avatar?.Url))
+            {
+                avatarUrl = await filesSigningService.GetSignedUrlAsync(friendInfo.User.Avatar.Url, cancellationToken);
+            }
+            
             var friendDto = new FriendDto(
                 friendInfo.User.Id,
                 friendInfo.User.Username,
-                friendInfo.User.Avatar?.Url,
+                avatarUrl,
                 friendInfo.User.LastSeen,
                 friendInfo.IsBlockedByMe,
                 friendInfo.HasBlockedMe,

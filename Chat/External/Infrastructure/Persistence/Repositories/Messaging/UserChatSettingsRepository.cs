@@ -7,33 +7,28 @@ namespace Infrastructure.Persistence.Repositories.Messaging;
 
 public class UserChatSettingsRepository(ChatsDbContext dbContext) : IUserChatSettingsRepository
 {
-    public Task<UserChatSettings?> GetByUserAndChatAsync(Guid userId, Guid chatId, CancellationToken cancellationToken = default)
-    {
-        return dbContext.Set<UserChatSettings>()
-            .Include(ucs => ucs.DisabledUsers)
-            .FirstOrDefaultAsync(ucs => ucs.UserId == userId && ucs.ChatId == chatId, cancellationToken);
-    }
-
     public async Task<UserChatSettings> GetByUserAndChatOrCreateAsync(Guid userId, Guid chatId, CancellationToken cancellationToken = default)
     {
         var settings = await GetByUserAndChatAsync(userId, chatId, cancellationToken);
-        
-        if (settings == null)
+
+        if (settings != null)
         {
-            settings = new UserChatSettings
-            {
-                Id = Guid.NewGuid(),
-                UserId = userId,
-                ChatId = chatId,
-                IsMuted = false,
-                IsDisabled = false,
-                DisabledUsers = []
-            };
-            
-            await dbContext.Set<UserChatSettings>().AddAsync(settings, cancellationToken);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            return settings;
         }
         
+        settings = new UserChatSettings
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            ChatId = chatId,
+            IsMuted = false,
+            IsDisabled = false,
+            DisabledUsers = []
+        };
+            
+        await dbContext.Set<UserChatSettings>().AddAsync(settings, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
         return settings;
     }
 
@@ -53,5 +48,12 @@ public class UserChatSettingsRepository(ChatsDbContext dbContext) : IUserChatSet
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return dbContext.SaveChangesAsync(cancellationToken);
+    }
+    
+    private Task<UserChatSettings?> GetByUserAndChatAsync(Guid userId, Guid chatId, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Set<UserChatSettings>()
+            .Include(ucs => ucs.DisabledUsers)
+            .FirstOrDefaultAsync(ucs => ucs.UserId == userId && ucs.ChatId == chatId, cancellationToken);
     }
 } 

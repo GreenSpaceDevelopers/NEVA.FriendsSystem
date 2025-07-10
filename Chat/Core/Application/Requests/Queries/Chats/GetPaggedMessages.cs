@@ -1,6 +1,8 @@
 using Application.Abstractions.Persistence.Repositories.Messaging;
+using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
+using Application.Common.Mappers;
 using Application.Dtos.Responses.Chats;
 using Application.Services.ApplicationInfrastructure.Results;
 
@@ -8,7 +10,7 @@ namespace Application.Requests.Queries.Chats;
 
 public record GetPaggedMessages(Guid ChatId, Guid UserId, int Skip, int Take) : IRequest;
 
-public class GetPaggedMessagesHandler(IChatsRepository chatsRepository) : IRequestHandler<GetPaggedMessages>
+public class GetPaggedMessagesHandler(IChatsRepository chatsRepository, IFilesSigningService filesSigningService) : IRequestHandler<GetPaggedMessages>
 {
     public async Task<IOperationResult> HandleAsync(GetPaggedMessages request, CancellationToken cancellationToken = default)
     {
@@ -26,18 +28,12 @@ public class GetPaggedMessagesHandler(IChatsRepository chatsRepository) : IReque
         
         var messages = await chatsRepository.GetMessagesByChatIdNoTrackingAsync(request.ChatId, request.Take, request.Skip, cancellationToken);
         
-        var messageDtos = messages.Select(m => new MessageDto(
-            m.Id,
-            m.ChatId,
-            m.SenderId,
-            m.Sender.Username,
-            m.Sender.Avatar?.Url,
-            m.Content,
-            m.Attachment?.Url,
-            m.CreatedAt,
-            m.Replies.Count,
-            m.Reactions.Count
-        )).ToList();
+        var messageDtos = new List<MessageDto>();
+        foreach (var message in messages)
+        {
+            var messageDto = await message.ToMessageDtoAsync(filesSigningService, cancellationToken);
+            messageDtos.Add(messageDto);
+        }
 
         return ResultsHelper.Ok(new
         {

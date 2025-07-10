@@ -2,6 +2,7 @@ using Application.Dtos.Messaging;
 using Application.Dtos.Responses.Chats;
 using Application.Messaging.Proto.Messages;
 using Domain.Models.Messaging;
+using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 
 namespace Application.Common.Mappers;
 
@@ -17,6 +18,34 @@ public static class Messages
             message.Sender.Avatar?.Url,
             message.Content,
             message.Attachment?.Url,
+            message.CreatedAt,
+            message.Replies.Count,
+            message.Reactions.Count
+        );
+    }
+
+    public static async Task<MessageDto> ToMessageDtoAsync(this Message message, IFilesSigningService filesSigningService, CancellationToken cancellationToken = default)
+    {
+        string? avatarUrl = null;
+        if (!string.IsNullOrEmpty(message.Sender.Avatar?.Url))
+        {
+            avatarUrl = await filesSigningService.GetSignedUrlAsync(message.Sender.Avatar.Url, cancellationToken);
+        }
+
+        string? attachmentUrl = null;
+        if (!string.IsNullOrEmpty(message.Attachment?.Url))
+        {
+            attachmentUrl = await filesSigningService.GetSignedUrlAsync(message.Attachment.Url, cancellationToken);
+        }
+
+        return new MessageDto(
+            message.Id,
+            message.ChatId,
+            message.SenderId,
+            message.Sender.Username,
+            avatarUrl,
+            message.Content,
+            attachmentUrl,
             message.CreatedAt,
             message.Replies.Count,
             message.Reactions.Count
@@ -59,5 +88,6 @@ public static class Messages
     }
 
     public static MessageToRoute Unverified(this RawMessage message) => new(message.ConnectionId!, Status: Status.Unverified);
+
     public static MessageToRoute Unauthorized(this RawMessage message) => new(message.ConnectionId!, Status: Status.Unauthorized);
 }

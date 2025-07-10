@@ -2,43 +2,12 @@ using Application.Abstractions.Persistence.Repositories.Messaging;
 using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Domain.Models.Messaging;
-using Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories.Messaging;
 
 public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(dbContext), IChatsRepository
 {
-    public Task<PagedList<Chat>> GetUserChatsNoTrackingAsync(
-        Guid userId,
-        PageSettings pageSettings,
-        string? searchQuery = null,
-        CancellationToken cancellationToken = default)
-    {
-        var query = dbContext.Set<Chat>()
-            .AsNoTracking()
-            .AsSplitQuery()
-            .Include(c => c.ChatPicture)
-            .Include(c => c.Users)
-            .Include(c => c.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
-            .ThenInclude(m => m.Sender)
-            .Include(c => c.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
-            .ThenInclude(m => m.Attachment)
-            .Where(c => c.Users.Any(u => u.Id == userId));
-
-        if (!string.IsNullOrWhiteSpace(searchQuery))
-        {
-            query = query.Where(c => 
-                c.Name.Contains(searchQuery) || 
-                c.Users.Any(u => u.Username.Contains(searchQuery))
-            );
-        }
-
-        return query
-            .OrderByDescending(c => c.LastMessageDate)
-            .ToPagedList(pageSettings, cancellationToken);
-    }
-
     public async Task<Guid[]> GetUserIdsFromChatNoTrackingAsync(string messageChatId)
     {
         return await dbContext.Set<Chat>()
@@ -119,7 +88,6 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
             .Take(pageSettings.Take)
             .ToListAsync(cancellationToken);
 
-        // Получаем количество непрочитанных сообщений для каждого чата
         var chatsWithUnreadCount = new List<ChatWithUnreadCount>();
         foreach (var chat in chats)
         {
@@ -134,13 +102,19 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
         };
     }
 
-    public async Task<int> GetUnreadMessagesCountAsync(Guid userId, Guid chatId, CancellationToken cancellationToken = default)
+    public Task<Message?> GetLastMessageInChatAsync(Guid chatId, CancellationToken cancellationToken = default)
     {
-        // Получаем настройки пользователя для данного чата
+        return dbContext.Set<Message>()
+            .Where(m => m.ChatId == chatId)
+            .OrderByDescending(m => m.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+    
+    private async Task<int> GetUnreadMessagesCountAsync(Guid userId, Guid chatId, CancellationToken cancellationToken = default)
+    {
         var userChatSettings = await dbContext.Set<UserChatSettings>()
             .FirstOrDefaultAsync(ucs => ucs.UserId == userId && ucs.ChatId == chatId, cancellationToken);
 
-        // Если настроек нет или LastReadMessageId не установлен, считаем все сообщения непрочитанными
         if (userChatSettings?.LastReadMessageId == null)
         {
             return await dbContext.Set<Message>()
@@ -148,7 +122,6 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
                 .CountAsync(cancellationToken);
         }
 
-        // Получаем дату последнего прочитанного сообщения
         var lastReadMessage = await dbContext.Set<Message>()
             .Where(m => m.Id == userChatSettings.LastReadMessageId.Value)
             .Select(m => m.CreatedAt)
@@ -156,25 +129,15 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
 
         if (lastReadMessage == default)
         {
-            // Если последнее прочитанное сообщение не найдено, считаем все сообщения непрочитанными
             return await dbContext.Set<Message>()
                 .Where(m => m.ChatId == chatId && m.SenderId != userId)
                 .CountAsync(cancellationToken);
         }
 
-        // Считаем сообщения после последнего прочитанного
         return await dbContext.Set<Message>()
             .Where(m => m.ChatId == chatId && 
-                       m.SenderId != userId && 
-                       m.CreatedAt > lastReadMessage)
+                        m.SenderId != userId && 
+                        m.CreatedAt > lastReadMessage)
             .CountAsync(cancellationToken);
-    }
-
-    public Task<Message?> GetLastMessageInChatAsync(Guid chatId, CancellationToken cancellationToken = default)
-    {
-        return dbContext.Set<Message>()
-            .Where(m => m.ChatId == chatId)
-            .OrderByDescending(m => m.CreatedAt)
-            .FirstOrDefaultAsync(cancellationToken);
     }
 }

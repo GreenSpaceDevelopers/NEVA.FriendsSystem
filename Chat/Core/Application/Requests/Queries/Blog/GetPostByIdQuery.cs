@@ -1,5 +1,6 @@
 using Application.Abstractions.Persistence.Repositories.Blog;
 using Application.Abstractions.Persistence.Repositories.Users;
+using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Dtos.Responses.Blog;
@@ -9,7 +10,7 @@ namespace Application.Requests.Queries.Blog;
 
 public record GetPostByIdQuery(Guid PostId, Guid? CurrentUserId = null) : IRequest;
 
-public class GetPostByIdQueryHandler(IBlogRepository blogRepository, IChatUsersRepository chatUsersRepository) : IRequestHandler<GetPostByIdQuery>
+public class GetPostByIdQueryHandler(IBlogRepository blogRepository, IChatUsersRepository chatUsersRepository, IFilesSigningService filesSigningService) : IRequestHandler<GetPostByIdQuery>
 {
     public async Task<IOperationResult> HandleAsync(GetPostByIdQuery request, CancellationToken cancellationToken = default)
     {
@@ -28,12 +29,20 @@ public class GetPostByIdQueryHandler(IBlogRepository blogRepository, IChatUsersR
             }
         }
 
+        var attachmentUrl = post.Attachment?.Url != null 
+            ? await filesSigningService.GetSignedUrlAsync(post.Attachment.Url, cancellationToken) 
+            : null;
+            
+        var authorAvatarUrl = post.Author.Avatar?.Url != null 
+            ? await filesSigningService.GetSignedUrlAsync(post.Author.Avatar.Url, cancellationToken) 
+            : null;
+
         var currentUserId = request.CurrentUserId;
         var dto = new PostListItemDto(
             post.Id,
             post.Title ?? string.Empty,
             post.Content,
-            post.Attachment?.Url,
+            attachmentUrl,
             post.CreatedAt,
             post.Comments?.Count ?? 0,
             post.Reactions?.Count ?? 0,
@@ -41,7 +50,7 @@ public class GetPostByIdQueryHandler(IBlogRepository blogRepository, IChatUsersR
             post.IsCommentsEnabled,
             post.Author.Id,
             post.Author.Username,
-            post.Author.Avatar?.Url,
+            authorAvatarUrl,
             currentUserId.HasValue && (post.Reactions?.Any(r => r.ReactorId == currentUserId.Value) ?? false)
         );
 

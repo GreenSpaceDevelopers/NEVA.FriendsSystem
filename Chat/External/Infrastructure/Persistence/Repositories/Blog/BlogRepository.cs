@@ -67,7 +67,6 @@ public class BlogRepository(ChatsDbContext dbContext) : BaseRepository<Post>(dbC
         CancellationToken cancellationToken = default)
     {
         var query = dbContext.Set<Comment>()
-            .AsNoTracking()
             .AsSplitQuery()
             .Include(c => c.CommentReactions)
             .Include(c => c.Author)

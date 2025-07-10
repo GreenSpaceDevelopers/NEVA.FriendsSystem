@@ -8,12 +8,6 @@ public class NotificationSettingsRepository(ChatsDbContext dbContext) : BaseRepo
 {
     private readonly ChatsDbContext _dbContext = dbContext;
 
-    public async Task<NotificationSettings?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
-    {
-        return await _dbContext.Set<NotificationSettings>()
-            .FirstOrDefaultAsync(ns => ns.UserId == userId, cancellationToken);
-    }
-
     public async Task<NotificationSettings> GetByUserIdOrCreateAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var settings = await GetByUserIdAsync(userId, cancellationToken);
@@ -50,5 +44,11 @@ public class NotificationSettingsRepository(ChatsDbContext dbContext) : BaseRepo
         }
         
         return settings;
+    }
+    
+    private async Task<NotificationSettings?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Set<NotificationSettings>()
+            .FirstOrDefaultAsync(ns => ns.UserId == userId, cancellationToken);
     }
 } 

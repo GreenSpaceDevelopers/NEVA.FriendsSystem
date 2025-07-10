@@ -3,29 +3,12 @@ using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Domain.Models.Users;
 using Domain.Models.Messaging;
-using Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories.Users;
 
 public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<ChatUser>(dbContext), IChatUsersRepository
 {
-    public Task<PagedList<ChatUser>> GetByUsernamePagedAsync(string? username, PageSettings requestPageSettings, Guid currentUserId, IEnumerable<Guid> blockedUserIds, CancellationToken cancellationToken = default)
-    {
-        IQueryable<ChatUser> query = dbContext.Set<ChatUser>()
-            .Where(user => user.Id != currentUserId)
-            .Where(user => !blockedUserIds.Contains(user.Id))
-            .OrderBy(user => user.Username);
-
-        if (!string.IsNullOrEmpty(username))
-        {
-            query = query.Where(user => user.Username.StartsWith(username));
-        }
-        
-        return query
-            .ToPagedList(requestPageSettings, cancellationToken);
-    }
-
     public Task<ChatUser?> GetByIdWithFriendsAsync(Guid requestUserId, CancellationToken cancellationToken)
     {
         return dbContext.Set<ChatUser>()
@@ -68,31 +51,6 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
             .SingleOrDefaultAsync(user => user.Id == requestUserId, cancellationToken: cancellationToken);
     }
 
-    public Task<List<ChatUser>> GetBlockedUsersAsync(
-        Guid requestUserId,
-        string queryString,
-        PageSettings requestPageSettings,
-        CancellationToken cancellationToken)
-    {
-        IQueryable<ChatUser> query = dbContext.Set<ChatUser>()
-            .AsNoTracking()
-            .AsSplitQuery()
-            .Where(u => u.BlockedUsers.Any(b => b.Id == requestUserId))
-            .Include(u => u.AspNetUser)
-            .Include(u => u.Avatar)
-            .OrderBy(u => u.Username);
-
-        if (!string.IsNullOrEmpty(queryString))
-        {
-            query = query.Where(u => u.Username.Contains(queryString));
-        }
-
-        return query
-            .Skip(requestPageSettings.Skip)
-            .Take(requestPageSettings.Take)
-            .ToListAsync(cancellationToken);
-    }
-
     public Task<bool> IsUsernameUniqueAsync(string username, CancellationToken cancellationToken = default)
     {
         return dbContext.Set<ChatUser>()
@@ -118,6 +76,7 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
     {
         var user = await dbContext.Set<ChatUser>()
             .Include(u => u.BlockedUsers)
+            .ThenInclude(bu => bu.Avatar)
             .SingleOrDefaultAsync(u => u.Id == requestUserId, cancellationToken);
 
         if (user == null)
@@ -158,54 +117,39 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
             .AnyAsync(u => u.BlockedUsers.Any(b => b.Id == userId), cancellationToken);
     }
 
-    public Task<PagedList<ChatUser>> SearchUsersWithBlockingLogicAsync(string? username, PageSettings requestPageSettings, Guid currentUserId, CancellationToken cancellationToken = default)
-    {
-        IQueryable<ChatUser> query = dbContext.Set<ChatUser>()
-            .Where(user => user.Id != currentUserId)
-            .Where(user => user.BlockedUsers.All(b => b.Id != currentUserId))
-            .OrderBy(user => user.Username);
-
-        if (!string.IsNullOrEmpty(username))
-        {
-            query = query.Where(user => user.Username.StartsWith(username));
-        }
-        
-        return query
-            .ToPagedList(requestPageSettings, cancellationToken);
-    }
-
     public async Task<PagedList<UserWithBlockingInfo>> SearchUsersWithBlockingInfoAsync(string? username, PageSettings requestPageSettings, Guid currentUserId, CancellationToken cancellationToken = default)
     {
-        var query = dbContext.Set<ChatUser>()
+        // Сначала загружаем пользователей с аватарками
+        var usersQuery = dbContext.Set<ChatUser>()
+            .Include(user => user.Avatar)
             .Where(user => user.Id != currentUserId)
-            .Where(user => user.BlockedUsers.All(b => b.Id != currentUserId))
-            .Select(user => new
-            {
-                User = user,
-                IsBlockedByMe = dbContext.Set<ChatUser>()
-                    .Where(cu => cu.Id == currentUserId)
-                    .Any(cu => cu.BlockedUsers.Any(bu => bu.Id == user.Id)),
-                HasBlockedMe = user.BlockedUsers.Any(b => b.Id == currentUserId)
-            });
+            .Where(user => user.BlockedUsers.All(b => b.Id != currentUserId));
 
         if (!string.IsNullOrEmpty(username))
         {
-            query = query.Where(x => x.User.Username.StartsWith(username));
+            usersQuery = usersQuery.Where(user => user.Username.StartsWith(username));
         }
 
-        var orderedQuery = query.OrderBy(x => x.User.Username);
-        var totalCount = await orderedQuery.CountAsync(cancellationToken);
+        var orderedUsersQuery = usersQuery.OrderBy(user => user.Username);
+        var totalCount = await orderedUsersQuery.CountAsync(cancellationToken);
         
-        var pagedData = await orderedQuery
+        var pagedUsers = await orderedUsersQuery
             .Skip(requestPageSettings.Skip)
             .Take(requestPageSettings.Take)
             .ToListAsync(cancellationToken);
 
-        var result = pagedData.Select(x => new UserWithBlockingInfo(
-            x.User,
-            x.IsBlockedByMe,
-            x.HasBlockedMe
-        )).ToList();
+        // Теперь формируем результат с информацией о блокировке
+        var result = new List<UserWithBlockingInfo>();
+        foreach (var user in pagedUsers)
+        {
+            var isBlockedByMe = await dbContext.Set<ChatUser>()
+                .Where(cu => cu.Id == currentUserId)
+                .AnyAsync(cu => cu.BlockedUsers.Any(bu => bu.Id == user.Id), cancellationToken);
+
+            var hasBlockedMe = user.BlockedUsers.Any(b => b.Id == currentUserId);
+
+            result.Add(new UserWithBlockingInfo(user, isBlockedByMe, hasBlockedMe));
+        }
 
         return new PagedList<UserWithBlockingInfo>
         {
@@ -214,9 +158,11 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
         };
     }
 
-    public async Task<List<UserWithBlockingInfo>> GetFriendsWithBlockingInfoAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<List<UserWithBlockingInfo>> GetFriendsWithBlockingInfoAsync(Guid userId, string? searchQuery, CancellationToken cancellationToken = default)
     {
-        var result = await dbContext.Set<ChatUser>()
+        var query = dbContext.Set<ChatUser>()
+            .Include(user => user.Friends)
+            .ThenInclude(friend => friend.Avatar)
             .Where(user => user.Id == userId)
             .SelectMany(user => user.Friends)
             .Select(friend => new
@@ -226,7 +172,14 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
                     .Where(cu => cu.Id == userId)
                     .Any(cu => cu.BlockedUsers.Any(bu => bu.Id == friend.Id)), // Current user blocked this friend
                 HasBlockedMe = friend.BlockedUsers.Any(b => b.Id == userId) // This friend blocked current user
-            })
+            });
+
+        if (!string.IsNullOrEmpty(searchQuery))
+        {
+            query = query.Where(x => x.User.Username.Contains(searchQuery));
+        }
+
+        var result = await query
             .OrderBy(x => x.User.Username)
             .ToListAsync(cancellationToken);
 

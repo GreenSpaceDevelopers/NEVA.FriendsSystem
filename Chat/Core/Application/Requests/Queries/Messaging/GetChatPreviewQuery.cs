@@ -1,6 +1,7 @@
 using Application.Abstractions.Persistence.Repositories.Messaging;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
+using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Dtos.Responses.Chats;
 using Application.Services.ApplicationInfrastructure.Results;
 
@@ -8,7 +9,7 @@ namespace Application.Requests.Queries.Messaging;
 
 public record GetChatPreviewQuery(Guid UserId, Guid ChatId) : IRequest;
 
-public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository) : IRequestHandler<GetChatPreviewQuery>
+public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository, IFilesSigningService filesSigningService) : IRequestHandler<GetChatPreviewQuery>
 {
     public async Task<IOperationResult> HandleAsync(GetChatPreviewQuery request, CancellationToken cancellationToken = default)
     {
@@ -23,7 +24,17 @@ public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository) : IReq
             return ResultsHelper.Forbidden("You are not a member of this chat");
         }
 
-        var participants = chat.Users.Select(u => new ChatParticipantDto(u.Id, u.Username, u.Avatar?.Url)).ToList();
+        var participants = new List<ChatParticipantDto>();
+        foreach (var user in chat.Users)
+        {
+            string? avatarUrl = null;
+            if (!string.IsNullOrEmpty(user.Avatar?.Url))
+            {
+                avatarUrl = await filesSigningService.GetSignedUrlAsync(user.Avatar.Url, cancellationToken);
+            }
+
+            participants.Add(new ChatParticipantDto(user.Id, user.Username, avatarUrl));
+        }
 
         var isGroup = chat.Users.Count > 2;
         string displayName;
@@ -37,13 +48,19 @@ public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository) : IReq
             displayName = chat.Name;
         }
 
+        string? chatImageUrl = null;
+        if (!string.IsNullOrEmpty(chat.ChatPicture?.Url))
+        {
+            chatImageUrl = await filesSigningService.GetSignedUrlAsync(chat.ChatPicture.Url, cancellationToken);
+        }
+
         var lastMessage = chat.Messages.FirstOrDefault();
         var lastMsgPreview = new LastChatMessagePreview(lastMessage?.Sender.Username ?? string.Empty,
             lastMessage?.Content ?? string.Empty,
             lastMessage?.Attachment is not null,
             lastMessage?.CreatedAt ?? default);
 
-        var dto = new ChatDetailsDto(chat.Id, displayName, chat.ChatPicture?.Url, isGroup, participants, lastMsgPreview);
+        var dto = new ChatDetailsDto(chat.Id, displayName, chatImageUrl, isGroup, participants, lastMsgPreview);
 
         return ResultsHelper.Ok(dto);
     }

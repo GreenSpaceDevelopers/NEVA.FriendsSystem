@@ -1,6 +1,7 @@
 using Application.Abstractions.Persistence.Repositories.Messaging;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
+using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Common.Mappers;
 using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
@@ -11,9 +12,7 @@ namespace Application.Requests.Queries.Messaging;
 
 public record GetChatMessagesQuery(Guid ChatId, Guid UserId, PageSettings PageSettings, bool Desc = true) : IRequest;
 
-public class GetChatMessagesQueryHandler(
-    IChatsRepository chatsRepository,
-    IUserChatSettingsRepository userChatSettingsRepository) : IRequestHandler<GetChatMessagesQuery>
+public class GetChatMessagesQueryHandler(IChatsRepository chatsRepository, IUserChatSettingsRepository userChatSettingsRepository, IFilesSigningService filesSigningService) : IRequestHandler<GetChatMessagesQuery>
 {
     public async Task<IOperationResult> HandleAsync(GetChatMessagesQuery request, CancellationToken cancellationToken = default)
     {
@@ -53,7 +52,12 @@ public class GetChatMessagesQueryHandler(
             }
         }
 
-        var messagesDtos = messages.Select(message => message.ToMessageDto()).ToList();
+        var messagesDtos = new List<MessageDto>();
+        foreach (var message in messages)
+        {
+            var messageDto = await message.ToMessageDtoAsync(filesSigningService, cancellationToken);
+            messagesDtos.Add(messageDto);
+        }
 
         var pagedResult = new PagedList<MessageDto>
         {
