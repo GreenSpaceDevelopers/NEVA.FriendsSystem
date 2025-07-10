@@ -1,4 +1,5 @@
 using Application.Abstractions.Services.ApplicationInfrastructure.Data;
+using Application.Abstractions.Services.External;
 using Application.Dtos.Responses.Profile;
 using Domain.Models.Users;
 
@@ -6,7 +7,7 @@ namespace Application.Common.Mappers;
 
 public static class Profile
 {
-    public static ProfileDto ToProfileDto(this ChatUser user, bool canViewFullProfile, UserPrivacySettingsDto privacySettings, bool isBlockedByMe, bool hasBlockedMe, bool isFriendRequestSentByMe, bool isFriend, Guid? chatId, bool isChatDisabled, bool isChatMuted)
+    public static ProfileDto ToProfileDto(this ChatUser user, bool canViewFullProfile, UserPrivacySettingsDto privacySettings, bool isBlockedByMe, bool hasBlockedMe, bool isFriendRequestSentByMe, bool isFriend, Guid? chatId, bool isChatDisabled, bool isChatMuted, IReadOnlyList<LinkedAccountDto> linkedAccounts)
     {
         return new ProfileDto(
             user.Id,
@@ -25,11 +26,12 @@ public static class Profile
             isFriend,
             chatId,
             isChatDisabled,
-            isChatMuted
+            isChatMuted,
+            linkedAccounts
         );
     }
 
-    public static async Task<ProfileDto> ToProfileDtoAsync(this ChatUser user, bool canViewFullProfile, UserPrivacySettingsDto privacySettings, bool isBlockedByMe, bool hasBlockedMe, bool isFriendRequestSentByMe, bool isFriend, Guid? chatId, bool isChatDisabled, bool isChatMuted, IFilesSigningService filesSigningService, CancellationToken cancellationToken = default)
+    public static async Task<ProfileDto> ToProfileDtoAsync(this ChatUser user, bool canViewFullProfile, UserPrivacySettingsDto privacySettings, bool isBlockedByMe, bool hasBlockedMe, bool isFriendRequestSentByMe, bool isFriend, Guid? chatId, bool isChatDisabled, bool isChatMuted, IFilesSigningService filesSigningService, ILinkedAccountsService linkedAccountsService, CancellationToken cancellationToken = default)
     {
         string? avatarUrl = null;
         string? coverUrl = null;
@@ -43,6 +45,10 @@ public static class Profile
         {
             coverUrl = await filesSigningService.GetSignedUrlAsync(user.Cover.Url, cancellationToken);
         }
+
+        var linkedAccounts = canViewFullProfile 
+            ? await linkedAccountsService.GetLinkedAccountsAsync(user.Id, cancellationToken)
+            : Array.Empty<LinkedAccountDto>();
 
         return new ProfileDto(
             user.Id,
@@ -61,11 +67,12 @@ public static class Profile
             isFriend,
             chatId,
             isChatDisabled,
-            isChatMuted
+            isChatMuted,
+            linkedAccounts
         );
     }
 
-    public static OwnProfileDto ToOwnProfileDto(this ChatUser user)
+    public static OwnProfileDto ToOwnProfileDto(this ChatUser user, IReadOnlyList<LinkedAccountDto> linkedAccounts)
     {
         return new OwnProfileDto(
             user.Id,
@@ -82,11 +89,12 @@ public static class Profile
                 user.PrivacySettings.FriendsListVisibility,
                 user.PrivacySettings.CommentsPermission,
                 user.PrivacySettings.DirectMessagesPermission
-            )
+            ),
+            linkedAccounts
         );
     }
 
-    public static async Task<OwnProfileDto> ToOwnProfileDtoAsync(this ChatUser user, IFilesSigningService filesSigningService, CancellationToken cancellationToken = default)
+    public static async Task<OwnProfileDto> ToOwnProfileDtoAsync(this ChatUser user, IFilesSigningService filesSigningService, ILinkedAccountsService linkedAccountsService, CancellationToken cancellationToken = default)
     {
         string? avatarUrl = null;
         string? coverUrl = null;
@@ -100,6 +108,8 @@ public static class Profile
         {
             coverUrl = await filesSigningService.GetSignedUrlAsync(user.Cover.Url, cancellationToken);
         }
+
+        var linkedAccounts = await linkedAccountsService.GetLinkedAccountsAsync(user.Id, cancellationToken);
 
         return new OwnProfileDto(
             user.Id,
@@ -116,7 +126,8 @@ public static class Profile
                 user.PrivacySettings.FriendsListVisibility,
                 user.PrivacySettings.CommentsPermission,
                 user.PrivacySettings.DirectMessagesPermission
-            )
+            ),
+            linkedAccounts
         );
     }
 }

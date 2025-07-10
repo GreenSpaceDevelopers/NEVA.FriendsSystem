@@ -52,7 +52,9 @@ public record ProfileDto(
     [SwaggerSchema(Description = "Отключен ли чат с этим пользователем")]
     bool IsChatDisabled,
     [SwaggerSchema(Description = "Отключены ли уведомления от этого чата")]
-    bool IsChatMuted
+    bool IsChatMuted,
+    [SwaggerSchema(Description = "Список привязанных аккаунтов (Steam, Discord, Telegram)")]
+    IReadOnlyList<LinkedAccountDto> LinkedAccounts
 );
 
 /// <summary>

@@ -119,11 +119,26 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
 
     public async Task<PagedList<UserWithBlockingInfo>> SearchUsersWithBlockingInfoAsync(string? username, PageSettings requestPageSettings, Guid currentUserId, CancellationToken cancellationToken = default)
     {
-        // Сначала загружаем пользователей с аватарками
+        var currentUserFriendsAndBlocked = await dbContext.Set<ChatUser>()
+            .Where(u => u.Id == currentUserId)
+            .Select(u => new 
+            {
+                FriendIds = u.Friends.Select(f => f.Id).ToList(),
+                BlockedUserIds = u.BlockedUsers.Select(b => b.Id).ToList()
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (currentUserFriendsAndBlocked == null)
+        {
+            return new PagedList<UserWithBlockingInfo> { Data = new List<UserWithBlockingInfo>(), TotalCount = 0 };
+        }
+
         var usersQuery = dbContext.Set<ChatUser>()
             .Include(user => user.Avatar)
             .Where(user => user.Id != currentUserId)
-            .Where(user => user.BlockedUsers.All(b => b.Id != currentUserId));
+            .Where(user => user.BlockedUsers.All(b => b.Id != currentUserId))
+            .Where(user => !currentUserFriendsAndBlocked.FriendIds.Contains(user.Id))
+            .Where(user => !currentUserFriendsAndBlocked.BlockedUserIds.Contains(user.Id));
 
         if (!string.IsNullOrEmpty(username))
         {
@@ -138,15 +153,11 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
             .Take(requestPageSettings.Take)
             .ToListAsync(cancellationToken);
 
-        // Теперь формируем результат с информацией о блокировке
         var result = new List<UserWithBlockingInfo>();
         foreach (var user in pagedUsers)
         {
-            var isBlockedByMe = await dbContext.Set<ChatUser>()
-                .Where(cu => cu.Id == currentUserId)
-                .AnyAsync(cu => cu.BlockedUsers.Any(bu => bu.Id == user.Id), cancellationToken);
-
-            var hasBlockedMe = user.BlockedUsers.Any(b => b.Id == currentUserId);
+            const bool isBlockedByMe = false;
+            const bool hasBlockedMe = false;
 
             result.Add(new UserWithBlockingInfo(user, isBlockedByMe, hasBlockedMe));
         }

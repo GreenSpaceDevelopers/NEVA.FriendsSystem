@@ -38,10 +38,13 @@ public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository, IFiles
 
         var isGroup = chat.Users.Count > 2;
         string displayName;
+        Guid? friendId = null;
+        
         if (!isGroup && chat.Users.Count == 2)
         {
             var interlocutor = chat.Users.First(u => u.Id != request.UserId);
             displayName = interlocutor.Username;
+            friendId = interlocutor.Id;
         }
         else
         {
@@ -60,7 +63,7 @@ public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository, IFiles
             lastMessage?.Attachment is not null,
             lastMessage?.CreatedAt ?? default);
 
-        var dto = new ChatDetailsDto(chat.Id, displayName, chatImageUrl, isGroup, participants, lastMsgPreview);
+        var dto = new ChatDetailsDto(chat.Id, displayName, chatImageUrl, isGroup, participants, lastMsgPreview, friendId);
 
         return ResultsHelper.Ok(dto);
     }

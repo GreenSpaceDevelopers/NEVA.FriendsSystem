@@ -13,5 +13,6 @@ public record OwnProfileDto(
     [property: SwaggerSchema(Description = "Дата рождения")] DateTime? DateOfBirth,
     [property: SwaggerSchema(Description = "URL аватара пользователя (может быть null)")] string? AvatarUrl,
     [property: SwaggerSchema(Description = "URL обложки профиля (может быть null)")] string? CoverUrl,
-    [property: SwaggerSchema(Description = "Настройки приватности пользователя")] UserPrivacySettingsDto PrivacySettings
+    [property: SwaggerSchema(Description = "Настройки приватности пользователя")] UserPrivacySettingsDto PrivacySettings,
+    [property: SwaggerSchema(Description = "Список привязанных аккаунтов (Steam, Discord, Telegram)")] IReadOnlyList<LinkedAccountDto> LinkedAccounts
 ); 

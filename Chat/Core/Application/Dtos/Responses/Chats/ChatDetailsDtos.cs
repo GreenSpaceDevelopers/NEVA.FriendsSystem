@@ -14,4 +14,6 @@ public record ChatDetailsDto(
     string? ImageUrl,
     bool IsGroup,
     IReadOnlyCollection<ChatParticipantDto> Participants,
-    LastChatMessagePreview LastMessagePreview); 
+    LastChatMessagePreview LastMessagePreview,
+    [SwaggerSchema(Description = "ID друга для личного чата (null для групповых чатов)")]
+    Guid? FriendId); 

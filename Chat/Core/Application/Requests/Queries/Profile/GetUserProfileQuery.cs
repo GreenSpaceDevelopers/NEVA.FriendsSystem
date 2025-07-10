@@ -2,6 +2,7 @@ using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Abstractions.Services.ApplicationInfrastructure.Data;
+using Application.Abstractions.Services.External;
 using Application.Common.Mappers;
 using Application.Dtos.Responses.Profile;
 using Application.Services.ApplicationInfrastructure.Results;
@@ -11,7 +12,7 @@ namespace Application.Requests.Queries.Profile;
 
 public record GetUserProfileQuery(Guid RequestedUserId, Guid CurrentUserId) : IRequest;
 
-public class GetUserProfileQueryHandler(IChatUsersRepository chatUsersRepository, IFilesSigningService filesSigningService) : IRequestHandler<GetUserProfileQuery>
+public class GetUserProfileQueryHandler(IChatUsersRepository chatUsersRepository, IFilesSigningService filesSigningService, ILinkedAccountsService linkedAccountsService) : IRequestHandler<GetUserProfileQuery>
 {
     public async Task<IOperationResult> HandleAsync(GetUserProfileQuery request, CancellationToken cancellationToken = default)
     {
@@ -61,6 +62,7 @@ public class GetUserProfileQueryHandler(IChatUsersRepository chatUsersRepository
             chatInfo?.IsChatDisabled ?? false,
             chatInfo?.IsChatMuted ?? false,
             filesSigningService,
+            linkedAccountsService,
             cancellationToken);
 
         return ResultsHelper.Ok(profileDto);
