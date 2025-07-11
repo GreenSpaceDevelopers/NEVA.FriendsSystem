@@ -22,6 +22,7 @@ public class ChatUser : IEntity
     public Guid Id { get; set; }
     public AspNetUser AspNetUser { get; set; }
     public string Username { get; set; }
+    public string PersonalLink { get; set; } = string.Empty;
     public string? Name { get; set; }
     public string? Surname { get; set; }
     public string? MiddleName { get; set; }

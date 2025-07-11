@@ -44,6 +44,24 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
             .SingleOrDefaultAsync(user => user.Id == requestUserId, cancellationToken: cancellationToken);
     }
 
+    public Task<ChatUser?> GetByPersonalLinkWithFriendsAsync(string personalLink, CancellationToken cancellationToken)
+    {
+        return dbContext.Set<ChatUser>()
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(user => user.AspNetUser)
+            .Include(user => user.Friends)
+            .ThenInclude(f => f.Avatar)
+            .Include(user => user.FriendRequests)
+            .ThenInclude(fr => fr.Avatar)
+            .Include(user => user.BlockedUsers)
+            .Include(user => user.WaitingFriendRequests)
+            .Include(user => user.Avatar)
+            .Include(user => user.Cover)
+            .Include(user => user.PrivacySettings)
+            .SingleOrDefaultAsync(user => user.PersonalLink == personalLink, cancellationToken: cancellationToken);
+    }
+
     public Task<ChatUser?> GetByIdWithBlockerUsersAsync(Guid requestUserId, CancellationToken cancellationToken)
     {
         return dbContext.Set<ChatUser>()
@@ -55,6 +73,13 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
     {
         return dbContext.Set<ChatUser>()
             .AnyAsync(user => user.Username == username, cancellationToken)
+            .ContinueWith(task => !task.Result, cancellationToken);
+    }
+
+    public Task<bool> IsPersonalLinkUniqueAsync(string personalLink, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Set<ChatUser>()
+            .AnyAsync(user => user.PersonalLink == personalLink, cancellationToken)
             .ContinueWith(task => !task.Result, cancellationToken);
     }
 
@@ -119,16 +144,17 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
 
     public async Task<PagedList<UserWithBlockingInfo>> SearchUsersWithBlockingInfoAsync(string? username, PageSettings requestPageSettings, Guid currentUserId, CancellationToken cancellationToken = default)
     {
-        var currentUserFriendsAndBlocked = await dbContext.Set<ChatUser>()
+        var currentUserInfo = await dbContext.Set<ChatUser>()
             .Where(u => u.Id == currentUserId)
             .Select(u => new 
             {
                 FriendIds = u.Friends.Select(f => f.Id).ToList(),
-                BlockedUserIds = u.BlockedUsers.Select(b => b.Id).ToList()
+                BlockedUserIds = u.BlockedUsers.Select(b => b.Id).ToList(),
+                WaitingFriendRequestIds = u.WaitingFriendRequests.Select(wr => wr.Id).ToList()
             })
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (currentUserFriendsAndBlocked == null)
+        if (currentUserInfo == null)
         {
             return new PagedList<UserWithBlockingInfo> { Data = new List<UserWithBlockingInfo>(), TotalCount = 0 };
         }
@@ -137,8 +163,8 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
             .Include(user => user.Avatar)
             .Where(user => user.Id != currentUserId)
             .Where(user => user.BlockedUsers.All(b => b.Id != currentUserId))
-            .Where(user => !currentUserFriendsAndBlocked.FriendIds.Contains(user.Id))
-            .Where(user => !currentUserFriendsAndBlocked.BlockedUserIds.Contains(user.Id));
+            .Where(user => !currentUserInfo.FriendIds.Contains(user.Id))
+            .Where(user => !currentUserInfo.BlockedUserIds.Contains(user.Id));
 
         if (!string.IsNullOrEmpty(username))
         {
@@ -158,8 +184,9 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
         {
             const bool isBlockedByMe = false;
             const bool hasBlockedMe = false;
+            var isFriendRequestSentByMe = currentUserInfo.WaitingFriendRequestIds.Contains(user.Id);
 
-            result.Add(new UserWithBlockingInfo(user, isBlockedByMe, hasBlockedMe));
+            result.Add(new UserWithBlockingInfo(user, isBlockedByMe, hasBlockedMe, isFriendRequestSentByMe));
         }
 
         return new PagedList<UserWithBlockingInfo>
@@ -197,7 +224,8 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
         return result.Select(x => new UserWithBlockingInfo(
             x.User,
             x.IsBlockedByMe,
-            x.HasBlockedMe
+            x.HasBlockedMe,
+            false
         )).ToList();
     }
 
@@ -223,5 +251,38 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
             userChatSettings?.IsDisabled ?? false,
             userChatSettings?.IsMuted ?? false
         );
+    }
+
+    public async Task<OwnProfileData?> GetOwnProfileDataAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var result = await dbContext.Set<ChatUser>()
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(user => user.AspNetUser)
+            .Include(user => user.Friends)
+            .ThenInclude(f => f.Avatar)
+            .Include(user => user.FriendRequests)
+            .ThenInclude(fr => fr.Avatar)
+            .Include(user => user.BlockedUsers)
+            .Include(user => user.WaitingFriendRequests)
+            .Include(user => user.Avatar)
+            .Include(user => user.Cover)
+            .Include(user => user.PrivacySettings)
+            .Where(user => user.Id == userId)
+            .Select(user => new
+            {
+                User = user,
+                HasUnreadMessages = user.ChatSettings
+                    .Any(ucs => ucs.Chat.Messages
+                        .Any(m => m.SenderId != userId && 
+                                 (ucs.LastReadMessageId == null || m.Id > ucs.LastReadMessageId))),
+                HasPendingFriendRequests = user.FriendRequests.Any()
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (result == null)
+            return null;
+
+        return new OwnProfileData(result.User, result.HasUnreadMessages, result.HasPendingFriendRequests);
     }
 }

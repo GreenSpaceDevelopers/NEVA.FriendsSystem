@@ -12,6 +12,7 @@ public static class Profile
         return new ProfileDto(
             user.Id,
             user.Username,
+            user.PersonalLink,
             canViewFullProfile ? user.AspNetUser.Email : null,
             canViewFullProfile ? user.Name : null,
             canViewFullProfile ? user.Surname : null,
@@ -53,6 +54,7 @@ public static class Profile
         return new ProfileDto(
             user.Id,
             user.Username,
+            user.PersonalLink,
             canViewFullProfile ? user.AspNetUser.Email : null,
             canViewFullProfile ? user.Name : null,
             canViewFullProfile ? user.Surname : null,
@@ -72,11 +74,12 @@ public static class Profile
         );
     }
 
-    public static OwnProfileDto ToOwnProfileDto(this ChatUser user, IReadOnlyList<LinkedAccountDto> linkedAccounts)
+    public static OwnProfileDto ToOwnProfileDto(this ChatUser user, bool hasUnreadMessages, bool hasPendingFriendRequests, IReadOnlyList<LinkedAccountDto> linkedAccounts)
     {
         return new OwnProfileDto(
             user.Id,
             user.Username,
+            user.PersonalLink,
             user.AspNetUser.Email,
             user.Name,
             user.Surname,
@@ -90,11 +93,13 @@ public static class Profile
                 user.PrivacySettings.CommentsPermission,
                 user.PrivacySettings.DirectMessagesPermission
             ),
+            hasUnreadMessages,
+            hasPendingFriendRequests,
             linkedAccounts
         );
     }
 
-    public static async Task<OwnProfileDto> ToOwnProfileDtoAsync(this ChatUser user, IFilesSigningService filesSigningService, ILinkedAccountsService linkedAccountsService, CancellationToken cancellationToken = default)
+    public static async Task<OwnProfileDto> ToOwnProfileDtoAsync(this ChatUser user, bool hasUnreadMessages, bool hasPendingFriendRequests, IFilesSigningService filesSigningService, ILinkedAccountsService linkedAccountsService, CancellationToken cancellationToken = default)
     {
         string? avatarUrl = null;
         string? coverUrl = null;
@@ -114,6 +119,7 @@ public static class Profile
         return new OwnProfileDto(
             user.Id,
             user.Username,
+            user.PersonalLink,
             user.AspNetUser.Email,
             user.Name,
             user.Surname,
@@ -127,6 +133,8 @@ public static class Profile
                 user.PrivacySettings.CommentsPermission,
                 user.PrivacySettings.DirectMessagesPermission
             ),
+            hasUnreadMessages,
+            hasPendingFriendRequests,
             linkedAccounts
         );
     }

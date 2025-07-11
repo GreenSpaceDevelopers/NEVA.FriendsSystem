@@ -28,6 +28,21 @@ public static class Profile
         .Produces<Application.Dtos.Responses.Profile.ProfileDto>(200)
         .Produces<NotFoundErrorResponse>(404);
 
+        app.MapGet("/profile/link/{personalLink}", async (
+            [FromRoute] string personalLink,
+            [FromServices] ISender sender, HttpContext context,
+            CancellationToken cancellationToken) =>
+        {
+            var query = new GetUserByPersonalLinkQuery(personalLink, context.GetUserId());
+            var result = await sender.SendAsync(query, cancellationToken);
+            return result.ToApiResult();
+        })
+        .WithName("GetUserProfileByPersonalLink")
+        .WithOpenApi()
+        .WithTags("Profile")
+        .Produces<Application.Dtos.Responses.Profile.ProfileDto>(200)
+        .Produces<NotFoundErrorResponse>(404);
+
         app.MapGet("/profile", async (
             [FromServices] ISender sender,
             HttpContext context,
@@ -57,6 +72,7 @@ public static class Profile
             var request = new UpdateProfileRequest(
                 context.GetUserId(),
                 form.Username,
+                form.PersonalLink,
                 form.Name,
                 form.Surname,
                 form.MiddleName,
@@ -90,6 +106,20 @@ public static class Profile
         .Produces<Application.Dtos.Responses.Profile.ProfileValidationDto>(200)
         .Produces<ValidationErrorResponse>(400);
 
+        app.MapPost("/profile/validate-personal-link", async (
+            [FromBody] ValidatePersonalLinkRequest request,
+            [FromServices] ISender sender,
+            CancellationToken cancellationToken) =>
+        {
+            var result = await sender.SendAsync(request, cancellationToken);
+            return result.ToApiResult();
+        })
+        .WithName("ValidatePersonalLink")
+        .WithOpenApi()
+        .WithTags("Profile")
+        .Produces<Application.Dtos.Responses.Profile.ProfileValidationDto>(200)
+        .Produces<ValidationErrorResponse>(400);
+
         app.MapGet("/profile/{userId:guid}/permissions", async (
             [FromRoute] Guid userId,
             [FromServices] ISender sender,
@@ -117,6 +147,12 @@ public static class Profile
         /// </summary>
         [SwaggerSchema(Description = "Имя пользователя (от 3 до 50 символов)")]
         public string Username { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Персональная ссылка
+        /// </summary>
+        [SwaggerSchema(Description = "Персональная ссылка профиля (от 3 до 50 символов)")]
+        public string PersonalLink { get; set; } = string.Empty;
 
         /// <summary>
         /// Имя

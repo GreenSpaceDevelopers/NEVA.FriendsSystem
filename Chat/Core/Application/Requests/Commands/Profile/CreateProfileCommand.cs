@@ -15,6 +15,7 @@ public class CreateProfileCommandHandler(IChatUsersRepository chatUsersRepositor
     public async Task<IOperationResult> HandleAsync(CreateProfileCommand request, CancellationToken cancellationToken = default)
     {
         var chatUser = new ChatUser(request.AspNetUser);
+        chatUser.PersonalLink = chatUser.Username;
 
         var userPrivacySettings = new UserPrivacySettings
         {

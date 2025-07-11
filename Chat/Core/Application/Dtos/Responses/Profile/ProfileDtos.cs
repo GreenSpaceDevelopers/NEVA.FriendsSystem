@@ -23,6 +23,8 @@ public record ProfileDto(
     Guid Id,
     [SwaggerSchema(Description = "Имя пользователя")]
     string Username,
+    [SwaggerSchema(Description = "Персональная ссылка профиля (slug)")]
+    string Slug,
     [SwaggerSchema(Description = "Email пользователя (доступен только при достаточном уровне доступа)")]
     string? Email,
     [SwaggerSchema(Description = "Имя")]

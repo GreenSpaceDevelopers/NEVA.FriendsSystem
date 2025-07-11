@@ -36,8 +36,8 @@ public class GetPostCommentsQueryHandler(IBlogRepository blogRepository, IChatUs
         {
             new()
             {
-                PropertyName = nameof(Domain.Models.Blog.Comment.CreatedAt),
-                Direction = SortDirection.Desc
+                PropertyName = nameof(Comment.CreatedAt),
+                Direction = SortDirection.Asc
             }
         };
 

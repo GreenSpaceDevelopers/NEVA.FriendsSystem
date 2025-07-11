@@ -35,7 +35,8 @@ public class SearchUsersQueryHandler(IChatUsersRepository chatUsersRepository, I
                 userInfo.User.Username,
                 avatarUrl,
                 userInfo.IsBlockedByMe,
-                userInfo.HasBlockedMe
+                userInfo.HasBlockedMe,
+                userInfo.IsFriendRequestSentByMe
             );
             userDtos.Add(userDto);
         }

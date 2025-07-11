@@ -92,6 +92,10 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
             .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<ChatUser>()
+            .HasIndex(u => u.PersonalLink)
+            .IsUnique();
+
+        modelBuilder.Entity<ChatUser>()
             .HasOne(u => u.PrivacySettings)
             .WithOne(p => p.ChatUser)
             .HasForeignKey<UserPrivacySettings>(p => p.ChatUserId)

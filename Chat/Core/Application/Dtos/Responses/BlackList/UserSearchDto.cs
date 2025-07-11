@@ -16,5 +16,7 @@ public record UserSearchDto(
     [SwaggerSchema(Description = "Заблокирован ли этот пользователь текущим пользователем")]
     bool IsBlockedByMe,
     [SwaggerSchema(Description = "Заблокировал ли этот пользователь текущего пользователя")]
-    bool HasBlockedMe
+    bool HasBlockedMe,
+    [SwaggerSchema(Description = "Отправлена ли заявка в друзья этому пользователю текущим пользователем")]
+    bool IsFriendRequestSentByMe
 );

@@ -14,13 +14,13 @@ public class GetOwnProfileQueryHandler(IChatUsersRepository chatUsersRepository,
 {
     public async Task<IOperationResult> HandleAsync(GetOwnProfileQuery request, CancellationToken cancellationToken = default)
     {
-        var user = await chatUsersRepository.GetByIdWithFriendsAsNoTrackingAsync(request.CurrentUserId, cancellationToken);
-        if (user is null)
+        var profileData = await chatUsersRepository.GetOwnProfileDataAsync(request.CurrentUserId, cancellationToken);
+        if (profileData is null)
         {
             return ResultsHelper.NotFound("User not found");
         }
 
-        var dto = await user.ToOwnProfileDtoAsync(filesSigningService, linkedAccountsService, cancellationToken);
+        var dto = await profileData.User.ToOwnProfileDtoAsync(profileData.HasUnreadMessages, profileData.HasPendingFriendRequests, filesSigningService, linkedAccountsService, cancellationToken);
 
         return ResultsHelper.Ok(dto);
     }

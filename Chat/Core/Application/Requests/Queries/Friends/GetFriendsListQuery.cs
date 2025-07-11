@@ -89,7 +89,7 @@ public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository
         try
         {
             var externalApiBaseUrl = configuration["ExternalApi:BaseUrl"] ?? "http://localhost:7198";
-            var externalApiUrl = $"{externalApiBaseUrl}/api/Players/GetMatchHistory/{playerId}";
+            var externalApiUrl = $"{externalApiBaseUrl}/Players/GetMatchHistory/{playerId}";
             var response = await httpClient.GetAsync(externalApiUrl, cancellationToken);
             
             if (!response.IsSuccessStatusCode)
