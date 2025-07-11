@@ -15,6 +15,13 @@ public class FilesValidator : IFilesValidator
         }
 
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
-        return AllowedExtensions.Contains(extension);
+        var isValid = AllowedExtensions.Contains(extension);
+        
+        if (memoryStream.CanSeek)
+        {
+            memoryStream.Position = 0;
+        }
+        
+        return isValid;
     }
 }

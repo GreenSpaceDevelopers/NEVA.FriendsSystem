@@ -8,6 +8,9 @@ using System.Text.Json;
 using Domain.Models.Messaging;
 using GS.IdentityServerApi.Constants;
 using WebApi.Common.Helpers;
+using Microsoft.Extensions.Options;
+using Minio;
+using Minio.DataModel.Args;
 
 namespace WebApi.Endpoints;
 
@@ -31,6 +34,9 @@ public static class AdminEndpoints
 
         group.MapPost("/seed-attachment-types", SeedAttachmentTypes)
             .WithName("SeedAttachmentTypes");
+            
+        group.MapGet("/minio-diagnostics", GetMinioDiagnostics)
+            .WithName("GetMinioDiagnostics");
     }
 
     private static async Task<IResult> CreatePrivacySettingsForAllUsers(
@@ -442,6 +448,117 @@ public static class AdminEndpoints
         
         return Task.FromResult(Results.Ok(authDiagnostics));
     }
+
+    private static async Task<IResult> GetMinioDiagnostics(
+        IOptions<Infrastructure.Configs.MinioConfig> minioConfig,
+        CancellationToken cancellationToken)
+    {
+        var diagnostics = new MinioDiagnosticsResult();
+        var config = minioConfig.Value;
+
+        try
+        {
+            diagnostics.Settings = new MinioSettings
+            {
+                Endpoint = config.Endpoint,
+                BucketName = config.BucketName,
+                UseSSL = config.UseSSL,
+                IgnoreSSLCertificateErrors = config.IgnoreSSLCertificateErrors,
+                AccessKeyProvided = !string.IsNullOrEmpty(config.AccessKey),
+                SecretKeyProvided = !string.IsNullOrEmpty(config.SecretKey)
+            };
+
+            var minioClientBuilder = new MinioClient()
+                .WithEndpoint(config.Endpoint)
+                .WithCredentials(config.AccessKey, config.SecretKey);
+
+            if (config.UseSSL)
+            {
+                minioClientBuilder = minioClientBuilder.WithSSL();
+            }
+            
+            if (config.IgnoreSSLCertificateErrors)
+            {
+                var httpClientHandler = new HttpClientHandler()
+                {
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
+                };
+                var httpClient = new HttpClient(httpClientHandler);
+                minioClientBuilder = minioClientBuilder.WithHttpClient(httpClient);
+            }
+
+            var minioClient = minioClientBuilder.Build();
+
+            var connectionTests = new List<MinioConnectionTest>();
+
+            try
+            {
+                var bucketExists = await minioClient.BucketExistsAsync(
+                    new BucketExistsArgs().WithBucket(config.BucketName),
+                    cancellationToken);
+
+                connectionTests.Add(new MinioConnectionTest
+                {
+                    TestName = "Bucket Exists Check",
+                    IsSuccessful = true,
+                    Message = $"Bucket '{config.BucketName}' exists: {bucketExists}",
+                    Details = bucketExists ? "Bucket is accessible" : "Bucket does not exist but connection works"
+                });
+
+                diagnostics.BucketExists = bucketExists;
+            }
+            catch (Exception ex)
+            {
+                connectionTests.Add(new MinioConnectionTest
+                {
+                    TestName = "Bucket Exists Check",
+                    IsSuccessful = false,
+                    Message = $"Failed to check bucket: {ex.Message}",
+                    Details = ex.ToString()
+                });
+            }
+
+            try
+            {
+                var buckets = await minioClient.ListBucketsAsync(cancellationToken);
+                var bucketNames = buckets.Buckets.Select(b => b.Name).ToList();
+
+                connectionTests.Add(new MinioConnectionTest
+                {
+                    TestName = "List Buckets",
+                    IsSuccessful = true,
+                    Message = $"Successfully listed {buckets.Buckets.Count} buckets",
+                    Details = $"Buckets: {string.Join(", ", bucketNames)}"
+                });
+            }
+            catch (Exception ex)
+            {
+                connectionTests.Add(new MinioConnectionTest
+                {
+                    TestName = "List Buckets",
+                    IsSuccessful = false,
+                    Message = $"Failed to list buckets: {ex.Message}",
+                    Details = ex.ToString()
+                });
+            }
+
+            diagnostics.ConnectionTests = connectionTests;
+            diagnostics.IsHealthy = connectionTests.Any(t => t.IsSuccessful);
+        }
+        catch (Exception ex)
+        {
+            diagnostics.ConnectionTests.Add(new MinioConnectionTest
+            {
+                TestName = "General Connection",
+                IsSuccessful = false,
+                Message = $"Failed to initialize MinIO client: {ex.Message}",
+                Details = ex.ToString()
+            });
+        }
+
+        diagnostics.CheckedAt = DateTime.UtcNow;
+        return Results.Ok(diagnostics);
+    }
 }
 
 public class IdentityApiResponse
@@ -519,4 +636,31 @@ public class AuthDiagnosticsResult
     public bool IsUserAuthenticated { get; set; }
     public DateTime CheckedAt { get; set; }
     public string? Error { get; set; }
+}
+
+public class MinioDiagnosticsResult
+{
+    public bool IsHealthy { get; set; }
+    public DateTime CheckedAt { get; set; }
+    public MinioSettings Settings { get; set; } = new();
+    public bool? BucketExists { get; set; }
+    public List<MinioConnectionTest> ConnectionTests { get; set; } = new();
+}
+
+public class MinioSettings
+{
+    public string Endpoint { get; set; } = string.Empty;
+    public string BucketName { get; set; } = string.Empty;
+    public bool UseSSL { get; set; }
+    public bool IgnoreSSLCertificateErrors { get; set; }
+    public bool AccessKeyProvided { get; set; }
+    public bool SecretKeyProvided { get; set; }
+}
+
+public class MinioConnectionTest
+{
+    public string TestName { get; set; } = string.Empty;
+    public bool IsSuccessful { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public string? Details { get; set; }
 } 

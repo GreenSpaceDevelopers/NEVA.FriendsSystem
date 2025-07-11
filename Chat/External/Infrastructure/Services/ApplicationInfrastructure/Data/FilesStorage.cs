@@ -17,11 +17,30 @@ public class FilesStorage : IFilesStorage
     {
         _config = config.Value;
         
-        _minioClient = new MinioClient()
+        var minioClientBuilder = new MinioClient()
             .WithEndpoint(_config.Endpoint)
-            .WithCredentials(_config.AccessKey, _config.SecretKey)
-            .WithSSL()
-            .Build();
+            .WithCredentials(_config.AccessKey, _config.SecretKey);
+    
+        if (_config.UseSSL)
+        {
+            minioClientBuilder = minioClientBuilder.WithSSL();
+        }
+        
+        var httpClientHandler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true,
+            MaxConnectionsPerServer = 10,
+            UseCookies = false
+        };
+    
+        var httpClient = new HttpClient(httpClientHandler)
+        {
+            Timeout = TimeSpan.FromSeconds(120)
+        };
+        
+        minioClientBuilder = minioClientBuilder.WithHttpClient(httpClient);
+    
+        _minioClient = minioClientBuilder.Build();
     }
 
     public async Task<IOperationResult> UploadAsync(Stream stream, string fileName, CancellationToken cancellationToken = default)
@@ -30,6 +49,11 @@ public class FilesStorage : IFilesStorage
         
         try
         {
+            if (stream.CanSeek)
+            {
+                stream.Position = 0;
+            }
+            
             var found = await _minioClient!.BucketExistsAsync(new BucketExistsArgs().WithBucket(_config.BucketName), cancellationToken);
             if (!found)
             {
@@ -45,14 +69,17 @@ public class FilesStorage : IFilesStorage
             
             await _minioClient.PutObjectAsync(putObjectArgs, cancellationToken);
             
-            var url = $"{(_config.UseSSL ? "https" : "http")}://{_config.Endpoint}/{_config.BucketName}/{objectName}";
+            var publicEndpoint = !string.IsNullOrEmpty(_config.PublicEndpoint) ? _config.PublicEndpoint : _config.Endpoint;
+            var url = $"{(_config.UseSSL ? "https" : "http")}://{publicEndpoint}/{_config.BucketName}/{objectName}";
             return ResultsHelper.Ok(url);
         }
         catch (MinioException ex)
         {
-            Console.WriteLine($"Minio error: {ex.Message}");
-
-            throw;
+            return ResultsHelper.BadRequest($"File upload failed: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return ResultsHelper.BadRequest($"File upload failed: {ex.Message}");
         }
     }
     
