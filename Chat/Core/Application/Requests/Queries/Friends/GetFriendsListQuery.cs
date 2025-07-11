@@ -63,6 +63,7 @@ public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository
             var friendDto = new FriendDto(
                 friendInfo.User.Id,
                 friendInfo.User.Username,
+                friendInfo.User.PersonalLink,
                 avatarUrl,
                 friendInfo.User.LastSeen,
                 friendInfo.IsBlockedByMe,

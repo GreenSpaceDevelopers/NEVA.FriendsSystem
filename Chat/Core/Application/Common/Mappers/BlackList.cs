@@ -8,7 +8,7 @@ public static class BlackList
 {
     public static BlackListItemDto ToBlackListItem(this ChatUser chat)
     {
-        return new BlackListItemDto(chat.AspNetUser.Id, chat.Username, chat.AspNetUser.Email, chat.Avatar?.Url);
+        return new BlackListItemDto(chat.AspNetUser.Id, chat.Username, chat.PersonalLink, chat.AspNetUser.Email, chat.Avatar?.Url);
     }
 
     public static async Task<BlackListItemDto> ToBlackListItemAsync(this ChatUser chat, IFilesSigningService filesSigningService, CancellationToken cancellationToken = default)
@@ -19,6 +19,6 @@ public static class BlackList
             avatarUrl = await filesSigningService.GetSignedUrlAsync(chat.Avatar.Url, cancellationToken);
         }
 
-        return new BlackListItemDto(chat.AspNetUser.Id, chat.Username, chat.AspNetUser.Email, avatarUrl);
+        return new BlackListItemDto(chat.AspNetUser.Id, chat.Username, chat.PersonalLink, chat.AspNetUser.Email, avatarUrl);
     }
 }

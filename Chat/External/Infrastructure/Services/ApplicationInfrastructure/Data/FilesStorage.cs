@@ -4,6 +4,7 @@ using Application.Services.ApplicationInfrastructure.Results;
 using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;
+using Minio.Exceptions;
 
 namespace Infrastructure.Services.ApplicationInfrastructure.Data;
 
@@ -15,26 +16,24 @@ public class FilesStorage : IFilesStorage
     public FilesStorage(IOptions<Infrastructure.Configs.MinioConfig> config)
     {
         _config = config.Value;
+        
         _minioClient = new MinioClient()
             .WithEndpoint(_config.Endpoint)
-            .WithCredentials(_config.AccessKey, _config.SecretKey);
-        if (_config.UseSSL)
-        {
-            _minioClient = _minioClient.WithSSL();
-        }
-
-        _minioClient = _minioClient.Build();
+            .WithCredentials(_config.AccessKey, _config.SecretKey)
+            .WithSSL()
+            .Build();
     }
 
     public async Task<IOperationResult> UploadAsync(Stream stream, string fileName, CancellationToken cancellationToken = default)
     {
+        var objectName = GetUniqueFileName(fileName);
+        
         try
         {
-            var objectName = $"{Guid.NewGuid()}/{fileName}";
-
-            if (stream.CanSeek)
+            var found = await _minioClient!.BucketExistsAsync(new BucketExistsArgs().WithBucket(_config.BucketName), cancellationToken);
+            if (!found)
             {
-                stream.Seek(0, SeekOrigin.Begin);
+                await _minioClient.MakeBucketAsync(new MakeBucketArgs().WithBucket(_config.BucketName), cancellationToken);
             }
 
             var putObjectArgs = new PutObjectArgs()
@@ -42,17 +41,24 @@ public class FilesStorage : IFilesStorage
                 .WithObject(objectName)
                 .WithStreamData(stream)
                 .WithObjectSize(stream.Length)
-                .WithContentType(GetContentType(fileName));
-
+                .WithContentType("auto");
+            
             await _minioClient.PutObjectAsync(putObjectArgs, cancellationToken);
-
+            
             var url = $"{(_config.UseSSL ? "https" : "http")}://{_config.Endpoint}/{_config.BucketName}/{objectName}";
             return ResultsHelper.Ok(url);
         }
-        catch (Exception ex)
+        catch (MinioException ex)
         {
-            return ResultsHelper.BadRequest($"Failed to upload file: {ex.Message}");
+            Console.WriteLine($"Minio error: {ex.Message}");
+
+            throw;
         }
+    }
+    
+    private static string GetUniqueFileName(string fileName)
+    {
+        return $"{Guid.NewGuid()}{Path.GetExtension(fileName)}";
     }
 
     private static string GetContentType(string fileName)

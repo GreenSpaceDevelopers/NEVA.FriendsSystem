@@ -33,6 +33,7 @@ public class SearchUsersQueryHandler(IChatUsersRepository chatUsersRepository, I
             var userDto = new UserSearchDto(
                 userInfo.User.Id,
                 userInfo.User.Username,
+                userInfo.User.PersonalLink,
                 avatarUrl,
                 userInfo.IsBlockedByMe,
                 userInfo.HasBlockedMe,

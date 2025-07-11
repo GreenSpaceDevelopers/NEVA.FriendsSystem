@@ -11,6 +11,8 @@ public record BlackListItemDto(
     Guid Id,
     [SwaggerSchema(Description = "Имя заблокированного пользователя")]
     string Username,
+    [SwaggerSchema(Description = "Персональная ссылка профиля (slug)")]
+    string Slug,
     [SwaggerSchema(Description = "Email заблокированного пользователя")]
     string Email,
     [SwaggerSchema(Description = "URL аватара заблокированного пользователя (может быть null)")]

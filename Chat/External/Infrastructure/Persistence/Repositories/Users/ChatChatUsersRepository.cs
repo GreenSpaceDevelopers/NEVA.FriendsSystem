@@ -285,4 +285,11 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
 
         return new OwnProfileData(result.User, result.HasUnreadMessages, result.HasPendingFriendRequests);
     }
+
+    public Task<List<ChatUser>> GetByIdsAsync(IEnumerable<Guid> userIds, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Set<ChatUser>()
+            .Where(user => userIds.Contains(user.Id))
+            .ToListAsync(cancellationToken);
+    }
 }

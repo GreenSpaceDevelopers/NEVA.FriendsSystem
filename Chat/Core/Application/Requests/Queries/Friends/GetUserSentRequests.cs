@@ -42,6 +42,7 @@ public class GetUserSentRequestsQueryHandler(IChatUsersRepository chatUsersRepos
                 user.Id,
                 friend.Id,
                 friend.Username,
+                friend.PersonalLink,
                 avatarUrl
             ));
         }
@@ -84,6 +85,7 @@ public class GetUserPendingRequestsQueryHandler(IChatUsersRepository chatUsersRe
                 friend.Id,
                 user.Id,
                 friend.Username,
+                friend.PersonalLink,
                 avatarUrl
             ));
         }

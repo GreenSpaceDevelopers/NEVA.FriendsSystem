@@ -19,6 +19,8 @@ public record CommentDto(
     Guid AuthorId,
     [SwaggerSchema(Description = "Имя пользователя автора комментария")]
     string AuthorUsername,
+    [SwaggerSchema(Description = "Персональная ссылка профиля автора (slug)")]
+    string AuthorSlug,
     [SwaggerSchema(Description = "URL аватара автора комментария (может быть null)")]
     string? AuthorAvatarUrl,
     [SwaggerSchema(Description = "ID родительского комментария для ответов (может быть null)")]

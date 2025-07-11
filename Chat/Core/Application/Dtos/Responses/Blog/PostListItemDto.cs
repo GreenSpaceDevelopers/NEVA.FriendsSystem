@@ -29,6 +29,8 @@ public record PostListItemDto(
     Guid AuthorId,
     [SwaggerSchema(Description = "Имя пользователя автора поста")]
     string AuthorUsername,
+    [SwaggerSchema(Description = "Персональная ссылка профиля автора (slug)")]
+    string AuthorSlug,
     [SwaggerSchema(Description = "URL аватара автора поста (может быть null)")]
     string? AuthorAvatarUrl,
     [SwaggerSchema(Description = "Лайкнул ли текущий пользователь этот пост")]

@@ -54,7 +54,19 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
         modelBuilder.Entity<Chat>()
             .HasMany(c => c.Users)
             .WithMany(u => u.Chats)
-            .UsingEntity(j => j.ToTable("ChatUserChats"));
+            .UsingEntity<Dictionary<string, object>>(
+                "ChatUserChats",
+                j => j
+                    .HasOne<ChatUser>()
+                    .WithMany()
+                    .HasForeignKey("UsersId")
+                    .OnDelete(DeleteBehavior.Cascade),
+                j => j
+                    .HasOne<Chat>()
+                    .WithMany()
+                    .HasForeignKey("ChatsId")
+                    .OnDelete(DeleteBehavior.Cascade),
+                j => j.HasKey("ChatsId", "UsersId"));
 
         modelBuilder.Entity<Chat>()
             .HasOne(c => c.Admin)

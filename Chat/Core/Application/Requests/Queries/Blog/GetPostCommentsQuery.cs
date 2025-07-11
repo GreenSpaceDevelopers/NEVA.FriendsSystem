@@ -91,6 +91,7 @@ public class GetPostCommentsQueryHandler(IBlogRepository blogRepository, IChatUs
             comment.CreatedAt,
             comment.AuthorId,
             comment.Author.Username,
+            comment.Author.PersonalLink,
             authorAvatarUrl,
             comment.ParentCommentId,
             comment.Replies?.Count ?? 0,

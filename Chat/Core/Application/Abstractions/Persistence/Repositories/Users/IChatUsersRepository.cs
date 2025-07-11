@@ -26,4 +26,5 @@ public interface IChatUsersRepository : IBaseRepository<ChatUser>
     public Task<List<UserWithBlockingInfo>> GetFriendsWithBlockingInfoAsync(Guid userId, string? searchQuery, CancellationToken cancellationToken = default);
     public Task<UserChatInfo?> GetChatInfoBetweenUsersAsync(Guid currentUserId, Guid targetUserId, CancellationToken cancellationToken = default);
     public Task<OwnProfileData?> GetOwnProfileDataAsync(Guid userId, CancellationToken cancellationToken = default);
+    public Task<List<ChatUser>> GetByIdsAsync(IEnumerable<Guid> userIds, CancellationToken cancellationToken = default);
 }

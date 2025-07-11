@@ -11,6 +11,8 @@ public record UserSearchDto(
     Guid Id,
     [SwaggerSchema(Description = "Имя пользователя")]
     string Username,
+    [SwaggerSchema(Description = "Персональная ссылка профиля (slug)")]
+    string Slug,
     [SwaggerSchema(Description = "URL аватара пользователя (может быть null)")]
     string? AvatarUrl,
     [SwaggerSchema(Description = "Заблокирован ли этот пользователь текущим пользователем")]

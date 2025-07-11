@@ -50,6 +50,7 @@ public class GetPostByIdQueryHandler(IBlogRepository blogRepository, IChatUsersR
             post.IsCommentsEnabled,
             post.Author.Id,
             post.Author.Username,
+            post.Author.PersonalLink,
             authorAvatarUrl,
             currentUserId.HasValue && (post.Reactions?.Any(r => r.ReactorId == currentUserId.Value) ?? false)
         );

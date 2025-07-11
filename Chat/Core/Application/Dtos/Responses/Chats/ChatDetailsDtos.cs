@@ -5,6 +5,7 @@ namespace Application.Dtos.Responses.Chats;
 public record ChatParticipantDto(
     Guid Id,
     string Username,
+    string Slug,
     string? AvatarUrl);
 
 [SwaggerSchema(Description = "Детальная информация о чате")]

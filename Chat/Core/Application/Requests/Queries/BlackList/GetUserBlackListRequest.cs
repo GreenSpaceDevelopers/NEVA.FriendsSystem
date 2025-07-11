@@ -30,7 +30,7 @@ public class GetUserBlackListRequest(IChatUsersRepository chatUsersRepository, I
             blackListItems.Add(blackListItem);
         }
 
-        var pagedResult = new Application.Common.Models.PagedList<BlackListItemDto>
+        var pagedResult = new Common.Models.PagedList<BlackListItemDto>
         {
             Data = blackListItems,
             TotalCount = blockedUsers.TotalCount

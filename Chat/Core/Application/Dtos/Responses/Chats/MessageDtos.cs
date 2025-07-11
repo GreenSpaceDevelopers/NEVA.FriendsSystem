@@ -15,6 +15,8 @@ public record MessageDto(
     Guid SenderId,
     [SwaggerSchema(Description = "Имя пользователя отправителя")]
     string SenderUsername,
+    [SwaggerSchema(Description = "Персональная ссылка профиля отправителя (slug)")]
+    string SenderSlug,
     [SwaggerSchema(Description = "URL аватара отправителя (может быть null)")]
     string? SenderAvatarUrl,
     [SwaggerSchema(Description = "Содержимое сообщения (может быть null)")]

@@ -135,6 +135,32 @@ public static class Chats
         .Produces<ChatDetailsDto>(200)
         .Produces(403)
         .Produces(404);
+
+        app.MapPut("/chats/{chatId:guid}", async (
+            [FromRoute] Guid chatId,
+            [FromForm] UpdateChatForm form,
+            [FromServices] ISender sender,
+            HttpContext context,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new UpdateChatCommand(
+                chatId,
+                context.GetUserId(),
+                form.Name,
+                form.Picture,
+                form.ParticipantIds,
+                form.NewAdminId);
+            var result = await sender.SendAsync(command, cancellationToken);
+            return result.ToResult();
+        })
+        .WithName("UpdateChat")
+        .WithOpenApi()
+        .WithTags("Chats")
+        .DisableAntiforgery()
+        .Produces(200)
+        .Produces(400)
+        .Produces(403)
+        .Produces(404);
     }
 
     private class CreateChatForm
@@ -142,6 +168,14 @@ public static class Chats
         public Guid[] Users { get; set; } = [];
         public string? Name { get; set; }
         public IFormFile? Picture { get; set; }
+    }
+    
+    private class UpdateChatForm
+    {
+        public string? Name { get; set; }
+        public IFormFile? Picture { get; set; }
+        public Guid[]? ParticipantIds { get; set; }
+        public Guid? NewAdminId { get; set; }
     }
     
     private record MarkAsReadRequest(Guid? LastReadMessageId);

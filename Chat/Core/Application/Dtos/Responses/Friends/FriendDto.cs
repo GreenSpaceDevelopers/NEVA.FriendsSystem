@@ -11,6 +11,8 @@ public record FriendDto(
     Guid Id,
     [SwaggerSchema(Description = "Имя пользователя друга")]
     string Username,
+    [SwaggerSchema(Description = "Персональная ссылка профиля (slug)")]
+    string Slug,
     [SwaggerSchema(Description = "URL аватара друга (может быть null)")]
     string? AvatarUrl,
     [SwaggerSchema(Description = "Дата и время последнего посещения")]

@@ -33,7 +33,7 @@ public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository, IFiles
                 avatarUrl = await filesSigningService.GetSignedUrlAsync(user.Avatar.Url, cancellationToken);
             }
 
-            participants.Add(new ChatParticipantDto(user.Id, user.Username, avatarUrl));
+            participants.Add(new ChatParticipantDto(user.Id, user.Username, user.PersonalLink, avatarUrl));
         }
 
         var isGroup = chat.Users.Count > 2;

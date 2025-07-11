@@ -13,6 +13,8 @@ public record FriendRequestsDto(
     Guid ReceiverId,
     [SwaggerSchema(Description = "Имя пользователя")]
     string Username,
+    [SwaggerSchema(Description = "Персональная ссылка профиля (slug)")]
+    string Slug,
     [SwaggerSchema(Description = "URL аватара пользователя (может быть null)")]
     string? AvatarUrl
 );
