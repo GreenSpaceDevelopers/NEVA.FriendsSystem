@@ -6,6 +6,7 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Application.Dtos.Responses.Blog;
+using Application.Dtos.Responses.Shared;
 using Application.Services.ApplicationInfrastructure.Results;
 using Domain.Models.Blog;
 
@@ -66,9 +67,15 @@ public class GetPostCommentsQueryHandler(IBlogRepository blogRepository, IChatUs
 
     private static async Task<CommentDto> ConvertToCommentDto(Comment comment, Guid? currentUserId, IFilesSigningService filesSigningService, CancellationToken cancellationToken)
     {
-        var attachmentUrl = comment.Attachment?.Url != null 
-            ? await filesSigningService.GetSignedUrlAsync(comment.Attachment.Url, cancellationToken) 
-            : null;
+        var attachments = new List<AttachmentDto>();
+        if (comment.Attachments.Count != 0)
+        {
+            foreach (var attachment in comment.Attachments.Where(attachment => !string.IsNullOrEmpty(attachment.Url)))
+            {
+                var signedUrl = await filesSigningService.GetSignedUrlAsync(attachment.Url, cancellationToken);
+                attachments.Add(new AttachmentDto(attachment.Id, signedUrl));
+            }
+        }
             
         var authorAvatarUrl = comment.Author.Avatar?.Url != null 
             ? await filesSigningService.GetSignedUrlAsync(comment.Author.Avatar.Url, cancellationToken) 
@@ -87,7 +94,7 @@ public class GetPostCommentsQueryHandler(IBlogRepository blogRepository, IChatUs
         return new CommentDto(
             comment.Id,
             comment.Content,
-            attachmentUrl,
+            attachments,
             comment.CreatedAt,
             comment.AuthorId,
             comment.Author.Username,

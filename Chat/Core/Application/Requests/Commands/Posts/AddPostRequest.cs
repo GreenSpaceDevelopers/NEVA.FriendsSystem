@@ -13,7 +13,7 @@ namespace Application.Requests.Commands.Posts;
 
 public class AddPostRequest : IRequest
 {
-    public IFormFile? File { get; set; }
+    public IFormFileCollection? Files { get; set; }
     public Guid? UserId { get; set; }
     public string? Content { get; set; }
     public string? Title { get; set; } = string.Empty;
@@ -34,37 +34,45 @@ public class AddPostRequestHandler (
             return ResultsHelper.NotFound("User not found");
         }
 
-        var uploadResult = ResultsHelper.Ok("no file");
+        var attachmentsList = new List<Attachment>();
 
-        Attachment? attachment = null;
-        if (request.File is not null)
+        if (request.Files is not null && request.Files.Count > 0)
         {
-            using var memoryStream = new MemoryStream();
-            await request.File.CopyToAsync(memoryStream, cancellationToken);
-
-            if (filesValidator.ValidateFile(memoryStream, request.File.FileName) is not true)
+            if (request.Files.Count > 10)
             {
-                return ResultsHelper.BadRequest("Invalid file");
+                return ResultsHelper.BadRequest("Maximum 10 files allowed");
             }
 
-            uploadResult = await filesStorage.UploadAsync(memoryStream, request.File.FileName, cancellationToken);
-
-            if (!uploadResult.IsSuccess)
+            foreach (var file in request.Files)
             {
-                return ResultsHelper.BadRequest("file upload failed");
+                using var memoryStream = new MemoryStream();
+                await file.CopyToAsync(memoryStream, cancellationToken);
+
+                if (filesValidator.ValidateFile(memoryStream, file.FileName) is not true)
+                {
+                    return ResultsHelper.BadRequest($"Invalid file: {file.FileName}");
+                }
+
+                var uploadResult = await filesStorage.UploadAsync(memoryStream, file.FileName, cancellationToken);
+
+                if (!uploadResult.IsSuccess)
+                {
+                    return ResultsHelper.BadRequest($"File upload failed: {file.FileName}");
+                }
+                
+                var type = await attachments.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
+
+                var attachment = new Attachment
+                {
+                    Id = Guid.NewGuid(),
+                    Url = uploadResult.GetValue<string>(),
+                    Type = type,
+                    TypeId = type.Id,
+                };
+                
+                await attachments.AddAsync(attachment, cancellationToken);
+                attachmentsList.Add(attachment);
             }
-            
-            var type = await attachments.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
-
-            attachment = new Attachment
-            {
-                Id = Guid.NewGuid(),
-                Url = uploadResult.GetValue<string>(),
-                Type = type,
-                TypeId = type.Id,
-            };
-            
-            await attachments.AddAsync(attachment, cancellationToken);
         }
 
         var post = new Post
@@ -74,7 +82,7 @@ public class AddPostRequestHandler (
             AuthorId = user.Id,
             Content = request.Content ?? string.Empty,
             Title = request.Title,
-            AttachmentId = attachment?.Id ?? null,
+            Attachments = attachmentsList,
             CreatedAt = DateTime.UtcNow,
             IsCommentsEnabled = true
         };
@@ -98,5 +106,8 @@ public class AddPostRequestValidator : AbstractValidator<AddPostRequest>
         RuleFor(x => x.UserId)
             .NotEmpty().WithMessage("UserId is required.")
             .Must(id => id != Guid.Empty).WithMessage("UserId must not be empty.");
+
+        RuleFor(x => x.Files)
+            .Must(files => files is not { Count: > 10 }).WithMessage("Maximum 10 files allowed.");
     }
 }

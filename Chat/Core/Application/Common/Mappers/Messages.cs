@@ -1,5 +1,6 @@
 using Application.Dtos.Messaging;
 using Application.Dtos.Responses.Chats;
+using Application.Dtos.Responses.Shared;
 using Application.Messaging.Proto.Messages;
 using Domain.Models.Messaging;
 using Application.Abstractions.Services.ApplicationInfrastructure.Data;
@@ -10,6 +11,8 @@ public static class Messages
 {
     public static MessageDto ToMessageDto(this Message message)
     {
+        var attachments = message.Attachments?.Select(a => new AttachmentDto(a.Id, a.Url)).ToList() ?? new List<AttachmentDto>();
+        
         return new MessageDto(
             message.Id,
             message.ChatId,
@@ -18,7 +21,7 @@ public static class Messages
             message.Sender.PersonalLink,
             message.Sender.Avatar?.Url,
             message.Content,
-            message.Attachment?.Url,
+            attachments,
             message.CreatedAt,
             message.Replies.Count,
             message.Reactions.Count
@@ -33,10 +36,14 @@ public static class Messages
             avatarUrl = await filesSigningService.GetSignedUrlAsync(message.Sender.Avatar.Url, cancellationToken);
         }
 
-        string? attachmentUrl = null;
-        if (!string.IsNullOrEmpty(message.Attachment?.Url))
+        var attachments = new List<AttachmentDto>();
+        if (message.Attachments.Count != 0)
         {
-            attachmentUrl = await filesSigningService.GetSignedUrlAsync(message.Attachment.Url, cancellationToken);
+            foreach (var attachment in message.Attachments.Where(attachment => !string.IsNullOrEmpty(attachment.Url)))
+            {
+                var signedUrl = await filesSigningService.GetSignedUrlAsync(attachment.Url, cancellationToken);
+                attachments.Add(new AttachmentDto(attachment.Id, signedUrl));
+            }
         }
 
         return new MessageDto(
@@ -47,7 +54,7 @@ public static class Messages
             message.Sender.PersonalLink,
             avatarUrl,
             message.Content,
-            attachmentUrl,
+            attachments,
             message.CreatedAt,
             message.Replies.Count,
             message.Reactions.Count

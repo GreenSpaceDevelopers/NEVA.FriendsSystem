@@ -21,7 +21,9 @@ public record UpdateProfileRequest(
     string? MiddleName,
     DateTime? DateOfBirth,
     IFormFile? Avatar,
-    IFormFile? Cover)
+    IFormFile? Cover,
+    bool DeleteAvatar = false,
+    bool DeleteCover = false)
     : IRequest;
 
 public class UpdateProfileRequestHandler(
@@ -57,8 +59,22 @@ public class UpdateProfileRequestHandler(
             }
         }
 
-        if (request.Avatar is not null)
+        if (request.DeleteAvatar)
         {
+            if (user.Avatar != null && !string.IsNullOrEmpty(user.Avatar.Url))
+            {
+                await filesStorage.DeleteAsync(user.Avatar.Url, cancellationToken);
+            }
+            user.Avatar = null;
+            user.AvatarId = null;
+        }
+        else if (request.Avatar is not null)
+        {
+            if (user.Avatar != null && !string.IsNullOrEmpty(user.Avatar.Url))
+            {
+                await filesStorage.DeleteAsync(user.Avatar.Url, cancellationToken);
+            }
+
             using var avatarStream = new MemoryStream();
             await request.Avatar.CopyToAsync(avatarStream, cancellationToken);
 
@@ -88,8 +104,22 @@ public class UpdateProfileRequestHandler(
             user.Avatar = avatarAttachment;
         }
 
-        if (request.Cover is not null)
+        if (request.DeleteCover)
         {
+            if (user.Cover != null && !string.IsNullOrEmpty(user.Cover.Url))
+            {
+                await filesStorage.DeleteAsync(user.Cover.Url, cancellationToken);
+            }
+            user.Cover = null;
+            user.CoverId = null;
+        }
+        else if (request.Cover is not null)
+        {
+            if (user.Cover != null && !string.IsNullOrEmpty(user.Cover.Url))
+            {
+                await filesStorage.DeleteAsync(user.Cover.Url, cancellationToken);
+            }
+
             using var coverStream = new MemoryStream();
             await request.Cover.CopyToAsync(coverStream, cancellationToken);
 

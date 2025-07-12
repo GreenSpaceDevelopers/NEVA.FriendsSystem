@@ -24,6 +24,12 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
     public DbSet<UserPrivacySettings> UserPrivacySettings { get; set; }
     public DbSet<NotificationSettings> NotificationSettings { get; set; }
 
+    // Blog
+    public DbSet<Post> Posts { get; set; }
+    public DbSet<Comment> Comments { get; set; }
+    public DbSet<PostReaction> PostReactions { get; set; }
+    public DbSet<CommentReaction> CommentReactions { get; set; }
+
     // MediaDto
     public DbSet<Picture> Services { get; set; }
 
@@ -116,11 +122,12 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
         modelBuilder.Entity<ChatUser>().Navigation(ch => ch.AspNetUser).AutoInclude();
         modelBuilder.Entity<Post>().Navigation(p => p.Author).AutoInclude();
         modelBuilder.Entity<Post>().Navigation(p => p.Comments).AutoInclude();
-        modelBuilder.Entity<Post>().Navigation(p => p.Attachment).AutoInclude();
+        modelBuilder.Entity<Post>().Navigation(p => p.Attachments).AutoInclude();
         modelBuilder.Entity<Comment>().Navigation(c => c.Author).AutoInclude();
         modelBuilder.Entity<Comment>().Navigation(c => c.Post).AutoInclude();
         // modelBuilder.Entity<Comment>().Navigation(m => m.Parent).AutoInclude();
-        modelBuilder.Entity<Comment>().Navigation(a => a.Attachment).AutoInclude();
+        modelBuilder.Entity<Comment>().Navigation(a => a.Attachments).AutoInclude();
+        modelBuilder.Entity<Message>().Navigation(m => m.Attachments).AutoInclude();
         modelBuilder.Entity<Post>().Navigation(a => a.Reactions).AutoInclude();
         
         modelBuilder.Entity<ChatUser>()
@@ -200,6 +207,57 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
         modelBuilder.Entity<CommentReaction>()
             .HasIndex(cr => new { cr.CommentId, cr.ReactorId, cr.ReactionTypeId })
             .IsUnique();
+
+        modelBuilder.Entity<Post>()
+            .HasMany(p => p.Attachments)
+            .WithMany()
+            .UsingEntity<Dictionary<string, object>>(
+                "PostAttachments",
+                j => j
+                    .HasOne<Attachment>()
+                    .WithMany()
+                    .HasForeignKey("AttachmentsId")
+                    .OnDelete(DeleteBehavior.Cascade),
+                j => j
+                    .HasOne<Post>()
+                    .WithMany()
+                    .HasForeignKey("PostsId")
+                    .OnDelete(DeleteBehavior.Cascade),
+                j => j.HasKey("PostsId", "AttachmentsId"));
+
+        modelBuilder.Entity<Comment>()
+            .HasMany(c => c.Attachments)
+            .WithMany()
+            .UsingEntity<Dictionary<string, object>>(
+                "CommentAttachments",
+                j => j
+                    .HasOne<Attachment>()
+                    .WithMany()
+                    .HasForeignKey("AttachmentsId")
+                    .OnDelete(DeleteBehavior.Cascade),
+                j => j
+                    .HasOne<Comment>()
+                    .WithMany()
+                    .HasForeignKey("CommentsId")
+                    .OnDelete(DeleteBehavior.Cascade),
+                j => j.HasKey("CommentsId", "AttachmentsId"));
+
+        modelBuilder.Entity<Message>()
+            .HasMany(m => m.Attachments)
+            .WithMany()
+            .UsingEntity<Dictionary<string, object>>(
+                "MessageAttachments",
+                j => j
+                    .HasOne<Attachment>()
+                    .WithMany()
+                    .HasForeignKey("AttachmentsId")
+                    .OnDelete(DeleteBehavior.Cascade),
+                j => j
+                    .HasOne<Message>()
+                    .WithMany()
+                    .HasForeignKey("MessagesId")
+                    .OnDelete(DeleteBehavior.Cascade),
+                j => j.HasKey("MessagesId", "AttachmentsId"));
 
         base.OnModelCreating(modelBuilder);
     }

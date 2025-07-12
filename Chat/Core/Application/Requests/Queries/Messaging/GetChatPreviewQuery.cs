@@ -60,7 +60,7 @@ public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository, IFiles
         var lastMessage = chat.Messages.FirstOrDefault();
         var lastMsgPreview = new LastChatMessagePreview(lastMessage?.Sender.Username ?? string.Empty,
             lastMessage?.Content ?? string.Empty,
-            lastMessage?.Attachment is not null,
+            lastMessage?.Attachments?.Count > 0,
             lastMessage?.CreatedAt ?? default);
 
         var dto = new ChatDetailsDto(chat.Id, displayName, chatImageUrl, isGroup, participants, lastMsgPreview, friendId);

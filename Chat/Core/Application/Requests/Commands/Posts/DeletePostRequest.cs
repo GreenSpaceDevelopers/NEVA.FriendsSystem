@@ -1,4 +1,5 @@
 using Application.Abstractions.Persistence.Repositories.Blog;
+using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Services.ApplicationInfrastructure.Results;
@@ -8,7 +9,7 @@ namespace Application.Requests.Commands.Posts;
 
 public record DeletePostRequest(Guid Id, Guid? UserId) : IRequest;
 
-public class DeletePostRequestHandler(IBlogRepository blogRepository) : IRequestHandler<DeletePostRequest>
+public class DeletePostRequestHandler(IBlogRepository blogRepository, IFilesStorage filesStorage) : IRequestHandler<DeletePostRequest>
 {
     public async Task<IOperationResult> HandleAsync(DeletePostRequest request, CancellationToken cancellationToken = default)
     {
@@ -24,6 +25,16 @@ public class DeletePostRequestHandler(IBlogRepository blogRepository) : IRequest
         if (post is null)
         {
             return ResultsHelper.NotFound("Post not found");
+        }
+
+        var filesToDelete = post.Attachments
+            .Where(att => !string.IsNullOrEmpty(att.Url))
+            .Select(att => att.Url)
+            .ToList();
+        
+        if (filesToDelete.Any())
+        {
+            await filesStorage.DeleteBatchAsync(filesToDelete, cancellationToken);
         }
 
         user.Posts.Remove(post);

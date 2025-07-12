@@ -1,3 +1,4 @@
+using Application.Dtos.Responses.Shared;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Application.Dtos.Responses.Chats;
@@ -21,8 +22,8 @@ public record MessageDto(
     string? SenderAvatarUrl,
     [SwaggerSchema(Description = "Содержимое сообщения (может быть null)")]
     string? Content,
-    [SwaggerSchema(Description = "URL вложения к сообщению (может быть null)")]
-    string? AttachmentUrl,
+    [SwaggerSchema(Description = "Список вложений к сообщению")]
+    List<AttachmentDto> Attachments,
     [SwaggerSchema(Description = "Дата и время создания сообщения")]
     DateTime CreatedAt,
     [SwaggerSchema(Description = "Количество ответов на сообщение")]

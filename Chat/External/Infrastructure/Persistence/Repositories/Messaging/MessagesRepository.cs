@@ -20,7 +20,7 @@ public class MessagesRepository(ChatsDbContext dbContext) : BaseRepository<Messa
             .AsSplitQuery()
             .Include(m => m.Sender)
             .ThenInclude(s => s.Avatar)
-            .Include(m => m.Attachment)
+            .Include(m => m.Attachments)
             .Include(m => m.Replies)
             .Include(m => m.Reactions)
             .Where(m => m.ChatId == chatId);

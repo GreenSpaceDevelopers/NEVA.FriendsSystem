@@ -12,7 +12,7 @@ public static class Chats
         var lastMessage = chat.Messages.FirstOrDefault();
 
         var lastMessageDto = new LastChatMessagePreview(lastMessage?.Sender.Username ?? string.Empty,
-            lastMessage?.Content ?? string.Empty, lastMessage?.Attachment is not null, lastMessage?.CreatedAt ?? default);
+            lastMessage?.Content ?? string.Empty, lastMessage?.Attachments?.Count > 0, lastMessage?.CreatedAt ?? default);
 
         var isGroup = chat.Users.Count > 2;
 
@@ -43,7 +43,7 @@ public static class Chats
             lastMessagePreview = new LastChatMessagePreview(
                 lastMessage.Sender?.Username ?? string.Empty,
                 lastMessage.Content ?? string.Empty,
-                lastMessage.Attachment != null,
+                lastMessage.Attachments?.Count > 0,
                 lastMessage.CreatedAt
             );
         }
@@ -89,7 +89,7 @@ public static class Chats
             lastMessagePreview = new LastChatMessagePreview(
                 lastMessage.Sender?.Username ?? string.Empty,
                 lastMessage.Content ?? string.Empty,
-                lastMessage.Attachment != null,
+                lastMessage.Attachments?.Count > 0,
                 lastMessage.CreatedAt
             );
         }

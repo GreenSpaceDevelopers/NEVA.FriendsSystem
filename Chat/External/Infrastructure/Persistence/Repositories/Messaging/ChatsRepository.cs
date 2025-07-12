@@ -25,7 +25,7 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
             .AsSplitQuery()
             .Include(m => m.Sender)
             .ThenInclude(s => s.Avatar)
-            .Include(m => m.Attachment)
+            .Include(m => m.Attachments)
             .Include(m => m.Replies)
             .Include(m => m.Reactions)
             .Where(m => m.ChatId == chatId)
@@ -70,7 +70,7 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
             .Include(c => c.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
             .ThenInclude(m => m.Sender)
             .Include(c => c.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
-            .ThenInclude(m => m.Attachment)
+            .ThenInclude(m => m.Attachments)
             .Where(c => c.Users.Any(u => u.Id == userId));
 
         if (!string.IsNullOrWhiteSpace(searchQuery))

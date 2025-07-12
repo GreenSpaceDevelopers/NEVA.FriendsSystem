@@ -1,3 +1,4 @@
+using Application.Dtos.Responses.Shared;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Application.Dtos.Responses.Blog;
@@ -13,8 +14,8 @@ public record PostListItemDto(
     string Title,
     [SwaggerSchema(Description = "Содержимое поста")]
     string Content,
-    [SwaggerSchema(Description = "URL вложения к посту (может быть null)")]
-    string? AttachmentUrl,
+    [SwaggerSchema(Description = "Список вложений к посту")]
+    List<AttachmentDto> Attachments,
     [SwaggerSchema(Description = "Дата и время создания поста")]
     DateTime CreatedAt,
     [SwaggerSchema(Description = "Количество комментариев к посту")]

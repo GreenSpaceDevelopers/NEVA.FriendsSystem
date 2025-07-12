@@ -1,3 +1,4 @@
+using Application.Dtos.Responses.Shared;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Application.Dtos.Responses.Blog;
@@ -11,8 +12,8 @@ public record CommentDto(
     Guid Id,
     [SwaggerSchema(Description = "Текст комментария")]
     string Content,
-    [SwaggerSchema(Description = "URL вложения к комментарию (может быть null)")]
-    string? AttachmentUrl,
+    [SwaggerSchema(Description = "Список вложений к комментарию")]
+    List<AttachmentDto> Attachments,
     [SwaggerSchema(Description = "Дата и время создания комментария")]
     DateTime CreatedAt,
     [SwaggerSchema(Description = "Уникальный идентификатор автора комментария")]

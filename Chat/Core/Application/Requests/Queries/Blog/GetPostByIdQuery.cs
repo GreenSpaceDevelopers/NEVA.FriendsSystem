@@ -4,6 +4,7 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Dtos.Responses.Blog;
+using Application.Dtos.Responses.Shared;
 using Application.Services.ApplicationInfrastructure.Results;
 
 namespace Application.Requests.Queries.Blog;
@@ -29,9 +30,15 @@ public class GetPostByIdQueryHandler(IBlogRepository blogRepository, IChatUsersR
             }
         }
 
-        var attachmentUrl = post.Attachment?.Url != null 
-            ? await filesSigningService.GetSignedUrlAsync(post.Attachment.Url, cancellationToken) 
-            : null;
+        var attachments = new List<AttachmentDto>();
+        if (post.Attachments.Count != 0)
+        {
+            foreach (var attachment in post.Attachments.Where(attachment => !string.IsNullOrEmpty(attachment.Url)))
+            {
+                var signedUrl = await filesSigningService.GetSignedUrlAsync(attachment.Url, cancellationToken);
+                attachments.Add(new AttachmentDto(attachment.Id, signedUrl));
+            }
+        }
             
         var authorAvatarUrl = post.Author.Avatar?.Url != null 
             ? await filesSigningService.GetSignedUrlAsync(post.Author.Avatar.Url, cancellationToken) 
@@ -42,7 +49,7 @@ public class GetPostByIdQueryHandler(IBlogRepository blogRepository, IChatUsersR
             post.Id,
             post.Title ?? string.Empty,
             post.Content,
-            attachmentUrl,
+            attachments,
             post.CreatedAt,
             post.Comments?.Count ?? 0,
             post.Reactions?.Count ?? 0,

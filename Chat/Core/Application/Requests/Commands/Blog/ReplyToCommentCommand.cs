@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Application.Requests.Commands.Blog;
 
-public record ReplyToCommentRequest(Guid CommentId, Guid UserId, string Content, IFormFile? Attachment) : IRequest;
+public record ReplyToCommentRequest(Guid CommentId, Guid UserId, string Content, IFormFileCollection? Attachments) : IRequest;
 
 public class ReplyToCommentRequestHandler(
     IBlogRepository blogRepository,
@@ -52,33 +52,43 @@ public class ReplyToCommentRequestHandler(
             return ResultsHelper.Forbidden("You are blocked by the comment author");
         }
 
-        Attachment? attachment = null;
-        if (request.Attachment is not null)
+        var attachmentsList = new List<Attachment>();
+
+        if (request.Attachments is not null && request.Attachments.Count > 0)
         {
-            using var stream = new MemoryStream();
-            await request.Attachment.CopyToAsync(stream, cancellationToken);
-
-            if (filesValidator.ValidateFile(stream, request.Attachment.FileName) is not true)
+            if (request.Attachments.Count > 10)
             {
-                return ResultsHelper.BadRequest("Invalid attachment file");
+                return ResultsHelper.BadRequest("Maximum 10 files allowed");
             }
 
-            var uploadResult = await filesStorage.UploadAsync(stream, request.Attachment.FileName, cancellationToken);
-            if (!uploadResult.IsSuccess)
+            foreach (var file in request.Attachments)
             {
-                return ResultsHelper.BadRequest(uploadResult.GetValue<string>());
+                using var stream = new MemoryStream();
+                await file.CopyToAsync(stream, cancellationToken);
+
+                if (filesValidator.ValidateFile(stream, file.FileName) is not true)
+                {
+                    return ResultsHelper.BadRequest($"Invalid attachment file: {file.FileName}");
+                }
+
+                var uploadResult = await filesStorage.UploadAsync(stream, file.FileName, cancellationToken);
+                if (!uploadResult.IsSuccess)
+                {
+                    return ResultsHelper.BadRequest($"File upload failed: {file.FileName}");
+                }
+
+                var attachmentType = await attachmentsRepository.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
+                var attachment = new Attachment
+                {
+                    Id = Guid.NewGuid(),
+                    Url = uploadResult.GetValue<string>(),
+                    Type = attachmentType,
+                    TypeId = attachmentType.Id,
+                };
+
+                await attachmentsRepository.AddAsync(attachment, cancellationToken);
+                attachmentsList.Add(attachment);
             }
-
-            var attachmentType = await attachmentsRepository.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
-            attachment = new Attachment
-            {
-                Id = Guid.NewGuid(),
-                Url = uploadResult.GetValue<string>(),
-                Type = attachmentType,
-                TypeId = attachmentType.Id,
-            };
-
-            await attachmentsRepository.AddAsync(attachment, cancellationToken);
         }
 
         var reply = new Comment
@@ -88,7 +98,7 @@ public class ReplyToCommentRequestHandler(
             AuthorId = request.UserId,
             PostId = post.Id,
             ParentCommentId = request.CommentId,
-            Attachment = attachment,
+            Attachments = attachmentsList,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -114,7 +124,7 @@ public class ReplyToCommentRequestValidator : AbstractValidator<ReplyToCommentRe
             .MinimumLength(1).WithMessage("Content must not be empty.")
             .MaximumLength(1000).WithMessage("Content must not exceed 1000 characters.");
 
-        RuleFor(x => x.Attachment)
-            .Must(file => file == null || file.Length > 0).WithMessage("Attachment file must not be empty.");
+        RuleFor(x => x.Attachments)
+            .Must(files => files is not { Count: > 10 }).WithMessage("Maximum 10 files allowed.");
     }
 }

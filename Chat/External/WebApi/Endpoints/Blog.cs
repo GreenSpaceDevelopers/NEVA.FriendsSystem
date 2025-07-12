@@ -24,10 +24,10 @@ public class AddCommentForm
     public string Content { get; set; } = string.Empty;
 
     /// <summary>
-    /// Вложение к комментарию
+    /// Вложения к комментарию
     /// </summary>
-    [SwaggerSchema(Description = "Файл вложения (опционально)")]
-    public IFormFile? Attachment { get; set; }
+    [SwaggerSchema(Description = "Файлы вложений (опционально, максимум 10)")]
+    public IFormFileCollection? Attachments { get; set; }
 
     /// <summary>
     /// ID родительского комментария
@@ -48,10 +48,10 @@ public class ReplyToCommentForm
     public string Content { get; set; } = string.Empty;
 
     /// <summary>
-    /// Вложение к ответу
+    /// Вложения к ответу
     /// </summary>
-    [SwaggerSchema(Description = "Файл вложения (опционально)")]
-    public IFormFile? Attachment { get; set; }
+    [SwaggerSchema(Description = "Файлы вложений (опционально, максимум 5)")]
+    public IFormFileCollection? Attachments { get; set; }
 }
 
 public static class Blog
@@ -64,7 +64,7 @@ public static class Blog
             {
                 var command = new AddPostRequest
                 {
-                    File = request.File,
+                    Files = request.Files,
                     UserId = context.GetUserId(),
                     Content = request.Content,
                     Title = request.Title
@@ -168,7 +168,7 @@ public static class Blog
             HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            var command = new AddCommentRequest(postId, context.GetUserId(), form.Content, form.Attachment, form.ParentCommentId);
+            var command = new AddCommentRequest(postId, context.GetUserId(), form.Content, form.Attachments, form.ParentCommentId);
             var result = await sender.SendAsync(command, cancellationToken);
             return result.ToApiResult();
         })
@@ -187,7 +187,7 @@ public static class Blog
             HttpContext context,
             CancellationToken cancellationToken) =>
         {
-            var command = new ReplyToCommentRequest(commentId, context.GetUserId(), form.Content, form.Attachment);
+            var command = new ReplyToCommentRequest(commentId, context.GetUserId(), form.Content, form.Attachments);
             var result = await sender.SendAsync(command, cancellationToken);
             return result.ToApiResult();
         })
@@ -278,7 +278,8 @@ public static class Blog
                 UserId = userId,
                 Title = request.Title,
                 Content = request.Content,
-                File = request.File
+                AttachmentsToDelete = request.AttachmentsToDelete,
+                NewFiles = request.NewFiles
             };
             var result = await sender.SendAsync(command, cancellationToken);
             return result.ToResult();
@@ -295,7 +296,7 @@ public static class Blog
 
     private class AddPostApiRequest
     {
-        public IFormFile? File { get; set; }
+        public IFormFileCollection? Files { get; set; }
         public string? Content { get; set; }
         public string? Title { get; set; }
     }
@@ -307,6 +308,7 @@ public static class Blog
     {
         public string? Title { get; set; }
         public string Content { get; set; } = null!;
-        public IFormFile? File { get; set; }
+        public List<Guid> AttachmentsToDelete { get; set; } = new();
+        public IFormFileCollection? NewFiles { get; set; }
     }
 }

@@ -78,13 +78,13 @@ public static class Chats
         app.MapPost("/chats/{chatId:guid}/messages", async (
             [FromRoute] Guid chatId,
             [FromForm] string content,
-            [FromForm] IFormFile? attachment,
+            [FromForm] IFormFileCollection? attachments,
             [FromServices] ISender sender,
             HttpContext context,
             CancellationToken cancellationToken) =>
         {
             var currentUserId = context.GetUserId();
-            var command = new SendMessageCommand(chatId, currentUserId, content, attachment);
+            var command = new SendMessageCommand(chatId, currentUserId, content, attachments);
             var result = await sender.SendAsync(command, cancellationToken);
             return result.ToApiResult();
         })

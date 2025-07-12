@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Application.Requests.Commands.Messaging;
 
-public record SendMessageCommand(Guid ChatId, Guid SenderId, string Content, IFormFile? Attachment = null) : IRequest;
+public record SendMessageCommand(Guid ChatId, Guid SenderId, string Content, IFormFileCollection? Attachments = null) : IRequest;
 
 public class SendMessageCommandValidator : AbstractValidator<SendMessageCommand>
 {
@@ -21,12 +21,15 @@ public class SendMessageCommandValidator : AbstractValidator<SendMessageCommand>
         RuleFor(x => x.SenderId).NotEmpty().WithMessage("ID отправителя обязателен");
         
         RuleFor(x => x)
-            .Must(x => !string.IsNullOrWhiteSpace(x.Content) || x.Attachment != null)
+            .Must(x => !string.IsNullOrWhiteSpace(x.Content) || x.Attachments is { Count: > 0 })
             .WithMessage("Сообщение должно содержать либо текст, либо вложение");
             
         RuleFor(x => x.Content)
             .MaximumLength(2000).WithMessage("Сообщение не может быть длиннее 2000 символов")
             .When(x => !string.IsNullOrWhiteSpace(x.Content));
+
+        RuleFor(x => x.Attachments)
+            .Must(files => files is not { Count: > 10 }).WithMessage("Maximum 10 files allowed.");
     }
 }
 
@@ -51,36 +54,47 @@ public class SendMessageCommandHandler(
             return ResultsHelper.Forbidden("Вы не являетесь участником данного чата");
         }
 
-        Attachment? attachment = null;
-        if (request.Attachment is not null)
+        var attachmentsList = new List<Attachment>();
+
+        if (request.Attachments is not null && request.Attachments.Count > 0)
         {
-            using var memoryStream = new MemoryStream();
-            await request.Attachment.CopyToAsync(memoryStream, cancellationToken);
-
-            if (!filesValidator.ValidateFile(memoryStream, request.Attachment.FileName))
+            if (request.Attachments.Count > 5) // Максимум 5 файлов для сообщения
             {
-                return ResultsHelper.BadRequest("Недопустимый файл");
+                return ResultsHelper.BadRequest("Maximum 5 files allowed");
             }
 
-            var uploadResult = await filesStorage.UploadAsync(memoryStream, request.Attachment.FileName, cancellationToken);
-            if (!uploadResult.IsSuccess)
+            foreach (var file in request.Attachments)
             {
-                return ResultsHelper.BadRequest("Ошибка загрузки файла");
+                using var memoryStream = new MemoryStream();
+                await file.CopyToAsync(memoryStream, cancellationToken);
+
+                if (!filesValidator.ValidateFile(memoryStream, file.FileName))
+                {
+                    return ResultsHelper.BadRequest($"Недопустимый файл: {file.FileName}");
+                }
+
+                var uploadResult = await filesStorage.UploadAsync(memoryStream, file.FileName, cancellationToken);
+                if (!uploadResult.IsSuccess)
+                {
+                    return ResultsHelper.BadRequest($"Ошибка загрузки файла: {file.FileName}");
+                }
+
+                var attachmentType = await attachmentsRepository.GetAttachmentTypeAsync(
+                    GetAttachmentTypeFromFileName(file.FileName), 
+                    cancellationToken);
+
+                var attachment = new Attachment
+                {
+                    Id = Guid.NewGuid(),
+                    Url = uploadResult.GetValue<string>(),
+                    Type = attachmentType,
+                    TypeId = attachmentType.Id
+                };
+
+                await attachmentsRepository.AddAsync(attachment, cancellationToken);
+                attachmentsList.Add(attachment);
             }
 
-            var attachmentType = await attachmentsRepository.GetAttachmentTypeAsync(
-                GetAttachmentTypeFromFileName(request.Attachment.FileName), 
-                cancellationToken);
-
-            attachment = new Attachment
-            {
-                Id = Guid.NewGuid(),
-                Url = uploadResult.GetValue<string>(),
-                Type = attachmentType,
-                TypeId = attachmentType.Id
-            };
-
-            await attachmentsRepository.AddAsync(attachment, cancellationToken);
             await attachmentsRepository.SaveChangesAsync(cancellationToken);
         }
 
@@ -90,8 +104,7 @@ public class SendMessageCommandHandler(
             ChatId = request.ChatId,
             SenderId = request.SenderId,
             Content = request.Content,
-            AttachmentId = attachment?.Id,
-            Attachment = attachment,
+            Attachments = attachmentsList,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -112,16 +125,16 @@ public class SendMessageCommandHandler(
 
         var chatName = GetChatDisplayName(chat, request.SenderId);
 
-        var notificationContent = GetNotificationContent(request.Content, attachment);
+        var notificationContent = GetNotificationContent(request.Content, attachmentsList);
 
-        if (attachment != null)
+        if (attachmentsList.Count > 0)
         {
             await notificationService.NotifyNewMessageWithAttachmentAsync(
                 request.ChatId, 
                 request.SenderId, 
                 senderName, 
                 notificationContent, 
-                attachment.Url,
+                attachmentsList.First().Url,
                 message.CreatedAt);
 
             await notificationService.NotifyUsersAboutNewMessageWithAttachmentAsync(
@@ -130,7 +143,7 @@ public class SendMessageCommandHandler(
                 request.SenderId,
                 senderName,
                 notificationContent,
-                attachment.Url,
+                attachmentsList.First().Url,
                 message.CreatedAt,
                 chatName);
         }
@@ -201,25 +214,29 @@ public class SendMessageCommandHandler(
         return chatName;
     }
 
-    private static string GetNotificationContent(string content, Attachment? attachment)
+    private static string GetNotificationContent(string content, List<Attachment> attachments)
     {
         if (!string.IsNullOrWhiteSpace(content))
         {
             return content;
         }
 
-        if (attachment != null)
+        if (attachments.Count <= 0)
         {
-            return GetAttachmentTypeFromFileName(attachment.Url) switch
-            {
-                AttachmentTypes.Image => "📷 Фото",
-                AttachmentTypes.Video => "🎥 Видео", 
-                AttachmentTypes.Audio => "🎵 Аудио",
-                AttachmentTypes.Sticker => "✨ Стикер",
-                AttachmentTypes.File or _ => "📎 Файл"
-            };
+            return "📝 Сообщение";
         }
+        
+        var firstAttachment = attachments.First();
+        var baseContent = GetAttachmentTypeFromFileName(firstAttachment.Url) switch
+        {
+            AttachmentTypes.Image => "📷 Фото",
+            AttachmentTypes.Video => "🎥 Видео", 
+            AttachmentTypes.Audio => "🎵 Аудио",
+            AttachmentTypes.Sticker => "✨ Стикер",
+            AttachmentTypes.File or _ => "📎 Файл"
+        };
 
-        return "📝 Сообщение";
+        return attachments.Count > 1 ? $"{baseContent} (+{attachments.Count - 1})" : baseContent;
+
     }
 } 

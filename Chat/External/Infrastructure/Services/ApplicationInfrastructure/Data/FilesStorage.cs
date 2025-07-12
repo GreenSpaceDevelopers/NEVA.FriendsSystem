@@ -83,6 +83,67 @@ public class FilesStorage : IFilesStorage
         }
     }
     
+    public async Task<IOperationResult> DeleteAsync(string fileUrl, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var objectName = ExtractObjectNameFromUrl(fileUrl);
+            
+            if (string.IsNullOrEmpty(objectName))
+            {
+                return ResultsHelper.BadRequest("Invalid file URL");
+            }
+
+            var removeObjectArgs = new RemoveObjectArgs()
+                .WithBucket(_config.BucketName)
+                .WithObject(objectName);
+            
+            await _minioClient.RemoveObjectAsync(removeObjectArgs, cancellationToken);
+            
+            return ResultsHelper.Ok("File deleted successfully");
+        }
+        catch (MinioException ex)
+        {
+            return ResultsHelper.BadRequest($"File deletion failed: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return ResultsHelper.BadRequest($"File deletion failed: {ex.Message}");
+        }
+    }
+
+    public async Task<IOperationResult> DeleteBatchAsync(IEnumerable<string> fileUrls, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var objectNames = fileUrls
+                .Select(ExtractObjectNameFromUrl)
+                .Where(name => !string.IsNullOrEmpty(name))
+                .ToList();
+            
+            if (objectNames.Count == 0)
+            {
+                return ResultsHelper.Ok("No valid files to delete");
+            }
+
+            var removeObjectsArgs = new RemoveObjectsArgs()
+                .WithBucket(_config.BucketName)
+                .WithObjects(objectNames);
+            
+            await _minioClient.RemoveObjectsAsync(removeObjectsArgs, cancellationToken);
+            
+            return ResultsHelper.Ok($"Successfully deleted {objectNames.Count} files");
+        }
+        catch (MinioException ex)
+        {
+            return ResultsHelper.BadRequest($"Batch file deletion failed: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return ResultsHelper.BadRequest($"Batch file deletion failed: {ex.Message}");
+        }
+    }
+
     private static string GetUniqueFileName(string fileName)
     {
         return $"{Guid.NewGuid()}{Path.GetExtension(fileName)}";
@@ -99,5 +160,23 @@ public class FilesStorage : IFilesStorage
             ".webp" => "image/webp",
             _ => "application/octet-stream"
         };
+    }
+
+    private static string ExtractObjectNameFromUrl(string fileUrl)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(fileUrl))
+                return string.Empty;
+
+            var uri = new Uri(fileUrl);
+            var pathSegments = uri.AbsolutePath.Trim('/').Split('/');
+            
+            return pathSegments.Length >= 2 ? string.Join("/", pathSegments.Skip(1)) : string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
+        }
     }
 }

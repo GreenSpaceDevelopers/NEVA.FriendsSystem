@@ -6,6 +6,7 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Application.Dtos.Responses.Blog;
+using Application.Dtos.Responses.Shared;
 using Application.Services.ApplicationInfrastructure.Results;
 
 namespace Application.Requests.Queries.Blog;
@@ -56,9 +57,15 @@ public class GetUserPostsQueryHandler(IBlogRepository blogRepository, IChatUsers
         
         foreach (var post in pagedPosts.Data)
         {
-            var attachmentUrl = post.Attachment?.Url != null 
-                ? await filesSigningService.GetSignedUrlAsync(post.Attachment.Url, cancellationToken) 
-                : null;
+            var attachments = new List<AttachmentDto>();
+            if (post.Attachments.Count != 0)
+            {
+                foreach (var attachment in post.Attachments.Where(attachment => !string.IsNullOrEmpty(attachment.Url)))
+                {
+                    var signedUrl = await filesSigningService.GetSignedUrlAsync(attachment.Url, cancellationToken);
+                    attachments.Add(new AttachmentDto(attachment.Id, signedUrl));
+                }
+            }
                 
             var authorAvatarUrl = post.Author.Avatar?.Url != null 
                 ? await filesSigningService.GetSignedUrlAsync(post.Author.Avatar.Url, cancellationToken) 
@@ -68,7 +75,7 @@ public class GetUserPostsQueryHandler(IBlogRepository blogRepository, IChatUsers
                 post.Id,
                 post.Title ?? string.Empty,
                 post.Content,
-                attachmentUrl,
+                attachments,
                 post.CreatedAt,
                 post.Comments?.Count ?? 0,
                 post.Reactions?.Count ?? 0,

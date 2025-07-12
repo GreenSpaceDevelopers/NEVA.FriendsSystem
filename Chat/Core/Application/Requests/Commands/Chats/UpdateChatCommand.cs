@@ -17,7 +17,8 @@ public record UpdateChatCommand(
     string? Name = null,
     IFormFile? Picture = null,
     Guid[]? ParticipantIds = null,
-    Guid? NewAdminId = null) : IRequest;
+    Guid? NewAdminId = null,
+    bool DeletePicture = false) : IRequest;
 
 public class UpdateChatCommandValidator : AbstractValidator<UpdateChatCommand>
 {
@@ -62,8 +63,22 @@ public class UpdateChatCommandHandler(
             chat.Name = request.Name.Trim();
         }
 
-        if (request.Picture != null)
+        if (request.DeletePicture)
         {
+            if (chat.ChatPicture != null && !string.IsNullOrEmpty(chat.ChatPicture.Url))
+            {
+                await filesStorage.DeleteAsync(chat.ChatPicture.Url, cancellationToken);
+            }
+            chat.ChatPicture = null;
+            chat.ChatPictureId = null;
+        }
+        else if (request.Picture != null)
+        {
+            if (chat.ChatPicture != null && !string.IsNullOrEmpty(chat.ChatPicture.Url))
+            {
+                await filesStorage.DeleteAsync(chat.ChatPicture.Url, cancellationToken);
+            }
+
             using var memoryStream = new MemoryStream();
             await request.Picture.CopyToAsync(memoryStream, cancellationToken);
 

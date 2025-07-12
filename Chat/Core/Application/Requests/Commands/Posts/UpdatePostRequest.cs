@@ -16,7 +16,8 @@ public class UpdatePostRequest : IRequest
     public Guid? UserId { get; set; }
     public string? Title { get; set; }
     public string? Content { get; set; }
-    public IFormFile? File { get; set; }
+    public List<Guid> AttachmentsToDelete { get; set; } = new();
+    public IFormFileCollection? NewFiles { get; set; }
 }
 
 public class UpdatePostRequestHandler(
@@ -40,28 +41,62 @@ public class UpdatePostRequestHandler(
         if (request.Content != null)
             post.Content = request.Content;
 
-        if (request.File is not null)
+        if (request.AttachmentsToDelete.Count > 0)
         {
-            using var memoryStream = new MemoryStream();
-            await request.File.CopyToAsync(memoryStream, cancellationToken);
-            if (!filesValidator.ValidateFile(memoryStream, request.File.FileName))
-                return ResultsHelper.BadRequest("Invalid file");
-
-            var uploadResult = await filesStorage.UploadAsync(memoryStream, request.File.FileName, cancellationToken);
-            if (!uploadResult.IsSuccess)
-                return ResultsHelper.BadRequest("File upload failed");
-
-            var type = await attachmentsRepository.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
-            var attachment = new Attachment
+            var attachmentsToDelete = post.Attachments
+                .Where(att => request.AttachmentsToDelete.Contains(att.Id))
+                .ToList();
+            
+            if (attachmentsToDelete.Count > 0)
             {
-                Id = Guid.NewGuid(),
-                Url = uploadResult.GetValue<string>(),
-                Type = type,
-                TypeId = type.Id,
-            };
-            await attachmentsRepository.AddAsync(attachment, cancellationToken);
-            post.AttachmentId = attachment.Id;
-            post.Attachment = attachment;
+                var filesToDelete = attachmentsToDelete
+                    .Where(att => !string.IsNullOrEmpty(att.Url))
+                    .Select(att => att.Url)
+                    .ToList();
+                
+                if (filesToDelete.Count > 0)
+                {
+                    await filesStorage.DeleteBatchAsync(filesToDelete, cancellationToken);
+                }
+                
+                foreach (var attachment in attachmentsToDelete)
+                {
+                    post.Attachments.Remove(attachment);
+                    attachmentsRepository.Delete(attachment);
+                }
+            }
+        }
+
+        if (request.NewFiles is not null && request.NewFiles.Count > 0)
+        {
+            var totalAttachments = post.Attachments.Count + request.NewFiles.Count;
+            if (totalAttachments > 10)
+            {
+                return ResultsHelper.BadRequest("Maximum 10 files allowed");
+            }
+
+            foreach (var file in request.NewFiles)
+            {
+                using var memoryStream = new MemoryStream();
+                await file.CopyToAsync(memoryStream, cancellationToken);
+                if (!filesValidator.ValidateFile(memoryStream, file.FileName))
+                    return ResultsHelper.BadRequest($"Invalid file: {file.FileName}");
+
+                var uploadResult = await filesStorage.UploadAsync(memoryStream, file.FileName, cancellationToken);
+                if (!uploadResult.IsSuccess)
+                    return ResultsHelper.BadRequest($"File upload failed: {file.FileName}");
+
+                var type = await attachmentsRepository.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
+                var attachment = new Attachment
+                {
+                    Id = Guid.NewGuid(),
+                    Url = uploadResult.GetValue<string>(),
+                    Type = type,
+                    TypeId = type.Id,
+                };
+                await attachmentsRepository.AddAsync(attachment, cancellationToken);
+                post.Attachments.Add(attachment);
+            }
         }
 
         await blogRepository.SaveChangesAsync(cancellationToken);
@@ -80,5 +115,7 @@ public class UpdatePostRequestValidator : AbstractValidator<UpdatePostRequest>
         RuleFor(x => x.Content)
             .MinimumLength(10).WithMessage("Content must be at least 10 characters long.")
             .When(x => x.Content != null);
+        RuleFor(x => x.NewFiles)
+            .Must(files => files is not { Count: > 10 }).WithMessage("Maximum 10 files allowed.");
     }
 } 

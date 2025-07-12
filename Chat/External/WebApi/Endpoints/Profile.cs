@@ -135,6 +135,36 @@ public static class Profile
         .WithTags("Profile")
         .Produces<Application.Dtos.Responses.Profile.UserInteractionPermissionsDto>(200)
         .Produces<NotFoundErrorResponse>(404);
+
+        app.MapDelete("/profile/avatar", async (
+            [FromServices] ISender sender,
+            HttpContext context,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new DeleteAvatarCommand(context.GetUserId());
+            var result = await sender.SendAsync(command, cancellationToken);
+            return result.ToApiResult();
+        })
+        .WithName("DeleteAvatar")
+        .WithOpenApi()
+        .WithTags("Profile")
+        .Produces(204)
+        .Produces<NotFoundErrorResponse>(404);
+
+        app.MapDelete("/profile/cover", async (
+            [FromServices] ISender sender,
+            HttpContext context,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new DeleteCoverCommand(context.GetUserId());
+            var result = await sender.SendAsync(command, cancellationToken);
+            return result.ToApiResult();
+        })
+        .WithName("DeleteCover")
+        .WithOpenApi()
+        .WithTags("Profile")
+        .Produces(204)
+        .Produces<NotFoundErrorResponse>(404);
     }
 
     /// <summary>
