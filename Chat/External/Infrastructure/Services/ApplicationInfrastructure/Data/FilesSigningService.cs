@@ -15,7 +15,7 @@ public class FilesSigningService : IFilesSigningService
     {
         _config = minioConfig.Value;
         _minioClient = new MinioClient()
-            .WithEndpoint(_config.Endpoint)
+            .WithEndpoint(_config.PublicEndpoint)
             .WithCredentials(_config.AccessKey, _config.SecretKey);
         if (_config.UseSSL)
         {
