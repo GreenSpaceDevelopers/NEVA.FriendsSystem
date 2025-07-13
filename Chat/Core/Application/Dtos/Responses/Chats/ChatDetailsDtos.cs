@@ -17,4 +17,8 @@ public record ChatDetailsDto(
     IReadOnlyCollection<ChatParticipantDto> Participants,
     LastChatMessagePreview LastMessagePreview,
     [SwaggerSchema(Description = "ID друга для личного чата (null для групповых чатов)")]
-    Guid? FriendId); 
+    Guid? FriendId,
+    [SwaggerSchema(Description = "ID администратора чата")]
+    Guid AdminId,
+    [SwaggerSchema(Description = "Был ли чат замучен текущим пользователем")]
+    bool IsMuted); 

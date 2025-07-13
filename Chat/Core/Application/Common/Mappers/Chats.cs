@@ -28,7 +28,7 @@ public static class Chats
         return chatPreview;
     }
 
-    public static UserChatListItemDto ToUserChatListItemDto(this ChatWithUnreadCount chatWithUnreadCount, Guid userId)
+    public static UserChatListItemDto ToUserChatListItemDto(this ChatWithUnreadCount chatWithUnreadCount, Guid userId, bool isMuted = false)
     {
         var chat = chatWithUnreadCount.Chat;
         var unreadCount = chatWithUnreadCount.UnreadCount;
@@ -57,7 +57,8 @@ public static class Chats
                 unreadCount,
                 lastMessagePreview,
                 userRole,
-                isGroup
+                isGroup,
+                isMuted
             );
         
         var interlocutor = chat.Users.First(u => u.Id != userId);
@@ -70,11 +71,12 @@ public static class Chats
             unreadCount,
             lastMessagePreview,
             userRole,
-            isGroup
+            isGroup,
+            isMuted
         );
     }
 
-    public static async Task<UserChatListItemDto> ToUserChatListItemDtoAsync(this ChatWithUnreadCount chatWithUnreadCount, Guid userId, IFilesSigningService filesSigningService, CancellationToken cancellationToken = default)
+    public static async Task<UserChatListItemDto> ToUserChatListItemDtoAsync(this ChatWithUnreadCount chatWithUnreadCount, Guid userId, IFilesSigningService filesSigningService, bool isMuted = false, CancellationToken cancellationToken = default)
     {
         var chat = chatWithUnreadCount.Chat;
         var unreadCount = chatWithUnreadCount.UnreadCount;
@@ -109,7 +111,8 @@ public static class Chats
                 unreadCount,
                 lastMessagePreview,
                 userRole,
-                isGroup
+                isGroup,
+                isMuted
             );
         
         var interlocutor = chat.Users.First(u => u.Id != userId);
@@ -122,7 +125,8 @@ public static class Chats
             unreadCount,
             lastMessagePreview,
             userRole,
-            isGroup
+            isGroup,
+            isMuted
         );
     }
 }

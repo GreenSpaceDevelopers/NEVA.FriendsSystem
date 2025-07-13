@@ -9,7 +9,7 @@ namespace Application.Requests.Queries.Messaging;
 
 public record GetChatPreviewQuery(Guid UserId, Guid ChatId) : IRequest;
 
-public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository, IFilesSigningService filesSigningService) : IRequestHandler<GetChatPreviewQuery>
+public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository, IUserChatSettingsRepository userChatSettingsRepository, IFilesSigningService filesSigningService) : IRequestHandler<GetChatPreviewQuery>
 {
     public async Task<IOperationResult> HandleAsync(GetChatPreviewQuery request, CancellationToken cancellationToken = default)
     {
@@ -63,7 +63,10 @@ public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository, IFiles
             lastMessage?.Attachment is not null,
             lastMessage?.CreatedAt ?? default);
 
-        var dto = new ChatDetailsDto(chat.Id, displayName, chatImageUrl, isGroup, participants, lastMsgPreview, friendId);
+        var userSettings = await userChatSettingsRepository.GetByUserAndChatOrCreateAsync(request.UserId, chat.Id, cancellationToken);
+        var isMuted = userSettings.IsMuted;
+
+        var dto = new ChatDetailsDto(chat.Id, displayName, chatImageUrl, isGroup, participants, lastMsgPreview, friendId, chat.AdminId, isMuted);
 
         return ResultsHelper.Ok(dto);
     }

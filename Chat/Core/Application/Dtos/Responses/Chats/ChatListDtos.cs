@@ -20,7 +20,9 @@ public record UserChatListItemDto(
     [SwaggerSchema(Description = "Роль текущего пользователя в чате")]
     string UserRole,
     [SwaggerSchema(Description = "Является ли чат групповым")]
-    bool IsGroup);
+    bool IsGroup,
+    [SwaggerSchema(Description = "Был ли чат замучен текущим пользователем")]
+    bool IsMuted);
 
 public record UserChatListItem(Guid UserId, Guid ChatId, string ChatName, string? photoUrl, LastChatMessagePreview LastMessagePreview, bool IsGroup);
 

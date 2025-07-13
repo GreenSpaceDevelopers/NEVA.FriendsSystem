@@ -15,7 +15,7 @@ namespace Application.Requests.Commands.Profile;
 public record UpdateProfileRequest(
     Guid UserId,
     string Username,
-    string PersonalLink,
+    string? PersonalLink,
     string? Name,
     string? Surname,
     string? MiddleName,
@@ -48,9 +48,9 @@ public class UpdateProfileRequestHandler(
             }
         }
 
-        if (user.PersonalLink != request.PersonalLink)
+        if (!string.IsNullOrWhiteSpace(request.PersonalLink) && user.PersonalLink != request.PersonalLink)
         {
-            var isPersonalLinkUnique = await chatUsersRepository.IsPersonalLinkUniqueAsync(request.PersonalLink, cancellationToken);
+            var isPersonalLinkUnique = await chatUsersRepository.IsPersonalLinkUniqueAsync(request.PersonalLink!, cancellationToken);
             if (!isPersonalLinkUnique)
             {
                 return ResultsHelper.BadRequest("Personal link is already taken");
@@ -120,7 +120,10 @@ public class UpdateProfileRequestHandler(
         }
 
         user.Username = request.Username;
-        user.PersonalLink = request.PersonalLink;
+        if (!string.IsNullOrWhiteSpace(request.PersonalLink))
+        {
+            user.PersonalLink = request.PersonalLink;
+        }
         user.Name = request.Name;
         user.Surname = request.Surname;
         user.MiddleName = request.MiddleName;
@@ -145,11 +148,13 @@ public class UpdateProfileRequestValidator : AbstractValidator<UpdateProfileRequ
             .MinimumLength(3).WithMessage("Username must be at least 3 characters long.")
             .MaximumLength(50).WithMessage("Username must not exceed 50 characters.");
 
-        RuleFor(x => x.PersonalLink)
-            .NotEmpty().WithMessage("Personal link is required.")
-            .MinimumLength(3).WithMessage("Personal link must be at least 3 characters long.")
-            .MaximumLength(50).WithMessage("Personal link must not exceed 50 characters.")
-            .Matches("^[a-zA-Z0-9_]+$").WithMessage("Personal link can only contain letters, numbers, and underscores.");
+        When(x => !string.IsNullOrWhiteSpace(x.PersonalLink), () =>
+        {
+            RuleFor(x => x.PersonalLink!)
+                .MinimumLength(3).WithMessage("Personal link must be at least 3 characters long.")
+                .MaximumLength(50).WithMessage("Personal link must not exceed 50 characters.")
+                .Matches("^[a-zA-Z0-9_]+$").WithMessage("Personal link can only contain letters, numbers, and underscores.");
+        });
 
         RuleFor(x => x.Name)
             .MaximumLength(100).WithMessage("Name must not exceed 100 characters.")

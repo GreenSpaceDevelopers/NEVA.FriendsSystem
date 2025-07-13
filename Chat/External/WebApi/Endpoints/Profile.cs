@@ -152,7 +152,7 @@ public static class Profile
         /// Персональная ссылка
         /// </summary>
         [SwaggerSchema(Description = "Персональная ссылка профиля (от 3 до 50 символов)")]
-        public string PersonalLink { get; set; } = string.Empty;
+        public string? PersonalLink { get; set; }
 
         /// <summary>
         /// Имя

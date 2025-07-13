@@ -161,6 +161,62 @@ public static class Chats
         .Produces(400)
         .Produces(403)
         .Produces(404);
+
+        app.MapPost("/chats/{chatId:guid}/leave", async (
+            [FromRoute] Guid chatId,
+            [FromServices] ISender sender,
+            HttpContext context,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new LeaveChatCommand(chatId, context.GetUserId());
+            var result = await sender.SendAsync(command, cancellationToken);
+            return result.ToResult();
+        })
+        .WithName("LeaveChat")
+        .WithOpenApi()
+        .WithTags("Chats")
+        .Produces(200)
+        .Produces(400)
+        .Produces(403)
+        .Produces(404);
+
+        app.MapDelete("/chats/{chatId:guid}/users/{userId:guid}", async (
+            [FromRoute] Guid chatId,
+            [FromRoute] Guid userId,
+            [FromServices] ISender sender,
+            HttpContext context,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new RemoveUserFromChatCommand(chatId, context.GetUserId(), userId);
+            var result = await sender.SendAsync(command, cancellationToken);
+            return result.ToResult();
+        })
+        .WithName("RemoveUserFromChat")
+        .WithOpenApi()
+        .WithTags("Chats")
+        .Produces(200)
+        .Produces(400)
+        .Produces(403)
+        .Produces(404);
+
+        app.MapPost("/chats/{chatId:guid}/mute", async (
+            [FromRoute] Guid chatId,
+            [FromBody] MuteChatRequest request,
+            [FromServices] ISender sender,
+            HttpContext context,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new MuteChatCommand(chatId, context.GetUserId(), request.IsMuted);
+            var result = await sender.SendAsync(command, cancellationToken);
+            return result.ToResult();
+        })
+        .WithName("MuteChat")
+        .WithOpenApi()
+        .WithTags("Chats")
+        .Produces(200)
+        .Produces(400)
+        .Produces(403)
+        .Produces(404);
     }
 
     private class CreateChatForm
@@ -179,4 +235,6 @@ public static class Chats
     }
     
     private record MarkAsReadRequest(Guid? LastReadMessageId);
+    
+    private record MuteChatRequest(bool IsMuted);
 }
