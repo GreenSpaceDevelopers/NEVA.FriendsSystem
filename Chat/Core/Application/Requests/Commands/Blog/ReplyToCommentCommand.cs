@@ -77,11 +77,13 @@ public class ReplyToCommentRequestHandler(
                     return ResultsHelper.BadRequest($"File upload failed: {file.FileName}");
                 }
 
+                var fileResult = uploadResult.GetValue<FileUploadResult>();
                 var attachmentType = await attachmentsRepository.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
                 var attachment = new Attachment
                 {
                     Id = Guid.NewGuid(),
-                    Url = uploadResult.GetValue<string>(),
+                    Url = fileResult.Url,
+                    FileId = fileResult.FileId,
                     Type = attachmentType,
                     TypeId = attachmentType.Id,
                 };

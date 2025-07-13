@@ -79,6 +79,7 @@ public class SendMessageCommandHandler(
                     return ResultsHelper.BadRequest($"Ошибка загрузки файла: {file.FileName}");
                 }
 
+                var fileResult = uploadResult.GetValue<FileUploadResult>();
                 var attachmentType = await attachmentsRepository.GetAttachmentTypeAsync(
                     GetAttachmentTypeFromFileName(file.FileName), 
                     cancellationToken);
@@ -86,7 +87,8 @@ public class SendMessageCommandHandler(
                 var attachment = new Attachment
                 {
                     Id = Guid.NewGuid(),
-                    Url = uploadResult.GetValue<string>(),
+                    Url = fileResult.Url,
+                    FileId = fileResult.FileId,
                     Type = attachmentType,
                     TypeId = attachmentType.Id
                 };

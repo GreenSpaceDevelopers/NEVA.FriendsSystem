@@ -19,9 +19,9 @@ public class DeleteAvatarCommandHandler(IChatUsersRepository usersRepository, IF
             return ResultsHelper.NotFound("User not found");
         }
 
-        if (user.Avatar != null && !string.IsNullOrEmpty(user.Avatar.Url))
+        if (user.Avatar != null && !string.IsNullOrEmpty(user.Avatar.FileId))
         {
-            await filesStorage.DeleteAsync(user.Avatar.Url, cancellationToken);
+            await filesStorage.DeleteByFileIdAsync(user.Avatar.FileId, cancellationToken);
         }
 
         user.Avatar = null;

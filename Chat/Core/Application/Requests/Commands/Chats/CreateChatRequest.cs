@@ -1,4 +1,5 @@
 using Application.Abstractions.Persistence.Repositories.Messaging;
+using Application.Abstractions.Persistence.Repositories.Media;
 using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
@@ -7,7 +8,6 @@ using Domain.Models.Messaging;
 using Domain.Models.Users;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
-using Domain.Models.Media;
 using Application.Abstractions.Services.ApplicationInfrastructure.Data; // For IFilesStorage / Validator
 
 namespace Application.Requests.Commands.Chats;
@@ -36,7 +36,8 @@ public class CreateChatRequestHandler(
     IChatUsersRepository chatUsersRepository,
     IChatsRepository chatsRepository,
     IFilesStorage filesStorage,
-    IFilesValidator filesValidator) : IRequestHandler<CreateChatRequest>
+    IFilesValidator filesValidator,
+    IAttachmentsRepository attachmentsRepository) : IRequestHandler<CreateChatRequest>
 {
     public async Task<IOperationResult> HandleAsync(CreateChatRequest request, CancellationToken cancellationToken = default)
     {
@@ -92,7 +93,7 @@ public class CreateChatRequestHandler(
             chatName = string.Join(", ", chatUsers.Select(u => u.Username));
         }
 
-        Picture? chatPicture = null;
+        Attachment? chatPicture = null;
 
         if (request.ChatPicture is not null)
         {
@@ -110,10 +111,16 @@ public class CreateChatRequestHandler(
                 return ResultsHelper.BadRequest("Ошибка загрузки изображения");
             }
 
-            chatPicture = new Picture
+            var fileResult = uploadResult.GetValue<FileUploadResult>();
+            var imageType = await attachmentsRepository.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
+
+            chatPicture = new Attachment
             {
                 Id = Guid.NewGuid(),
-                Url = uploadResult.GetValue<string>()
+                Url = fileResult.Url,
+                FileId = fileResult.FileId,
+                TypeId = imageType.Id,
+                Type = imageType
             };
         }
 

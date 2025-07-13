@@ -1,5 +1,4 @@
 using Domain.Models.Blog;
-using Domain.Models.Media;
 using Domain.Models.Messaging;
 using Domain.Models.Service;
 using Domain.Models.Users;
@@ -29,9 +28,6 @@ public class ChatsDbContext(DbContextOptions<ChatsDbContext> options) : DbContex
     public DbSet<Comment> Comments { get; set; }
     public DbSet<PostReaction> PostReactions { get; set; }
     public DbSet<CommentReaction> CommentReactions { get; set; }
-
-    // MediaDto
-    public DbSet<Picture> Services { get; set; }
 
     // Service
     public DbSet<Event> Events { get; set; }

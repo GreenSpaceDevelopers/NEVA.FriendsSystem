@@ -20,9 +20,9 @@ public class DeleteReactionRequestHandler(IReactionsTypesRepository reactionsTyp
             return ResultsHelper.NotFound("Reaction type not found");
         }
 
-        if (reactionType.Attachment != null && !string.IsNullOrEmpty(reactionType.Attachment.Url))
+        if (reactionType.Attachment != null && !string.IsNullOrEmpty(reactionType.Attachment.FileId))
         {
-            await filesStorage.DeleteAsync(reactionType.Attachment.Url, cancellationToken);
+            await filesStorage.DeleteByFileIdAsync(reactionType.Attachment.FileId, cancellationToken);
         }
 
         reactionsTypesRepository.Delete(reactionType);

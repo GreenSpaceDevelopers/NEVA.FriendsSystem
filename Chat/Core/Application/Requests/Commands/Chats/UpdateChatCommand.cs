@@ -1,11 +1,11 @@
 using Application.Abstractions.Persistence.Repositories.Messaging;
+using Application.Abstractions.Persistence.Repositories.Media;
 using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Services.ApplicationInfrastructure.Results;
-using Domain.Models.Media;
-using Domain.Models.Users;
+using Domain.Models.Messaging;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 
@@ -43,7 +43,8 @@ public class UpdateChatCommandHandler(
     IChatsRepository chatsRepository,
     IChatUsersRepository chatUsersRepository,
     IFilesStorage filesStorage,
-    IFilesValidator filesValidator) : IRequestHandler<UpdateChatCommand>
+    IFilesValidator filesValidator,
+    IAttachmentsRepository attachmentsRepository) : IRequestHandler<UpdateChatCommand>
 {
     public async Task<IOperationResult> HandleAsync(UpdateChatCommand request, CancellationToken cancellationToken = default)
     {
@@ -65,18 +66,18 @@ public class UpdateChatCommandHandler(
 
         if (request.DeletePicture)
         {
-            if (chat.ChatPicture != null && !string.IsNullOrEmpty(chat.ChatPicture.Url))
+            if (chat.ChatPicture != null && !string.IsNullOrEmpty(chat.ChatPicture.FileId))
             {
-                await filesStorage.DeleteAsync(chat.ChatPicture.Url, cancellationToken);
+                await filesStorage.DeleteByFileIdAsync(chat.ChatPicture.FileId, cancellationToken);
             }
             chat.ChatPicture = null;
             chat.ChatPictureId = null;
         }
         else if (request.Picture != null)
         {
-            if (chat.ChatPicture != null && !string.IsNullOrEmpty(chat.ChatPicture.Url))
+            if (chat.ChatPicture != null && !string.IsNullOrEmpty(chat.ChatPicture.FileId))
             {
-                await filesStorage.DeleteAsync(chat.ChatPicture.Url, cancellationToken);
+                await filesStorage.DeleteByFileIdAsync(chat.ChatPicture.FileId, cancellationToken);
             }
 
             using var memoryStream = new MemoryStream();
@@ -93,10 +94,16 @@ public class UpdateChatCommandHandler(
                 return ResultsHelper.BadRequest("Failed to upload image");
             }
 
-            var chatPicture = new Picture
+            var fileResult = uploadResult.GetValue<FileUploadResult>();
+            var imageType = await attachmentsRepository.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
+
+            var chatPicture = new Attachment
             {
                 Id = Guid.NewGuid(),
-                Url = uploadResult.GetValue<string>()
+                Url = fileResult.Url,
+                FileId = fileResult.FileId,
+                TypeId = imageType.Id,
+                Type = imageType
             };
 
             chat.ChatPicture = chatPicture;

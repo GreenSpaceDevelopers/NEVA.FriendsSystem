@@ -27,14 +27,14 @@ public class DeletePostRequestHandler(IBlogRepository blogRepository, IFilesStor
             return ResultsHelper.NotFound("Post not found");
         }
 
-        var filesToDelete = post.Attachments
-            .Where(att => !string.IsNullOrEmpty(att.Url))
-            .Select(att => att.Url)
+        var fileIdsToDelete = post.Attachments
+            .Where(att => !string.IsNullOrEmpty(att.FileId))
+            .Select(att => att.FileId)
             .ToList();
         
-        if (filesToDelete.Any())
+        if (fileIdsToDelete.Count != 0)
         {
-            await filesStorage.DeleteBatchAsync(filesToDelete, cancellationToken);
+            await filesStorage.DeleteBatchByFileIdsAsync(fileIdsToDelete, cancellationToken);
         }
 
         user.Posts.Remove(post);

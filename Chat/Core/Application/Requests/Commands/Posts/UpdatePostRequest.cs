@@ -49,14 +49,14 @@ public class UpdatePostRequestHandler(
             
             if (attachmentsToDelete.Count > 0)
             {
-                var filesToDelete = attachmentsToDelete
-                    .Where(att => !string.IsNullOrEmpty(att.Url))
-                    .Select(att => att.Url)
+                var fileIdsToDelete = attachmentsToDelete
+                    .Where(att => !string.IsNullOrEmpty(att.FileId))
+                    .Select(att => att.FileId)
                     .ToList();
                 
-                if (filesToDelete.Count > 0)
+                if (fileIdsToDelete.Count > 0)
                 {
-                    await filesStorage.DeleteBatchAsync(filesToDelete, cancellationToken);
+                    await filesStorage.DeleteBatchByFileIdsAsync(fileIdsToDelete, cancellationToken);
                 }
                 
                 foreach (var attachment in attachmentsToDelete)
@@ -86,11 +86,13 @@ public class UpdatePostRequestHandler(
                 if (!uploadResult.IsSuccess)
                     return ResultsHelper.BadRequest($"File upload failed: {file.FileName}");
 
+                var fileResult = uploadResult.GetValue<FileUploadResult>();
                 var type = await attachmentsRepository.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
                 var attachment = new Attachment
                 {
                     Id = Guid.NewGuid(),
-                    Url = uploadResult.GetValue<string>(),
+                    Url = fileResult.Url,
+                    FileId = fileResult.FileId,
                     Type = type,
                     TypeId = type.Id,
                 };

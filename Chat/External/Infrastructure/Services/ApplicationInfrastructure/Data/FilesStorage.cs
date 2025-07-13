@@ -71,7 +71,9 @@ public class FilesStorage : IFilesStorage
             
             var publicEndpoint = !string.IsNullOrEmpty(_config.PublicEndpoint) ? _config.PublicEndpoint : _config.Endpoint;
             var url = $"{(_config.UseSSL ? "https" : "http")}://{publicEndpoint}/{_config.BucketName}/{objectName}";
-            return ResultsHelper.Ok(url);
+            
+            var result = new FileUploadResult(objectName, url);
+            return ResultsHelper.Ok(result);
         }
         catch (MinioException ex)
         {
@@ -83,20 +85,18 @@ public class FilesStorage : IFilesStorage
         }
     }
     
-    public async Task<IOperationResult> DeleteAsync(string fileUrl, CancellationToken cancellationToken = default)
+    public async Task<IOperationResult> DeleteByFileIdAsync(string fileId, CancellationToken cancellationToken = default)
     {
         try
         {
-            var objectName = ExtractObjectNameFromUrl(fileUrl);
-            
-            if (string.IsNullOrEmpty(objectName))
+            if (string.IsNullOrEmpty(fileId))
             {
-                return ResultsHelper.BadRequest("Invalid file URL");
+                return ResultsHelper.BadRequest("FileId cannot be empty");
             }
 
             var removeObjectArgs = new RemoveObjectArgs()
                 .WithBucket(_config.BucketName)
-                .WithObject(objectName);
+                .WithObject(fileId);
             
             await _minioClient.RemoveObjectAsync(removeObjectArgs, cancellationToken);
             
@@ -112,13 +112,14 @@ public class FilesStorage : IFilesStorage
         }
     }
 
-    public async Task<IOperationResult> DeleteBatchAsync(IEnumerable<string> fileUrls, CancellationToken cancellationToken = default)
+
+
+    public async Task<IOperationResult> DeleteBatchByFileIdsAsync(IEnumerable<string> fileIds, CancellationToken cancellationToken = default)
     {
         try
         {
-            var objectNames = fileUrls
-                .Select(ExtractObjectNameFromUrl)
-                .Where(name => !string.IsNullOrEmpty(name))
+            var objectNames = fileIds
+                .Where(id => !string.IsNullOrEmpty(id))
                 .ToList();
             
             if (objectNames.Count == 0)

@@ -61,18 +61,18 @@ public class UpdateProfileRequestHandler(
 
         if (request.DeleteAvatar)
         {
-            if (user.Avatar != null && !string.IsNullOrEmpty(user.Avatar.Url))
+            if (user.Avatar != null && !string.IsNullOrEmpty(user.Avatar.FileId))
             {
-                await filesStorage.DeleteAsync(user.Avatar.Url, cancellationToken);
+                await filesStorage.DeleteByFileIdAsync(user.Avatar.FileId, cancellationToken);
             }
             user.Avatar = null;
             user.AvatarId = null;
         }
         else if (request.Avatar is not null)
         {
-            if (user.Avatar != null && !string.IsNullOrEmpty(user.Avatar.Url))
+            if (user.Avatar != null && !string.IsNullOrEmpty(user.Avatar.FileId))
             {
-                await filesStorage.DeleteAsync(user.Avatar.Url, cancellationToken);
+                await filesStorage.DeleteByFileIdAsync(user.Avatar.FileId, cancellationToken);
             }
 
             using var avatarStream = new MemoryStream();
@@ -90,12 +90,14 @@ public class UpdateProfileRequestHandler(
                 return ResultsHelper.BadRequest("file upload failed");
             }
 
+            var fileResult = avatarUploadResult.GetValue<FileUploadResult>();
             var avatarType = await attachments.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
 
             var avatarAttachment = new Attachment
             {
                 Id = Guid.NewGuid(),
-                Url = avatarUploadResult.GetValue<string>(),
+                Url = fileResult.Url,
+                FileId = fileResult.FileId,
                 Type = avatarType,
                 TypeId = avatarType.Id,
             };
@@ -106,18 +108,18 @@ public class UpdateProfileRequestHandler(
 
         if (request.DeleteCover)
         {
-            if (user.Cover != null && !string.IsNullOrEmpty(user.Cover.Url))
+            if (user.Cover != null && !string.IsNullOrEmpty(user.Cover.FileId))
             {
-                await filesStorage.DeleteAsync(user.Cover.Url, cancellationToken);
+                await filesStorage.DeleteByFileIdAsync(user.Cover.FileId, cancellationToken);
             }
             user.Cover = null;
             user.CoverId = null;
         }
         else if (request.Cover is not null)
         {
-            if (user.Cover != null && !string.IsNullOrEmpty(user.Cover.Url))
+            if (user.Cover != null && !string.IsNullOrEmpty(user.Cover.FileId))
             {
-                await filesStorage.DeleteAsync(user.Cover.Url, cancellationToken);
+                await filesStorage.DeleteByFileIdAsync(user.Cover.FileId, cancellationToken);
             }
 
             using var coverStream = new MemoryStream();
@@ -135,12 +137,14 @@ public class UpdateProfileRequestHandler(
                 return ResultsHelper.BadRequest(coverUploadResult.GetValue<string>());
             }
 
+            var fileResult = coverUploadResult.GetValue<FileUploadResult>();
             var coverType = await attachments.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
 
             var coverAttachment = new Attachment
             {
                 Id = Guid.NewGuid(),
-                Url = coverUploadResult.GetValue<string>(),
+                Url = fileResult.Url,
+                FileId = fileResult.FileId,
                 Type = coverType,
                 TypeId = coverType.Id,
             };

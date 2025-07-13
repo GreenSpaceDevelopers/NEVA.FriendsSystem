@@ -20,9 +20,9 @@ public class DeleteStickerRequestHandler(IAttachmentsRepository attachments, IFi
             return ResultsHelper.NotFound("Sticker not found");
         }
 
-        if (!string.IsNullOrEmpty(sticker.Url))
+        if (!string.IsNullOrEmpty(sticker.FileId))
         {
-            await filesStorage.DeleteAsync(sticker.Url, cancellationToken);
+            await filesStorage.DeleteByFileIdAsync(sticker.FileId, cancellationToken);
         }
 
         attachments.Delete(sticker);

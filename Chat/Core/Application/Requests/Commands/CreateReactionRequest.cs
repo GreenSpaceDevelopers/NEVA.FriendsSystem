@@ -35,12 +35,14 @@ public class CreateReactionRequestHandler(
             return ResultsHelper.BadRequest(uploadResult.GetValue<string>());
         }
 
+        var fileResult = uploadResult.GetValue<FileUploadResult>();
         var type = await attachments.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
 
         var attachment = new Attachment
         {
             Id = Guid.NewGuid(),
-            Url = uploadResult.GetValue<string>(),
+            Url = fileResult.Url,
+            FileId = fileResult.FileId,
             Type = type,
             TypeId = type.Id,
         };

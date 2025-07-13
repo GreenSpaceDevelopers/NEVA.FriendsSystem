@@ -19,9 +19,9 @@ public class DeleteCoverCommandHandler(IChatUsersRepository usersRepository, IFi
             return ResultsHelper.NotFound("User not found");
         }
 
-        if (user.Cover != null && !string.IsNullOrEmpty(user.Cover.Url))
+        if (user.Cover != null && !string.IsNullOrEmpty(user.Cover.FileId))
         {
-            await filesStorage.DeleteAsync(user.Cover.Url, cancellationToken);
+            await filesStorage.DeleteByFileIdAsync(user.Cover.FileId, cancellationToken);
         }
 
         user.Cover = null;
