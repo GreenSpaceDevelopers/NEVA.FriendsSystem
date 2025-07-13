@@ -1,6 +1,7 @@
 using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Domain.Models.Messaging;
+using Domain.Models.Media;
 
 namespace Application.Abstractions.Persistence.Repositories.Messaging;
 
@@ -23,4 +24,6 @@ public interface IChatsRepository : IBaseRepository<Chat>
     Task<Chat?> GetByIdWithUsersAsync(Guid chatId, CancellationToken cancellationToken = default);
 
     Task<Chat?> GetChatPreviewAsync(Guid chatId, CancellationToken cancellationToken = default);
+    
+    Task AddPictureAsync(Picture picture, CancellationToken cancellationToken = default);
 }

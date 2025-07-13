@@ -16,7 +16,7 @@ public record UpdateChatCommand(
     Guid CurrentUserId,
     string? Name = null,
     IFormFile? Picture = null,
-    Guid[]? ParticipantIds = null,
+    List<Guid>? ParticipantIds = null,
     Guid? NewAdminId = null) : IRequest;
 
 public class UpdateChatCommandValidator : AbstractValidator<UpdateChatCommand>
@@ -33,7 +33,7 @@ public class UpdateChatCommandValidator : AbstractValidator<UpdateChatCommand>
         
         When(x => x.ParticipantIds != null, () =>
         {
-            RuleFor(x => x.ParticipantIds!.Length).LessThan(100).WithMessage("Too many participants");
+            RuleFor(x => x.ParticipantIds!.Count).LessThan(100).WithMessage("Too many participants");
         });
     }
 }
@@ -84,6 +84,7 @@ public class UpdateChatCommandHandler(
                 Url = uploadResult.GetValue<string>()
             };
 
+            await chatsRepository.AddPictureAsync(chatPicture, cancellationToken);
             chat.ChatPicture = chatPicture;
             chat.ChatPictureId = chatPicture.Id;
         }

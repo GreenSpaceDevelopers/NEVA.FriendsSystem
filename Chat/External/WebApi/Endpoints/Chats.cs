@@ -5,7 +5,6 @@ using Application.Dtos.Responses.Chats;
 using Application.Requests.Commands.Chats;
 using Application.Requests.Commands.Messaging;
 using Application.Requests.Queries.Messaging;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Common.Helpers;
 using WebApi.Common.Mappers;
@@ -230,7 +229,7 @@ public static class Chats
     {
         public string? Name { get; set; }
         public IFormFile? Picture { get; set; }
-        public Guid[]? ParticipantIds { get; set; }
+        public List<Guid>? ParticipantIds { get; set; }
         public Guid? NewAdminId { get; set; }
     }
     

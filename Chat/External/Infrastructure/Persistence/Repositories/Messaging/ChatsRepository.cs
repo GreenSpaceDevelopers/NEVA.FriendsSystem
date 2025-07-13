@@ -2,6 +2,7 @@ using Application.Abstractions.Persistence.Repositories.Messaging;
 using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Domain.Models.Messaging;
+using Domain.Models.Media;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories.Messaging;
@@ -139,5 +140,10 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
                         m.SenderId != userId && 
                         m.CreatedAt > lastReadMessage)
             .CountAsync(cancellationToken);
+    }
+
+    public async Task AddPictureAsync(Picture picture, CancellationToken cancellationToken = default)
+    {
+        await dbContext.Set<Picture>().AddAsync(picture, cancellationToken);
     }
 }

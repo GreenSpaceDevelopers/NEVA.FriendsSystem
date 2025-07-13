@@ -7,24 +7,33 @@ using Application.Common.Models;
 using Application.Dtos.Requests.Shared;
 using Application.Dtos.Responses.Blog;
 using Application.Services.ApplicationInfrastructure.Results;
+using Domain.Models.Users;
 
 namespace Application.Requests.Queries.Blog;
 
-public record GetUserPostsQuery(Guid UserId, PageSettings PageSettings, bool? Desc = true, Guid? CurrentUserId = null) : IRequest;
+public record GetUserPostsByIdentifierQuery(string UserIdentifier, PageSettings PageSettings, bool? Desc = true, Guid? CurrentUserId = null) : IRequest;
 
-public class GetUserPostsQueryHandler(IBlogRepository blogRepository, IChatUsersRepository chatUsersRepository, IFilesSigningService filesSigningService) : IRequestHandler<GetUserPostsQuery>
+public class GetUserPostsByIdentifierQueryHandler(IBlogRepository blogRepository, IChatUsersRepository chatUsersRepository, IFilesSigningService filesSigningService) : IRequestHandler<GetUserPostsByIdentifierQuery>
 {
-    public async Task<IOperationResult> HandleAsync(GetUserPostsQuery request, CancellationToken cancellationToken = default)
+    public async Task<IOperationResult> HandleAsync(GetUserPostsByIdentifierQuery request, CancellationToken cancellationToken = default)
     {
-        var user = await blogRepository.GetUserByIdWithPostsAsync(request.UserId, cancellationToken);
-        if (user is null)
+        ChatUser? user = null;
+        
+        if (Guid.TryParse(request.UserIdentifier, out var userId))
+        {
+            user = await blogRepository.GetUserByIdWithPostsAsync(userId, cancellationToken);
+        }
+        
+        user ??= await blogRepository.GetUserByPersonalLinkWithPostsAsync(request.UserIdentifier, cancellationToken);
+        
+        if (user == null)
         {
             return ResultsHelper.NotFound("User not found");
         }
 
         if (request.CurrentUserId.HasValue)
         {
-            var isBlocked = await chatUsersRepository.IsUserBlockedByAsync(request.CurrentUserId.Value, request.UserId, cancellationToken);
+            var isBlocked = await chatUsersRepository.IsUserBlockedByAsync(request.CurrentUserId.Value, user.Id, cancellationToken);
             if (isBlocked)
             {
                 return ResultsHelper.Forbidden("You are blocked by the author");
@@ -46,7 +55,7 @@ public class GetUserPostsQueryHandler(IBlogRepository blogRepository, IChatUsers
         };
 
         var pagedPosts = await blogRepository.GetUserPostsPagedAsync(
-            request.UserId,
+            user.Id,
             request.PageSettings,
             sortExpressions,
             cancellationToken);
@@ -92,4 +101,4 @@ public class GetUserPostsQueryHandler(IBlogRepository blogRepository, IChatUsers
 
         return ResultsHelper.Ok(pagedResult);
     }
-}
+} 

@@ -28,6 +28,23 @@ public class BlogRepository(ChatsDbContext dbContext) : BaseRepository<Post>(dbC
             .FirstOrDefaultAsync(u => u.Id == requestUserId, cancellationToken);
     }
 
+    public async Task<ChatUser?> GetUserByPersonalLinkWithPostsAsync(string personalLink, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Set<ChatUser>()
+            .AsSplitQuery()
+            .Include(u => u.Posts)
+            .ThenInclude(p => p.Reactions)
+            .Include(u => u.Posts)
+            .ThenInclude(p => p.Comments)
+            .Include(u => u.Posts)
+            .ThenInclude(p => p.Attachment)
+            .Include(u => u.Posts)
+            .ThenInclude(p => p.Author)
+            .ThenInclude(a => a.Avatar)
+            .Include(u => u.Avatar)
+            .FirstOrDefaultAsync(u => u.PersonalLink == personalLink, cancellationToken);
+    }
+
     public async Task<Comment?> GetCommentByIdAsync(Guid commentId, CancellationToken cancellationToken = default)
     {
         return await dbContext.Set<Comment>()

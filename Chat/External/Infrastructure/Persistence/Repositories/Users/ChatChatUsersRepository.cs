@@ -102,6 +102,9 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
         var user = await dbContext.Set<ChatUser>()
             .Include(u => u.BlockedUsers)
             .ThenInclude(bu => bu.Avatar)
+            .Include(u => u.BlockedUsers)
+            .ThenInclude(bu => bu.AspNetUser)
+            .AsSplitQuery()
             .SingleOrDefaultAsync(u => u.Id == requestUserId, cancellationToken);
 
         if (user == null)

@@ -31,7 +31,9 @@ public class GetAllChatsForUserQueryHandler(IChatUsersRepository chatUsersReposi
             cancellationToken);
 
         var userSettings = await userChatSettingsRepository.GetByUserAsync(request.UserId, cancellationToken);
-        var mutedDict = userSettings.ToDictionary(s => s.ChatId, s => s.IsMuted);
+        var mutedDict = userSettings
+            .GroupBy(s => s.ChatId)
+            .ToDictionary(g => g.Key, g => g.First().IsMuted);
 
         var chatDtos = new List<UserChatListItemDto>();
         foreach (var chatWithUnreadCount in chatsWithUnreadCount.Data)

@@ -9,6 +9,7 @@ namespace Application.Abstractions.Persistence.Repositories.Blog;
 public interface IBlogRepository : IBaseRepository<Post>
 {
     public Task<ChatUser?> GetUserByIdWithPostsAsync(Guid requestUserId, CancellationToken cancellationToken = default);
+    public Task<ChatUser?> GetUserByPersonalLinkWithPostsAsync(string personalLink, CancellationToken cancellationToken = default);
     public Task<Comment?> GetCommentByIdAsync(Guid commentId, CancellationToken cancellationToken = default);
     public Task<PagedList<Post>> GetUserPostsPagedAsync(
         Guid userId,

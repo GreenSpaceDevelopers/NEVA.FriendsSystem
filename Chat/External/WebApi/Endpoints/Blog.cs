@@ -123,8 +123,8 @@ public static class Blog
             .Produces(200)
             .Produces(404);
 
-        app.MapGet("/blog/user/{userId:guid}/posts", async (
-            [FromRoute] Guid userId,
+        app.MapGet("/blog/user/{userIdentifier}/posts", async (
+            [FromRoute] string userIdentifier,
             [FromQuery] int skip,
             [FromQuery] int take,
             [FromServices] ISender sender, HttpContext context,
@@ -132,7 +132,7 @@ public static class Blog
             [FromQuery] bool? desc = true) =>
         {
             var currentUserId = context.GetUserId();
-            var query = new GetUserPostsQuery(userId, new PageSettings(skip, take), desc, currentUserId);
+            var query = new GetUserPostsByIdentifierQuery(userIdentifier, new PageSettings(skip, take), desc, currentUserId);
             var result = await sender.SendAsync(query, cancellationToken);
             return result.ToApiResult();
         })
