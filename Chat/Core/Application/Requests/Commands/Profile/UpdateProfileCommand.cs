@@ -4,6 +4,7 @@ using Application.Abstractions.Persistence.Repositories.Media;
 using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
+using Application.Abstractions.Services.External;
 using Application.Services.ApplicationInfrastructure.Results;
 using Domain.Models.Messaging;
 using Domain.Models.Users;
@@ -28,7 +29,8 @@ public class UpdateProfileRequestHandler(
     IChatUsersRepository chatUsersRepository,
     IFilesStorage filesStorage,
     IFilesValidator filesValidator,
-    IAttachmentsRepository attachments) : IRequestHandler<UpdateProfileRequest>
+    IAttachmentsRepository attachments,
+    INevaBackendService nevaBackendService) : IRequestHandler<UpdateProfileRequest>
 {
     public async Task<IOperationResult> HandleAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default)
     {
@@ -119,7 +121,8 @@ public class UpdateProfileRequestHandler(
             user.Cover = coverAttachment;
         }
 
-        user.Username = request.Username;
+        var usernameChanged = user.Username != request.Username;
+        
         if (!string.IsNullOrWhiteSpace(request.PersonalLink))
         {
             user.PersonalLink = request.PersonalLink;
@@ -128,6 +131,17 @@ public class UpdateProfileRequestHandler(
         user.Surname = request.Surname;
         user.MiddleName = request.MiddleName;
         user.DateOfBirth = request.DateOfBirth?.ToUniversalTime();
+
+        if (usernameChanged)
+        {
+            var updateResult = await nevaBackendService.UpdatePlayerAsync(request.UserId, request.Username, cancellationToken);
+            if (!updateResult)
+            {
+                return ResultsHelper.BadRequest("Failed to update username in external service");
+            }
+            user.Username = request.Username;
+            user.AspNetUser.UserName = request.Username;
+        }
 
         await chatUsersRepository.SaveChangesAsync(cancellationToken);
 

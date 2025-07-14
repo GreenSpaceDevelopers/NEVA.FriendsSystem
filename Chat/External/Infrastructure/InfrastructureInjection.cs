@@ -6,7 +6,6 @@ using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Abstractions.Services.Communications;
 using Application.Abstractions.Services.External;
-using Application.Abstractions.Services.Notifications;
 using Application.Abstractions.Services.Reporting;
 using Infrastructure.Configs;
 using Infrastructure.Persistence;
@@ -42,14 +41,13 @@ public static class InfrastructureInjection
         services.AddScoped<IAttachmentsRepository, AttachmentsRepository>();
         services.AddScoped<IReactionsTypesRepository, ReactionsTypesRepository>();
         services.AddScoped<IMessagesRepository, MessagesRepository>();
-        services.AddScoped<IBackendNotificationService, BackendNotificationService>();
-
         services.AddScoped<IFilesStorage, FilesStorage>();
         services.AddScoped<IFilesValidator, FilesValidator>();
         services.AddScoped<IFilesSigningService, FilesSigningService>();
         services.AddScoped<IChatNotificationService, SignalRChatNotificationService>();
         
         services.AddHttpClient<ILinkedAccountsService, LinkedAccountsService>();
+        services.AddHttpClient<INevaBackendService, NevaBackendService>();
 
         services.AddSingleton<ITelegramBotClient>(provider =>
         {

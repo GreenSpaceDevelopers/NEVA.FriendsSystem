@@ -6,14 +6,14 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Services.ApplicationInfrastructure.Results;
 using Domain.Models.Messaging;
 using FluentValidation;
-using Application.Abstractions.Services.Notifications;
+using Application.Abstractions.Services.External;
 using Application.Notifications;
 
 namespace Application.Requests.Commands.Blog;
 
 public record ToggleCommentLikeRequest(Guid CommentId, Guid UserId, Guid ReactionTypeId) : IRequest;
 
-public class ToggleCommentLikeRequestHandler(IBlogRepository blogRepository, IReactionsTypesRepository reactionsTypesRepository, IChatUsersRepository chatUsersRepository, IBackendNotificationService notificationService) : IRequestHandler<ToggleCommentLikeRequest>
+public class ToggleCommentLikeRequestHandler(IBlogRepository blogRepository, IReactionsTypesRepository reactionsTypesRepository, IChatUsersRepository chatUsersRepository, INevaBackendService nevaBackendService) : IRequestHandler<ToggleCommentLikeRequest>
 {
     public async Task<IOperationResult> HandleAsync(ToggleCommentLikeRequest request, CancellationToken cancellationToken = default)
     {
@@ -66,13 +66,14 @@ public class ToggleCommentLikeRequestHandler(IBlogRepository blogRepository, IRe
             if (reactor is not null)
             {
                 var receiverParams = new List<string> { "#", reactor.Username ?? reactor.AspNetUser.UserName, "комментарий" };
-                await notificationService.SendNotificationAsync(
+                await nevaBackendService.SendNotificationAsync(
                     NotificationTemplateIds.PostReaction,
                     comment.AuthorId,
                     request.UserId,
                     false,
                     receiverParams,
-                    null);
+                    null,
+                    cancellationToken);
             }
         }
 

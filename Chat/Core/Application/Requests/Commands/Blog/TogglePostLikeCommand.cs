@@ -6,14 +6,14 @@ using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Services.ApplicationInfrastructure.Results;
 using Domain.Models.Messaging;
 using FluentValidation;
-using Application.Abstractions.Services.Notifications;
+using Application.Abstractions.Services.External;
 using Application.Notifications;
 
 namespace Application.Requests.Commands.Blog;
 
 public record TogglePostLikeRequest(Guid PostId, Guid UserId, Guid ReactionTypeId) : IRequest;
 
-public class TogglePostLikeRequestHandler(IBlogRepository blogRepository, IReactionsTypesRepository reactionsTypesRepository, IChatUsersRepository chatUsersRepository, IBackendNotificationService notificationService) : IRequestHandler<TogglePostLikeRequest>
+public class TogglePostLikeRequestHandler(IBlogRepository blogRepository, IReactionsTypesRepository reactionsTypesRepository, IChatUsersRepository chatUsersRepository, INevaBackendService nevaBackendService) : IRequestHandler<TogglePostLikeRequest>
 {
     public async Task<IOperationResult> HandleAsync(TogglePostLikeRequest request,
         CancellationToken cancellationToken = default)
@@ -73,13 +73,14 @@ public class TogglePostLikeRequestHandler(IBlogRepository blogRepository, IReact
         }
         
         var receiverParams = new List<string> { "#", reactor.Username ?? reactor.AspNetUser.UserName, "пост" };
-        await notificationService.SendNotificationAsync(
+        await nevaBackendService.SendNotificationAsync(
             NotificationTemplateIds.PostReaction,
             post.AuthorId,
             request.UserId,
             false,
             receiverParams,
-            null);
+            null,
+            cancellationToken);
 
         return ResultsHelper.Ok(new { Liked = true, ReactionTypeId = request.ReactionTypeId });
     }
