@@ -61,7 +61,7 @@ public class LinkedAccountsService(
 
         var type = displayName.ToLowerInvariant();
 
-        return new LinkedAccountDto(type, apiDto.LinkedData, displayName);
+        return new LinkedAccountDto(type, apiDto.LinkedData, displayName, apiDto.CanUnlink);
     }
 }
 
@@ -81,4 +81,5 @@ public class LinkedAccountApiDto
     public string UserId { get; set; } = string.Empty;
     public string TypeId { get; set; } = string.Empty;
     public string LinkedData { get; set; } = string.Empty;
+    public bool CanUnlink { get; set; }
 } 

@@ -12,7 +12,9 @@ public record LinkedAccountDto(
     [SwaggerSchema(Description = "Идентификатор аккаунта (SteamID, Discord ID, Telegram ID)")]
     string LinkedData,
     [SwaggerSchema(Description = "Отображаемое имя типа аккаунта")]
-    string DisplayName
+    string DisplayName,
+    [SwaggerSchema(Description = "Можно ли отвязать аккаунт")]
+    bool CanUnlink
 );
 
 /// <summary>
