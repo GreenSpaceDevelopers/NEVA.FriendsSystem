@@ -2,14 +2,14 @@ using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Services.ApplicationInfrastructure.Results;
-using Application.Abstractions.Services.Notifications;
+using Application.Abstractions.Services.External;
 using Application.Notifications;
 
 namespace Application.Requests.Commands.Friends;
 
 public record DenyPendingFriendRequest(Guid UserId, Guid FriendId) : IRequest;
 
-public class DenyPendingFriendRequestHandler(IChatUsersRepository chatUsersRepository, IBackendNotificationService notificationService) : IRequestHandler<DenyPendingFriendRequest>
+public class DenyPendingFriendRequestHandler(IChatUsersRepository chatUsersRepository, INevaBackendService nevaBackendService) : IRequestHandler<DenyPendingFriendRequest>
 {
     public async Task<IOperationResult> HandleAsync(DenyPendingFriendRequest request, CancellationToken cancellationToken = default)
     {
@@ -47,13 +47,14 @@ public class DenyPendingFriendRequestHandler(IChatUsersRepository chatUsersRepos
         if (shouldNotify)
         {
             var receiverParams = new List<string> { "#", user.Username ?? user.AspNetUser.UserName };
-            await notificationService.SendNotificationAsync(
+            await nevaBackendService.SendNotificationAsync(
                 NotificationTemplateIds.FriendDeclined,
                 request.FriendId,
                 request.UserId,
                 false,
                 receiverParams,
-                null);
+                null,
+                cancellationToken);
         }
 
         return ResultsHelper.NoContent();

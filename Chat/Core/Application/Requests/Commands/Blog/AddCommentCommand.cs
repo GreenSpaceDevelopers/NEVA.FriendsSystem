@@ -9,7 +9,7 @@ using Domain.Models.Blog;
 using Domain.Models.Messaging;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
-using Application.Abstractions.Services.Notifications;
+using Application.Abstractions.Services.External;
 using Application.Notifications;
 
 namespace Application.Requests.Commands.Blog;
@@ -22,7 +22,7 @@ public class AddCommentRequestHandler(
     IFilesStorage filesStorage,
     IFilesValidator filesValidator,
     IChatUsersRepository chatUsersRepository,
-    IBackendNotificationService notificationService) : IRequestHandler<AddCommentRequest>
+    INevaBackendService nevaBackendService) : IRequestHandler<AddCommentRequest>
 {
     public async Task<IOperationResult> HandleAsync(AddCommentRequest request, CancellationToken cancellationToken = default)
     {
@@ -107,13 +107,14 @@ public class AddCommentRequestHandler(
         }
         
         var receiverParams = new List<string> { "#", commenter.Username ?? commenter.AspNetUser.UserName };
-        await notificationService.SendNotificationAsync(
+        await nevaBackendService.SendNotificationAsync(
             NotificationTemplateIds.PostComment,
             post.AuthorId,
             request.UserId,
             false,
             receiverParams,
-            null);
+            null,
+            cancellationToken);
 
         return ResultsHelper.Created(comment.Id);
     }
