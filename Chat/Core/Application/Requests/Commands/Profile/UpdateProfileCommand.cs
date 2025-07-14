@@ -122,7 +122,6 @@ public class UpdateProfileRequestHandler(
         }
 
         var usernameChanged = user.Username != request.Username;
-        user.Username = request.Username;
         
         if (!string.IsNullOrWhiteSpace(request.PersonalLink))
         {
@@ -136,6 +135,12 @@ public class UpdateProfileRequestHandler(
         if (usernameChanged)
         {
             var updateResult = await nevaBackendService.UpdatePlayerAsync(request.UserId, request.Username, cancellationToken);
+            if (!updateResult)
+            {
+                return ResultsHelper.BadRequest("Failed to update username in external service");
+            }
+            user.Username = request.Username;
+            user.AspNetUser.UserName = request.Username;
         }
 
         await chatUsersRepository.SaveChangesAsync(cancellationToken);
