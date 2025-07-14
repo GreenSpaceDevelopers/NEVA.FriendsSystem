@@ -2,13 +2,14 @@ using Application.Abstractions.Persistence.Repositories.Messaging;
 using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
+using Application.Abstractions.Services.Communications;
 using Application.Services.ApplicationInfrastructure.Results;
 using Domain.Models.Messaging;
 using Domain.Models.Users;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Domain.Models.Media;
-using Application.Abstractions.Services.ApplicationInfrastructure.Data; // For IFilesStorage / Validator
+using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 
 namespace Application.Requests.Commands.Chats;
 
@@ -36,7 +37,8 @@ public class CreateChatRequestHandler(
     IChatUsersRepository chatUsersRepository,
     IChatsRepository chatsRepository,
     IFilesStorage filesStorage,
-    IFilesValidator filesValidator) : IRequestHandler<CreateChatRequest>
+    IFilesValidator filesValidator,
+    IChatNotificationService notificationService) : IRequestHandler<CreateChatRequest>
 {
     public async Task<IOperationResult> HandleAsync(CreateChatRequest request, CancellationToken cancellationToken = default)
     {
@@ -129,6 +131,10 @@ public class CreateChatRequestHandler(
         
         await chatsRepository.AddAsync(chat, cancellationToken);
         await chatsRepository.SaveChangesAsync(cancellationToken);
+        
+        var notificationTasks = chatUsers.Select(user => 
+            notificationService.NotifyUserJoinedChatAsync(chat.Id, user.Id, user.Username, chatName));
+        await Task.WhenAll(notificationTasks);
         
         return ResultsHelper.Created(chat.Id);
     }

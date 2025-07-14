@@ -146,4 +146,13 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
     {
         await dbContext.Set<Picture>().AddAsync(picture, cancellationToken);
     }
+    
+    public async Task<List<Guid>> GetUserChatIdsAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Set<Chat>()
+            .AsNoTracking()
+            .Where(c => c.Users.Any(u => u.Id == userId))
+            .Select(c => c.Id)
+            .ToListAsync(cancellationToken);
+    }
 }

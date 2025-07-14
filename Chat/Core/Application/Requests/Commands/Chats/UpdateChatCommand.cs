@@ -3,9 +3,9 @@ using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.ApplicationInfrastructure.Data;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
+using Application.Abstractions.Services.Communications;
 using Application.Services.ApplicationInfrastructure.Results;
 using Domain.Models.Media;
-using Domain.Models.Users;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 
@@ -42,7 +42,8 @@ public class UpdateChatCommandHandler(
     IChatsRepository chatsRepository,
     IChatUsersRepository chatUsersRepository,
     IFilesStorage filesStorage,
-    IFilesValidator filesValidator) : IRequestHandler<UpdateChatCommand>
+    IFilesValidator filesValidator,
+    IChatNotificationService notificationService) : IRequestHandler<UpdateChatCommand>
 {
     public async Task<IOperationResult> HandleAsync(UpdateChatCommand request, CancellationToken cancellationToken = default)
     {
@@ -103,11 +104,29 @@ public class UpdateChatCommandHandler(
                 return ResultsHelper.BadRequest("Some participants not found");
             }
 
+            var currentParticipantIds = chat.Users.Select(u => u.Id).ToHashSet();
+            var newParticipantIds = newParticipants.Select(p => p.Id).ToHashSet();
+            
+            var addedParticipants = newParticipants.Where(p => !currentParticipantIds.Contains(p.Id)).ToList();
+            
+            var removedParticipants = chat.Users.Where(u => !newParticipantIds.Contains(u.Id)).ToList();
+
             chat.Users.Clear();
             foreach (var participant in newParticipants)
             {
                 chat.Users.Add(participant);
             }
+            
+            var joinNotifications = addedParticipants.Select(p => 
+                notificationService.NotifyUserJoinedChatAsync(chat.Id, p.Id, p.Username, chat.Name));
+            
+            var leaveNotifications = removedParticipants.Select(p => 
+                notificationService.NotifyUserLeftChatAsync(chat.Id, p.Id, p.Username, chat.Name));
+            
+            chatsRepository.Update(chat);
+            await chatsRepository.SaveChangesAsync(cancellationToken);
+            
+            await Task.WhenAll(joinNotifications.Concat(leaveNotifications));
         }
 
         if (request.NewAdminId.HasValue && request.NewAdminId != chat.AdminId)
@@ -120,8 +139,11 @@ public class UpdateChatCommandHandler(
             chat.AdminId = request.NewAdminId.Value;
         }
 
-        chatsRepository.Update(chat);
-        await chatsRepository.SaveChangesAsync(cancellationToken);
+        if (request.ParticipantIds == null)
+        {
+            chatsRepository.Update(chat);
+            await chatsRepository.SaveChangesAsync(cancellationToken);
+        }
 
         return ResultsHelper.Ok(new { ChatId = chat.Id, Message = "Chat updated successfully" });
     }

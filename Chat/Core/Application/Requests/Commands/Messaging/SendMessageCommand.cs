@@ -116,40 +116,25 @@ public class SendMessageCommandHandler(
 
         if (attachment != null)
         {
-            await notificationService.NotifyNewMessageWithAttachmentAsync(
+            await notificationService.NotifyNewMessageWithAttachmentToAllChatParticipantsAsync(
                 request.ChatId, 
                 request.SenderId, 
                 senderName, 
                 notificationContent, 
                 attachment.Url,
-                message.CreatedAt);
-
-            await notificationService.NotifyUsersAboutNewMessageWithAttachmentAsync(
-                recipientUserIds,
-                request.ChatId,
-                request.SenderId,
-                senderName,
-                notificationContent,
-                attachment.Url,
                 message.CreatedAt,
+                message.Id,
                 chatName);
         }
         else
         {
-            await notificationService.NotifyNewMessageAsync(
+            await notificationService.NotifyNewMessageToAllChatParticipantsAsync(
                 request.ChatId, 
                 request.SenderId, 
                 senderName, 
                 notificationContent, 
-                message.CreatedAt);
-
-            await notificationService.NotifyUsersAboutNewMessageAsync(
-                recipientUserIds,
-                request.ChatId,
-                request.SenderId,
-                senderName,
-                notificationContent,
                 message.CreatedAt,
+                message.Id,
                 chatName);
         }
 

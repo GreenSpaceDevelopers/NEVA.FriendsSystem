@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignalR Chat Tester</title>
+    <script src="https://unpkg.com/@microsoft/signalr@latest/dist/browser/signalr.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        h1, h2, h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        input, button, textarea, select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        input, textarea, select {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            min-width: 120px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.connecting {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .log {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: #f8f9fa;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .chat-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+        .chat-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-item:hover {
+            background: #f8f9fa;
+        }
+        .chat-item.selected {
+            background: #e3f2fd;
+        }
+        .unread-count {
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 11px;
+            min-width: 18px;
+            text-align: center;
+        }
+        .message-item {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 3px solid #007bff;
+            background: #f8f9fa;
+        }
+        .message-item.notification {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .message-item.error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .typing-indicator {
+            font-style: italic;
+            color: #6c757d;
+            padding: 5px;
+        }
+        .inline-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .inline-form input {
+            flex: 1;
+        }
+        .buttons-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .config-section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .timestamp {
+            color: #6c757d;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 SignalR Chat Tester</h1>
+        
+        <!-- Настройки подключения -->
+        <div class="panel">
+            <h2>⚙️ Настройки подключения</h2>
+            <div class="config-section">
+                <h3>Конфигурация сервера</h3>
+                <div class="inline-form">
+                    <label>SignalR Hub URL:</label>
+                    <input type="text" id="hubUrl" value="https://localhost:7297/chathub" placeholder="https://localhost:7297/chathub">
+                </div>
+                <div class="inline-form">
+                    <label>API Base URL:</label>
+                    <input type="text" id="apiUrl" value="https://localhost:7297" placeholder="https://localhost:7297">
+                </div>
+                <div class="inline-form">
+                    <label>Bearer Token:</label>
+                    <input type="text" id="bearerToken" placeholder="Введите ваш Bearer токен">
+                </div>
+                <div class="buttons-group">
+                    <button onclick="connect()">🔌 Подключиться</button>
+                    <button onclick="disconnect()">🔌 Отключиться</button>
+                    <button onclick="loadChats()">📋 Загрузить чаты</button>
+                    <button onclick="clearLog()">🗑️ Очистить лог</button>
+                </div>
+            </div>
+            
+            <div id="connectionStatus" class="status disconnected">
+                ❌ Отключено
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Список чатов -->
+            <div class="panel">
+                <h2>💬 Мои чаты</h2>
+                <div id="chatsList" class="chat-list">
+                    <p>Сначала загрузите чаты...</p>
+                </div>
+                <div class="inline-form">
+                    <input type="text" id="chatIdInput" placeholder="ID чата для ручного подключения">
+                    <button onclick="joinChatManually()">Присоединиться</button>
+                </div>
+            </div>
+
+            <!-- Управление сообщениями -->
+            <div class="panel">
+                <h2>📝 Отправка сообщений</h2>
+                <div id="selectedChatInfo">
+                    <p>Выберите чат для отправки сообщений</p>
+                </div>
+                <div class="inline-form">
+                    <textarea id="messageInput" placeholder="Введите сообщение..." rows="3"></textarea>
+                </div>
+                <div class="buttons-group">
+                    <button onclick="sendMessage()">📤 Отправить</button>
+                    <button onclick="startTyping()">⌨️ Печатаю</button>
+                    <button onclick="stopTyping()">⏹️ Стоп печать</button>
+                </div>
+                
+                <h3>💭 Typing статусы</h3>
+                <div id="typingUsers" class="typing-indicator">
+                    Никто не печатает...
+                </div>
+            </div>
+        </div>
+
+        <!-- Лог событий -->
+        <div class="panel full-width">
+            <h2>📜 Лог событий</h2>
+            <div class="buttons-group">
+                <button onclick="clearMessages()">🗑️ Очистить сообщения</button>
+                <label>
+                    <input type="checkbox" id="autoScroll" checked> Автопрокрутка
+                </label>
+            </div>
+            <div id="messages" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        let connection = null;
+        let selectedChatId = null;
+        let typingUsers = new Set();
+        let chats = [];
+
+        function log(message, type = 'info') {
+            const messages = document.getElementById('messages');
+            const timestamp = new Date().toLocaleTimeString();
+            const messageElement = document.createElement('div');
+            messageElement.className = `message-item ${type}`;
+            messageElement.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+            messages.appendChild(messageElement);
+
+            if (document.getElementById('autoScroll').checked) {
+                messages.scrollTop = messages.scrollHeight;
+            }
+        }
+
+        function updateConnectionStatus(status, message) {
+            const statusElement = document.getElementById('connectionStatus');
+            statusElement.className = `status ${status}`;
+            
+            const statusMessages = {
+                connected: '✅ Подключено',
+                disconnected: '❌ Отключено',
+                connecting: '🔄 Подключение...'
+            };
+            
+            statusElement.textContent = statusMessages[status] + (message ? ` - ${message}` : '');
+        }
+
+        async function connect() {
+            if (connection && connection.state === signalR.HubConnectionState.Connected) {
+                log('Уже подключено к SignalR', 'info');
+                return;
+            }
+
+            const hubUrl = document.getElementById('hubUrl').value;
+            const bearerToken = document.getElementById('bearerToken').value;
+
+            if (!bearerToken) {
+                log('❌ Пожалуйста, введите Bearer токен', 'error');
+                return;
+            }
+
+            updateConnectionStatus('connecting');
+            log(`🔄 Подключение к ${hubUrl}...`);
+
+            try {
+                connection = new signalR.HubConnectionBuilder()
+                    .withUrl(hubUrl, {
+                        accessTokenFactory: () => bearerToken
+                    })
+                    .withAutomaticReconnect()
+                    .build();
+
+                // Обработчики событий
+                connection.on("Connected", (data) => {
+                    log(`🎉 Подключено! UserId: ${data.UserId}, ConnectionId: ${data.ConnectionId}`, 'notification');
+                    log(`📊 Автоматически подключено к ${data.JoinedChatsCount} чатам: ${data.JoinedChatIds.join(', ')}`, 'notification');
+                    updateConnectionStatus('connected', `UserId: ${data.UserId}`);
+                });
+
+                connection.on("Error", (errorMessage) => {
+                    log(`❌ Ошибка: ${errorMessage}`, 'error');
+                });
+
+                connection.on("ReceiveMessage", (data) => {
+                    log(`💬 [Чат ${data.ChatId}] ${data.SenderName}: ${data.Content}${data.AttachmentUrl ? ` (📎 ${data.AttachmentUrl})` : ''}`, 'notification');
+                    updateChatLastMessage(data.ChatId, data.Content, data.SenderName);
+                });
+
+                connection.on("NewMessageNotification", (data) => {
+                    log(`🔔 Уведомление из чата "${data.ChatName}": ${data.SenderName} написал: ${data.Content}${data.HasAttachment ? ' (с вложением)' : ''}`, 'notification');
+                    updateChatUnreadCount(data.ChatId);
+                });
+
+                connection.on("UserTyping", (data) => {
+                    handleTypingEvent(data);
+                });
+
+                connection.on("MessageRead", (data) => {
+                    log(`👁️ [Чат ${data.ChatId}] Пользователь прочитал сообщение ${data.MessageId}`, 'info');
+                });
+
+                connection.on("JoinedChat", (data) => {
+                    log(`✅ Присоединился к чату ${data.ChatId}`, 'notification');
+                });
+
+                connection.on("LeftChat", (data) => {
+                    log(`👋 Покинул чат ${data.ChatId}`, 'notification');
+                });
+
+                connection.on("MessageSent", (data) => {
+                    log(`📤 Сообщение отправлено: ID ${data.MessageId} в чат ${data.ChatId}`, 'notification');
+                });
+
+                connection.on("UserJoinedChat", (data) => {
+                    log(`👥 ${data.Username} присоединился к чату ${data.ChatName}`, 'info');
+                });
+
+                connection.on("UserLeftChat", (data) => {
+                    log(`👋 ${data.Username} покинул чат ${data.ChatName}`, 'info');
+                });
+
+                connection.on("ChatEvent", (data) => {
+                    log(`🎭 Событие чата: ${data.EventType} - ${data.Username} в ${data.ChatName}`, 'info');
+                });
+
+                // Обработчики переподключения
+                connection.onreconnecting((error) => {
+                    log(`🔄 Переподключение... ${error ? error.toString() : ''}`, 'info');
+                    updateConnectionStatus('connecting', 'Переподключение');
+                });
+
+                connection.onreconnected((connectionId) => {
+                    log(`✅ Переподключено! ConnectionId: ${connectionId}`, 'notification');
+                    updateConnectionStatus('connected', `Переподключено: ${connectionId}`);
+                });
+
+                connection.onclose((error) => {
+                    log(`🔌 Соединение закрыто. ${error ? error.toString() : ''}`, 'error');
+                    updateConnectionStatus('disconnected');
+                });
+
+                await connection.start();
+                log('🚀 SignalR подключение установлено', 'notification');
+
+            } catch (error) {
+                log(`❌ Ошибка подключения: ${error.toString()}`, 'error');
+                updateConnectionStatus('disconnected', error.message);
+            }
+        }
+
+        async function disconnect() {
+            if (connection) {
+                try {
+                    await connection.stop();
+                    log('🔌 Отключено от SignalR', 'info');
+                    updateConnectionStatus('disconnected');
+                } catch (error) {
+                    log(`❌ Ошибка отключения: ${error.toString()}`, 'error');
+                }
+            }
+        }
+
+        async function loadChats() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const bearerToken = document.getElementById('bearerToken').value;
+
+            if (!bearerToken) {
+                log('❌ Пожалуйста, введите Bearer токен', 'error');
+                return;
+            }
+
+            try {
+                log('📋 Загрузка списка чатов...', 'info');
+                
+                const response = await fetch(`${apiUrl}/users/chats?skip=0&take=50`, {
+                    headers: {
+                        'Authorization': `Bearer ${bearerToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                chats = result.data || [];
+                
+                log(`📋 Загружено ${chats.length} чатов`, 'notification');
+                renderChats();
+                
+            } catch (error) {
+                log(`❌ Ошибка загрузки чатов: ${error.toString()}`, 'error');
+            }
+        }
+
+        function renderChats() {
+            const chatsList = document.getElementById('chatsList');
+            
+            if (chats.length === 0) {
+                chatsList.innerHTML = '<p>Чаты не найдены</p>';
+                return;
+            }
+
+            chatsList.innerHTML = chats.map(chat => `
+                <div class="chat-item" onclick="selectChat('${chat.id}', '${chat.name.replace(/'/g, "\\'")}')">
+                    <div>
+                        <strong>${chat.name}</strong>
+                        <br>
+                        <small>${chat.lastMessagePreview ? 
+                            `${chat.lastMessagePreview.username}: ${chat.lastMessagePreview.text}` : 
+                            'Нет сообщений'}</small>
+                    </div>
+                    ${chat.unreadCount > 0 ? `<span class="unread-count">${chat.unreadCount}</span>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function selectChat(chatId, chatName) {
+            selectedChatId = chatId;
+            
+            // Обновляем UI
+            document.querySelectorAll('.chat-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.target.closest('.chat-item').classList.add('selected');
+            
+            document.getElementById('selectedChatInfo').innerHTML = `
+                <p><strong>Выбранный чат:</strong> ${chatName}</p>
+                <p><strong>ID:</strong> ${chatId}</p>
+            `;
+            
+            log(`💬 Выбран чат: ${chatName} (${chatId})`, 'info');
+        }
+
+        async function sendMessage() {
+            if (!connection || connection.state !== signalR.HubConnectionState.Connected) {
+                log('❌ Не подключено к SignalR', 'error');
+                return;
+            }
+
+            if (!selectedChatId) {
+                log('❌ Выберите чат для отправки сообщения', 'error');
+                return;
+            }
+
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+
+            if (!message) {
+                log('❌ Введите сообщение', 'error');
+                return;
+            }
+
+            try {
+                log(`📤 Отправка сообщения в чат ${selectedChatId}: ${message}`, 'info');
+                await connection.invoke("SendMessage", selectedChatId, message);
+                messageInput.value = '';
+            } catch (error) {
+                log(`❌ Ошибка отправки сообщения: ${error.toString()}`, 'error');
+            }
+        }
+
+        async function joinChatManually() {
+            if (!connection || connection.state !== signalR.HubConnectionState.Connected) {
+                log('❌ Не подключено к SignalR', 'error');
+                return;
+            }
+
+            const chatId = document.getElementById('chatIdInput').value.trim();
+            if (!chatId) {
+                log('❌ Введите ID чата', 'error');
+                return;
+            }
+
+            try {
+                log(`🔗 Ручное присоединение к чату ${chatId}`, 'info');
+                await connection.invoke("JoinChat", chatId);
+                document.getElementById('chatIdInput').value = '';
+            } catch (error) {
+                log(`❌ Ошибка присоединения к чату: ${error.toString()}`, 'error');
+            }
+        }
+
+        async function startTyping() {
+            if (!connection || connection.state !== signalR.HubConnectionState.Connected || !selectedChatId) {
+                return;
+            }
+
+            try {
+                await connection.invoke("StartTyping", selectedChatId);
+                log(`⌨️ Начал печатать в чате ${selectedChatId}`, 'info');
+            } catch (error) {
+                log(`❌ Ошибка: ${error.toString()}`, 'error');
+            }
+        }
+
+        async function stopTyping() {
+            if (!connection || connection.state !== signalR.HubConnectionState.Connected || !selectedChatId) {
+                return;
+            }
+
+            try {
+                await connection.invoke("StopTyping", selectedChatId);
+                log(`⏹️ Перестал печатать в чате ${selectedChatId}`, 'info');
+            } catch (error) {
+                log(`❌ Ошибка: ${error.toString()}`, 'error');
+            }
+        }
+
+        function handleTypingEvent(data) {
+            const key = `${data.UserId}-${data.ChatId}`;
+            
+            if (data.IsTyping) {
+                typingUsers.add(key);
+                log(`⌨️ ${data.UserId} печатает в чате ${data.ChatId}`, 'info');
+            } else {
+                typingUsers.delete(key);
+                log(`⏹️ ${data.UserId} перестал печатать в чате ${data.ChatId}`, 'info');
+            }
+            
+            updateTypingIndicator();
+        }
+
+        function updateTypingIndicator() {
+            const typingElement = document.getElementById('typingUsers');
+            if (typingUsers.size === 0) {
+                typingElement.textContent = 'Никто не печатает...';
+            } else {
+                typingElement.textContent = `Печатают: ${Array.from(typingUsers).join(', ')}`;
+            }
+        }
+
+        function updateChatLastMessage(chatId, message, senderName) {
+            const chat = chats.find(c => c.id === chatId);
+            if (chat) {
+                chat.lastMessagePreview = {
+                    username: senderName,
+                    text: message
+                };
+                renderChats();
+            }
+        }
+
+        function updateChatUnreadCount(chatId) {
+            const chat = chats.find(c => c.id === chatId);
+            if (chat && chatId !== selectedChatId) {
+                chat.unreadCount = (chat.unreadCount || 0) + 1;
+                renderChats();
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('messages').innerHTML = '';
+            log('🗑️ Лог очищен', 'info');
+        }
+
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+
+        // Автоматические обработчики
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Инициализация
+        log('🚀 SignalR Chat Tester инициализирован', 'info');
+        log('💡 Совет: Введите Bearer токен и нажмите "Подключиться"', 'info');
+    </script>
+</body>
+</html> 

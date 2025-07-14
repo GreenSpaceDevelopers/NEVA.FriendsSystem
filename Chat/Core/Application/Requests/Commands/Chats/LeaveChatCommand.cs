@@ -1,6 +1,7 @@
 using Application.Abstractions.Persistence.Repositories.Messaging;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
+using Application.Abstractions.Services.Communications;
 using Application.Services.ApplicationInfrastructure.Results;
 using FluentValidation;
 
@@ -17,7 +18,7 @@ public class LeaveChatCommandValidator : AbstractValidator<LeaveChatCommand>
     }
 }
 
-public class LeaveChatCommandHandler(IChatsRepository chatsRepository) : IRequestHandler<LeaveChatCommand>
+public class LeaveChatCommandHandler(IChatsRepository chatsRepository, IChatNotificationService notificationService) : IRequestHandler<LeaveChatCommand>
 {
     public async Task<IOperationResult> HandleAsync(LeaveChatCommand request, CancellationToken cancellationToken = default)
     {
@@ -50,6 +51,8 @@ public class LeaveChatCommandHandler(IChatsRepository chatsRepository) : IReques
         }
 
         await chatsRepository.SaveChangesAsync(cancellationToken);
+
+        await notificationService.NotifyUserLeftChatAsync(chat.Id, userToRemove.Id, userToRemove.Username, chat.Name);
 
         return ResultsHelper.Ok(new { Message = "Successfully left the chat" });
     }

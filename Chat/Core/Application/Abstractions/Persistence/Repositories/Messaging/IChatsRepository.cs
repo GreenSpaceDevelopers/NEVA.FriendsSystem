@@ -26,4 +26,6 @@ public interface IChatsRepository : IBaseRepository<Chat>
     Task<Chat?> GetChatPreviewAsync(Guid chatId, CancellationToken cancellationToken = default);
     
     Task AddPictureAsync(Picture picture, CancellationToken cancellationToken = default);
+    
+    Task<List<Guid>> GetUserChatIdsAsync(Guid userId, CancellationToken cancellationToken = default);
 }
