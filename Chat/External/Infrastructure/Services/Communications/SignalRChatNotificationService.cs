@@ -1,9 +1,10 @@
 using Application.Abstractions.Services.Communications;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Services.Communications;
 
-public class SignalRChatNotificationService(IHubContext<ChatHub> hubContext) : IChatNotificationService
+public class SignalRChatNotificationService(IHubContext<ChatHub> hubContext, ILogger<SignalRChatNotificationService> logger) : IChatNotificationService
 {
     public async Task NotifyNewMessageAsync(Guid chatId, Guid senderId, string senderName, string message, DateTime sentAt)
     {
@@ -81,6 +82,9 @@ public class SignalRChatNotificationService(IHubContext<ChatHub> hubContext) : I
 
     public async Task NotifyNewMessageToAllChatParticipantsAsync(Guid chatId, Guid senderId, string senderName, string message, DateTime sentAt, Guid messageId, string? chatName = null)
     {
+        logger.LogInformation("🔔 Sending ReceiveMessage to Chat_{ChatId} group - MessageId: {MessageId}, Sender: {SenderName}", 
+            chatId, messageId, senderName);
+            
         await hubContext.Clients.Group($"Chat_{chatId}")
             .SendAsync("ReceiveMessage", new
             {
@@ -92,6 +96,9 @@ public class SignalRChatNotificationService(IHubContext<ChatHub> hubContext) : I
                 SentAt = sentAt
             });
 
+        logger.LogInformation("🔔 Sending NewMessageNotification to ChatParticipants_{ChatId} group - MessageId: {MessageId}", 
+            chatId, messageId);
+            
         await hubContext.Clients.Group($"ChatParticipants_{chatId}")
             .SendAsync("NewMessageNotification", new
             {
@@ -104,10 +111,16 @@ public class SignalRChatNotificationService(IHubContext<ChatHub> hubContext) : I
                 SentAt = sentAt,
                 HasAttachment = false
             });
+            
+        logger.LogInformation("✅ Successfully sent SignalR notifications for message {MessageId} in chat {ChatId}", 
+            messageId, chatId);
     }
 
     public async Task NotifyNewMessageWithAttachmentToAllChatParticipantsAsync(Guid chatId, Guid senderId, string senderName, string message, string? attachmentUrl, DateTime sentAt, Guid messageId, string? chatName = null)
     {
+        logger.LogInformation("🔔 Sending ReceiveMessage with attachment to Chat_{ChatId} group - MessageId: {MessageId}, Sender: {SenderName}", 
+            chatId, messageId, senderName);
+            
         await hubContext.Clients.Group($"Chat_{chatId}")
             .SendAsync("ReceiveMessage", new
             {
@@ -120,6 +133,9 @@ public class SignalRChatNotificationService(IHubContext<ChatHub> hubContext) : I
                 SentAt = sentAt
             });
 
+        logger.LogInformation("🔔 Sending NewMessageNotification with attachment to ChatParticipants_{ChatId} group - MessageId: {MessageId}", 
+            chatId, messageId);
+            
         await hubContext.Clients.Group($"ChatParticipants_{chatId}")
             .SendAsync("NewMessageNotification", new
             {
@@ -133,6 +149,9 @@ public class SignalRChatNotificationService(IHubContext<ChatHub> hubContext) : I
                 SentAt = sentAt,
                 HasAttachment = true
             });
+            
+        logger.LogInformation("✅ Successfully sent SignalR notifications with attachment for message {MessageId} in chat {ChatId}", 
+            messageId, chatId);
     }
 
     public async Task NotifyUserJoinedChatAsync(Guid chatId, Guid userId, string username, string? chatName = null)

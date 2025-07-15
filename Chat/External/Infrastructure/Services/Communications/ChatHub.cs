@@ -1,44 +1,106 @@
 using Microsoft.AspNetCore.SignalR;
-using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
-using Application.Requests.Commands.Messaging;
 using Application.Abstractions.Persistence.Repositories.Messaging;
 using Application.Abstractions.Persistence.Repositories.Users;
 using Application.Abstractions.Services.Communications;
 using Microsoft.Extensions.Logging;
+using GS.IdentityServerApi;
+using GS.IdentityServerApi.Protocol.Models;
 
 namespace Infrastructure.Services.Communications;
 
-public class ChatHub(ISender sender, IChatsRepository chatsRepository, IChatUsersRepository chatUsersRepository, IChatNotificationService notificationService, ILogger<ChatHub> logger) : Hub
+public class ChatHub(IChatsRepository chatsRepository, IChatUsersRepository chatUsersRepository, IChatNotificationService notificationService, ILogger<ChatHub> logger, IdentityClient identityClient) : Hub
 {
-    private Guid GetCurrentUserId()
+    private async Task<Guid> GetCurrentUserIdAsync()
     {
+        if (Context.Items.TryGetValue("CachedUserId", out var cachedUserId) && cachedUserId is Guid userId)
+        {
+            return userId;
+        }
+
         var http = Context.GetHttpContext();
-        if (http is null) return Guid.Empty;
+        if (http is null) 
+        {
+            logger.LogWarning("GetCurrentUserId: HttpContext is null");
+            return Guid.Empty;
+        }
+
+        if (http.Items["SessionContext"] is IdentitySession identitySession)
+        {
+            var userIdFromSession = identitySession.User.UserId;
+            logger.LogInformation("Got real userId from SessionContext: {UserId}", userIdFromSession);
+            
+            Context.Items["CachedUserId"] = userIdFromSession;
+            return userIdFromSession;
+        }
+
+        logger.LogInformation("SessionContext not found, trying to get token manually...");
+
+        string? sessionToken = null;
 
         if (http.Request.Headers.TryGetValue("Authorization", out var authHeader))
         {
             var authVal = authHeader.ToString();
             if (!string.IsNullOrWhiteSpace(authVal) && authVal.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
             {
-                var token = authVal[7..].Trim();
-                if (Guid.TryParse(token, out var guidHdr)) return guidHdr;
+                sessionToken = authVal[7..].Trim();
+                logger.LogInformation("Extracted Bearer token: {Token}", sessionToken);
             }
         }
 
-        if (http.Request.Query.TryGetValue("access_token", out var tokenVals))
+        if (string.IsNullOrEmpty(sessionToken) && http.Request.Query.TryGetValue("access_token", out var tokenVals))
         {
-            var token = tokenVals.FirstOrDefault();
-            if (!string.IsNullOrEmpty(token) && Guid.TryParse(token, out var guidQry)) return guidQry;
+            sessionToken = tokenVals.FirstOrDefault();
+            logger.LogInformation("Found access_token query parameter: {Token}", sessionToken);
         }
 
-        return Guid.Empty;
+        if (string.IsNullOrEmpty(sessionToken))
+        {
+            logger.LogWarning("No token found in request");
+            return Guid.Empty;
+        }
+
+        if (!Guid.TryParse(sessionToken, out var sessionGuid))
+        {
+            logger.LogWarning("Invalid session token format: {Token}", sessionToken);
+            return Guid.Empty;
+        }
+
+        try
+        {
+            logger.LogInformation("Calling IdentityClient to get real userId for session: {SessionId}", sessionGuid);
+            var responseModel = await identityClient.GetUserSessionAsync(sessionGuid);
+            
+            if (responseModel is { Success: true })
+            {
+                var realUserId = responseModel.Data?.User.UserId ?? Guid.Empty;
+                logger.LogInformation("Successfully got real userId from IdentityClient: {UserId} for session {SessionId}", realUserId, sessionGuid);
+                
+                Context.Items["CachedUserId"] = realUserId;
+                return realUserId;
+            }
+            else
+            {
+                logger.LogWarning("IdentityClient returned failure for session {SessionId}", sessionGuid);
+                return Guid.Empty;
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error calling IdentityClient for session {SessionId}", sessionGuid);
+            return Guid.Empty;
+        }
     }
 
     public override async Task OnConnectedAsync()
     {
-        var userId = GetCurrentUserId();
+        logger.LogInformation("New SignalR connection attempt: {ConnectionId}", Context.ConnectionId);
+        
+        var userId = await GetCurrentUserIdAsync();
+        logger.LogInformation("Extracted userId: {UserId} from connection {ConnectionId}", userId, Context.ConnectionId);
+        
         if (userId == Guid.Empty) 
         { 
+            logger.LogWarning("Invalid user token for connection {ConnectionId}", Context.ConnectionId);
             await Clients.Caller.SendAsync("Error", "Invalid user token"); 
             return; 
         }
@@ -46,21 +108,40 @@ public class ChatHub(ISender sender, IChatsRepository chatsRepository, IChatUser
         try
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{userId}");
+            logger.LogInformation("Added user {UserId} to User_{UserId} group", userId, userId);
             
-            var userChatIds = await chatsRepository.GetUserChatIdsAsync(userId);
+            logger.LogInformation("Getting chats for user {UserId}...", userId);
+            
+            List<Guid> userChatIds;
+            try
+            {
+                userChatIds = await chatsRepository.GetUserChatIdsAsync(userId);
+                logger.LogInformation("Found {ChatCount} chats for user {UserId}: [{ChatIds}]", 
+                    userChatIds.Count, userId, string.Join(", ", userChatIds));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error getting chats for user {UserId}", userId);
+                userChatIds = new List<Guid>(); // Fallback to empty list
+            }
             
             var joinTasks = new List<Task>();
             foreach (var chatId in userChatIds)
             {
+                logger.LogInformation("Adding user {UserId} to Chat_{ChatId} and ChatParticipants groups", 
+                    userId, chatId);
                 joinTasks.Add(Groups.AddToGroupAsync(Context.ConnectionId, $"Chat_{chatId}"));
                 joinTasks.Add(Groups.AddToGroupAsync(Context.ConnectionId, $"ChatParticipants_{chatId}"));
             }
             
+            logger.LogInformation("Executing {TaskCount} group join tasks...", joinTasks.Count);
             await Task.WhenAll(joinTasks);
+            logger.LogInformation("All group join tasks completed");
             
             logger.LogInformation("User {UserId} connected with {ConnectionId} and joined {ChatCount} chats", 
                 userId, Context.ConnectionId, userChatIds.Count);
 
+            logger.LogInformation("Sending Connected event to client...");
             await Clients.Caller.SendAsync("Connected", new
             {
                 UserId = userId,
@@ -69,10 +150,11 @@ public class ChatHub(ISender sender, IChatsRepository chatsRepository, IChatUser
                 JoinedChatsCount = userChatIds.Count,
                 JoinedChatIds = userChatIds
             });
+            logger.LogInformation("Connected event sent successfully");
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error connecting user {UserId}", userId);
+            logger.LogError(ex, "Error connecting user {UserId} with connection {ConnectionId}", userId, Context.ConnectionId);
             await Clients.Caller.SendAsync("Error", $"Connection failed: {ex.Message}");
         }
         
@@ -81,7 +163,7 @@ public class ChatHub(ISender sender, IChatsRepository chatsRepository, IChatUser
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var userId = GetCurrentUserId();
+        var userId = await GetCurrentUserIdAsync();
         
         try
         {
@@ -114,7 +196,7 @@ public class ChatHub(ISender sender, IChatsRepository chatsRepository, IChatUser
 
     public async Task JoinChat(string chatId)
     {
-        var userId = GetCurrentUserId();
+        var userId = await GetCurrentUserIdAsync();
         if (userId == Guid.Empty)
         {
             await Clients.Caller.SendAsync("Error", "Invalid user token");
@@ -157,7 +239,7 @@ public class ChatHub(ISender sender, IChatsRepository chatsRepository, IChatUser
 
     public async Task LeaveChat(string chatId)
     {
-        var userId = GetCurrentUserId();
+        var userId = await GetCurrentUserIdAsync();
         if (userId == Guid.Empty)
         {
             await Clients.Caller.SendAsync("Error", "Invalid user token");
@@ -198,83 +280,13 @@ public class ChatHub(ISender sender, IChatsRepository chatsRepository, IChatUser
         }
     }
 
-    public async Task SendMessage(string chatId, string message)
-    {
-        var userId = GetCurrentUserId();
-        if (userId == Guid.Empty)
-        {
-            await Clients.Caller.SendAsync("Error", "Invalid user token"); 
-            return;
-        }
 
-        if (!Guid.TryParse(chatId, out var chatGuid))
-        {
-            await Clients.Caller.SendAsync("Error", "Invalid chat ID");
-            return;
-        }
 
-        try
-        {
-            var command = new SendMessageCommand(chatGuid, userId, message);
-            var result = await sender.SendAsync(command);
 
-            if (result.IsSuccess)
-            {
-                await Clients.Caller.SendAsync("MessageSent", new
-                {
-                    MessageId = result.ObjectData,
-                    ChatId = chatGuid,
-                    SenderId = userId,
-                    Content = message,
-                    SentAt = DateTime.UtcNow
-                });
-                
-                logger.LogInformation("User {UserId} sent message {MessageId} to chat {ChatId}", 
-                    userId, result.ObjectData, chatGuid);
-            }
-            else
-            {
-                await Clients.Caller.SendAsync("Error", $"Failed to send message: {result.ObjectData?.ToString()}");
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error sending message to chat {ChatId} for user {UserId}", chatGuid, userId);
-            await Clients.Caller.SendAsync("Error", $"Failed to send message: {ex.Message}");
-        }
-    }
-
-    public async Task StartTyping(string chatId)
-    {
-        var userId = GetCurrentUserId();
-        if (userId == Guid.Empty) return;
-
-        await Clients.OthersInGroup($"Chat_{chatId}").SendAsync("UserTyping", new
-        {
-            ChatId = chatId,
-            UserId = userId,
-            IsTyping = true,
-            Timestamp = DateTime.UtcNow
-        });
-    }
-
-    public async Task StopTyping(string chatId)
-    {
-        var userId = GetCurrentUserId();
-        if (userId == Guid.Empty) return;
-
-        await Clients.OthersInGroup($"Chat_{chatId}").SendAsync("UserTyping", new
-        {
-            ChatId = chatId,
-            UserId = userId,
-            IsTyping = false,
-            Timestamp = DateTime.UtcNow
-        });
-    }
 
     public async Task MarkMessageAsRead(string chatId, string messageId)
     {
-        var userId = GetCurrentUserId();
+        var userId = await GetCurrentUserIdAsync();
         if (userId == Guid.Empty) return;
 
         if (!Guid.TryParse(messageId, out var messageGuid)) return;
