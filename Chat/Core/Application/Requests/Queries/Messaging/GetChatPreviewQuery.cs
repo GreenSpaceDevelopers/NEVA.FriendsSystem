@@ -66,6 +66,16 @@ public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository, IUserC
         var userSettings = await userChatSettingsRepository.GetByUserAndChatOrCreateAsync(request.UserId, chat.Id, cancellationToken);
         var isMuted = userSettings.IsMuted;
 
+        if (lastMessage != null && lastMessage.SenderId != request.UserId)
+        {
+            if (userSettings.LastReadMessageId == null || userSettings.LastReadMessageId != lastMessage.Id)
+            {
+                userSettings.LastReadMessageId = lastMessage.Id;
+                userChatSettingsRepository.UpdateAsync(userSettings, cancellationToken);
+                await userChatSettingsRepository.SaveChangesAsync(cancellationToken);
+            }
+        }
+
         var dto = new ChatDetailsDto(chat.Id, displayName, chatImageUrl, isGroup, participants, lastMsgPreview, friendId, chat.AdminId, isMuted);
 
         return ResultsHelper.Ok(dto);

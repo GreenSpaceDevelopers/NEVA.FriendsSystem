@@ -25,8 +25,7 @@ public class GetUserByPersonalLinkQueryHandler(IChatUsersRepository chatUsersRep
         var isFriend = user.Friends.Any(f => f.Id == request.CurrentUserId);
         var isFriendRequestSentByMe = user.FriendRequests.Any(fr => fr.Id == request.CurrentUserId);
 
-        var canViewFullProfile = user.Id == request.CurrentUserId ||
-                                user.PrivacySettings.FriendsListVisibility == PrivacyLevel.Public;
+        var canViewFullProfile = user.PrivacySettings.FriendsListVisibility is PrivacyLevel.Public or PrivacyLevel.Friends;
 
         var isBlockedByMe = await chatUsersRepository.IsUserBlockedByAsync(user.Id, request.CurrentUserId, cancellationToken);
         var hasBlockedMe = await chatUsersRepository.IsUserBlockedByAsync(request.CurrentUserId, user.Id, cancellationToken);

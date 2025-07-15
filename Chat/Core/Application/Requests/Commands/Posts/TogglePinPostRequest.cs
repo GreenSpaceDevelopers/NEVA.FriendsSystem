@@ -25,10 +25,11 @@ public class TogglePinPostRequestHandler(IBlogRepository blogRepository) : IRequ
         }
 
         post.IsPinned = !post.IsPinned;
+        post.PinnedAt = post.IsPinned ? DateTime.UtcNow : null;
 
         await blogRepository.SaveChangesAsync(cancellationToken);
 
-        return ResultsHelper.Ok(new { PostId = post.Id, IsPinned = post.IsPinned });
+        return ResultsHelper.Ok(new { PostId = post.Id, IsPinned = post.IsPinned, PinnedAt = post.PinnedAt });
     }
 }
 

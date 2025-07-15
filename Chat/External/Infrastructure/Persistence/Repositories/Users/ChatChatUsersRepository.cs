@@ -271,6 +271,11 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
             .Include(user => user.Avatar)
             .Include(user => user.Cover)
             .Include(user => user.PrivacySettings)
+            .Include(user => user.ChatSettings)
+            .ThenInclude(ucs => ucs.Chat)
+            .ThenInclude(c => c.Messages)
+            .Include(user => user.ChatSettings)
+            .ThenInclude(ucs => ucs.LastReadMessage)
             .Where(user => user.Id == userId)
             .Select(user => new
             {
@@ -278,15 +283,12 @@ public class ChatChatUsersRepository(ChatsDbContext dbContext) : BaseRepository<
                 HasUnreadMessages = user.ChatSettings
                     .Any(ucs => ucs.Chat.Messages
                         .Any(m => m.SenderId != userId && 
-                                 (ucs.LastReadMessageId == null || m.Id > ucs.LastReadMessageId))),
+                                 (ucs.LastReadMessage == null || m.CreatedAt > ucs.LastReadMessage.CreatedAt))),
                 HasPendingFriendRequests = user.FriendRequests.Any()
             })
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (result == null)
-            return null;
-
-        return new OwnProfileData(result.User, result.HasUnreadMessages, result.HasPendingFriendRequests);
+        return result == null ? null : new OwnProfileData(result.User, result.HasUnreadMessages, result.HasPendingFriendRequests);
     }
 
     public Task<List<ChatUser>> GetByIdsAsync(IEnumerable<Guid> userIds, CancellationToken cancellationToken = default)

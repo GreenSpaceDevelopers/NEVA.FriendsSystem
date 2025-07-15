@@ -49,6 +49,11 @@ public class GetUserPostsByIdentifierQueryHandler(IBlogRepository blogRepository
             },
             new()
             {
+                PropertyName = nameof(Domain.Models.Blog.Post.PinnedAt),
+                Direction = SortDirection.Desc
+            },
+            new()
+            {
                 PropertyName = nameof(Domain.Models.Blog.Post.CreatedAt),
                 Direction = request.Desc == true ? SortDirection.Desc : SortDirection.Asc
             }
