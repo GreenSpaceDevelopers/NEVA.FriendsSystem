@@ -20,7 +20,7 @@ public class NevaBackendService(
         {
             using var content = new MultipartFormDataContent();
             content.Add(new StringContent(playerId.ToString()), "UserId");
-            content.Add(new StringContent(userName), "Name");
+            content.Add(new StringContent(userName), "UserName");
 
             var response = await httpClient.PutAsync($"{_baseUrl}/Players/UpdatePlayer/{playerId}", content, cancellationToken);
             
