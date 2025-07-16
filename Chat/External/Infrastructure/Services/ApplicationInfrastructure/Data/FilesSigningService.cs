@@ -26,6 +26,11 @@ public class FilesSigningService : IFilesSigningService
 
     public async Task<string> GetSignedUrlAsync(string urlOrObjectName, CancellationToken cancellationToken = default)
     {
+        if (urlOrObjectName.Contains("avatars.steamstatic.com", StringComparison.OrdinalIgnoreCase))
+        {
+            return urlOrObjectName;
+        }
+
         try
         {
             var objectName = ExtractObjectNameFromUrl(urlOrObjectName);

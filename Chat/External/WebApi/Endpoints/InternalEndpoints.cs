@@ -45,7 +45,7 @@ public static class InternalEndpoints
                 RoleId = roleId
             };
 
-            var createProfileCommand = new CreateProfileCommand(aspNetUser);
+            var createProfileCommand = new CreateProfileCommand(aspNetUser, request.ImageLink);
             await mediator.SendAsync(createProfileCommand, cancellationToken);
 
             return Results.Ok(new 
@@ -121,4 +121,5 @@ public class CreateUserRequest
     public string UserLogin { get; set; } = null!;
     public string? UserEmail { get; set; }
     public List<string> UserRoles { get; set; } = [];
+    public string? ImageLink { get; set; }
 } 

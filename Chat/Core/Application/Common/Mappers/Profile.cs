@@ -18,7 +18,7 @@ public static class Profile
             canViewFullProfile ? user.Surname : null,
             canViewFullProfile ? user.MiddleName : null,
             canViewFullProfile ? user.DateOfBirth?.ToUniversalTime() : null,
-            canViewFullProfile ? user.Avatar?.Url : null,
+            canViewFullProfile ? user.Avatar?.Url : "https://minio.greenspacegg.ru:9000/testpics/UserAvatar1.png",
             canViewFullProfile ? user.Cover?.Url : null,
             privacySettings,
             isBlockedByMe,
@@ -40,6 +40,10 @@ public static class Profile
         if (canViewFullProfile && !string.IsNullOrEmpty(user.Avatar?.Url))
         {
             avatarUrl = await filesSigningService.GetSignedUrlAsync(user.Avatar.Url, cancellationToken);
+        }
+        else
+        {
+            avatarUrl = "https://minio.greenspacegg.ru:9000/testpics/UserAvatar1.png";
         }
         
         if (canViewFullProfile && !string.IsNullOrEmpty(user.Cover?.Url))
@@ -101,12 +105,16 @@ public static class Profile
 
     public static async Task<OwnProfileDto> ToOwnProfileDtoAsync(this ChatUser user, bool hasUnreadMessages, bool hasPendingFriendRequests, IFilesSigningService filesSigningService, ILinkedAccountsService linkedAccountsService, CancellationToken cancellationToken = default)
     {
-        string? avatarUrl = null;
+        string? avatarUrl;
         string? coverUrl = null;
         
         if (!string.IsNullOrEmpty(user.Avatar?.Url))
         {
             avatarUrl = await filesSigningService.GetSignedUrlAsync(user.Avatar.Url, cancellationToken);
+        }
+        else
+        {
+            avatarUrl = "https://minio.greenspacegg.ru:9000/testpics/UserAvatar1.png";
         }
         
         if (!string.IsNullOrEmpty(user.Cover?.Url))

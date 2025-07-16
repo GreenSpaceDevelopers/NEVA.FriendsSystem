@@ -1,21 +1,41 @@
-using Application.Abstractions.Persistence.Repositories.Blog;
 using Application.Abstractions.Persistence.Repositories.Users;
+using Application.Abstractions.Persistence.Repositories.Media;
 using Application.Abstractions.Services.ApplicationInfrastructure.Mediator;
 using Application.Abstractions.Services.ApplicationInfrastructure.Results;
 using Application.Services.ApplicationInfrastructure.Results;
 using Domain.Models.Service;
 using Domain.Models.Users;
+using Domain.Models.Messaging;
 
 namespace Application.Requests.Commands.Profile;
 
-public record CreateProfileCommand(AspNetUser AspNetUser) : IRequest;
+public record CreateProfileCommand(AspNetUser AspNetUser, string? ImageLink = null) : IRequest;
 
-public class CreateProfileCommandHandler(IChatUsersRepository chatUsersRepository) : IRequestHandler<CreateProfileCommand>
+public class CreateProfileCommandHandler(
+    IChatUsersRepository chatUsersRepository,
+    IAttachmentsRepository attachmentsRepository) : IRequestHandler<CreateProfileCommand>
 {
     public async Task<IOperationResult> HandleAsync(CreateProfileCommand request, CancellationToken cancellationToken = default)
     {
         var chatUser = new ChatUser(request.AspNetUser);
         chatUser.PersonalLink = chatUser.Username;
+
+        if (!string.IsNullOrEmpty(request.ImageLink))
+        {
+            var avatarType = await attachmentsRepository.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
+            
+            var avatarAttachment = new Attachment
+            {
+                Id = Guid.NewGuid(),
+                Url = request.ImageLink,
+                Type = avatarType,
+                TypeId = avatarType.Id,
+            };
+
+            await attachmentsRepository.AddAsync(avatarAttachment, cancellationToken);
+            chatUser.Avatar = avatarAttachment;
+            chatUser.AvatarId = avatarAttachment.Id;
+        }
 
         var userPrivacySettings = new UserPrivacySettings
         {

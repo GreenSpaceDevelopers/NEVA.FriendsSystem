@@ -14,19 +14,29 @@ public class NevaBackendService(
 {
     private readonly string _baseUrl = configuration["ExternalApi:BaseUrl"] ?? throw new InvalidOperationException("ExternalApi:BaseUrl not configured");
 
-    public async Task<bool> UpdatePlayerAsync(Guid playerId, string userName, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdatePlayerAsync(Guid playerId, string? userName = null, string? avatarUrl = null, CancellationToken cancellationToken = default)
     {
         try
         {
             using var content = new MultipartFormDataContent();
             content.Add(new StringContent(playerId.ToString()), "UserId");
-            content.Add(new StringContent(userName), "UserName");
+            
+            if (!string.IsNullOrEmpty(userName))
+            {
+                content.Add(new StringContent(userName), "UserName");
+            }
+            
+            if (!string.IsNullOrEmpty(avatarUrl))
+            {
+                content.Add(new StringContent(avatarUrl), "AvatarStringURL");
+            }
 
             var response = await httpClient.PutAsync($"{_baseUrl}/Players/UpdatePlayer/{playerId}", content, cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
-                logger.LogInformation("Successfully updated player {PlayerId} with username {UserName} in NEVA Core", playerId, userName);
+                logger.LogInformation("Successfully updated player {PlayerId} in NEVA Core. UserName: {UserName}, AvatarUrl: {AvatarUrl}", 
+                    playerId, userName ?? "null", avatarUrl ?? "null");
                 return true;
             }
             
@@ -35,7 +45,7 @@ public class NevaBackendService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error updating player {PlayerId} with username {UserName} in NEVA Core", playerId, userName);
+            logger.LogError(ex, "Error updating player {PlayerId} in NEVA Core", playerId);
             return false;
         }
     }

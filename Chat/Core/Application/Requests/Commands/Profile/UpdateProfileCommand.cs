@@ -122,6 +122,7 @@ public class UpdateProfileRequestHandler(
         }
 
         var usernameChanged = user.Username != request.Username;
+        var avatarChanged = request.Avatar is not null;
         
         if (!string.IsNullOrWhiteSpace(request.PersonalLink))
         {
@@ -134,16 +135,25 @@ public class UpdateProfileRequestHandler(
 
         if (usernameChanged)
         {
-            var updateResult = await nevaBackendService.UpdatePlayerAsync(request.UserId, request.Username, cancellationToken);
-            if (!updateResult)
-            {
-                return ResultsHelper.BadRequest("Failed to update username in external service");
-            }
             user.Username = request.Username;
             user.AspNetUser.UserName = request.Username;
         }
 
         await chatUsersRepository.SaveChangesAsync(cancellationToken);
+
+        if (usernameChanged || avatarChanged)
+        {
+            var updateResult = await nevaBackendService.UpdatePlayerAsync(
+                request.UserId, 
+                usernameChanged ? request.Username : null,
+                avatarChanged ? user.Avatar?.Url : null,
+                cancellationToken);
+                
+            if (!updateResult)
+            {
+                return ResultsHelper.BadRequest("Failed to update player data in external service");
+            }
+        }
 
         return ResultsHelper.NoContent();
     }
