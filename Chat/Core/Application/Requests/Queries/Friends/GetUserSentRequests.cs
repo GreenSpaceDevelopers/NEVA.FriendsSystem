@@ -35,7 +35,7 @@ public class GetUserSentRequestsQueryHandler(IChatUsersRepository chatUsersRepos
             string? avatarUrl = null;
             if (!string.IsNullOrEmpty(friend.Avatar?.Url))
             {
-                avatarUrl = await filesSigningService.GetSignedUrlAsync(friend.Avatar.Url, cancellationToken);
+                avatarUrl = await filesSigningService.GetSignedUrlForObjectAsync(friend.Avatar.Url, friend.Avatar.BucketName ?? "neva-avatars", cancellationToken);
             }
 
             friendRequestDtos.Add(new FriendRequestsDto(
@@ -78,7 +78,7 @@ public class GetUserPendingRequestsQueryHandler(IChatUsersRepository chatUsersRe
             string? avatarUrl = null;
             if (!string.IsNullOrEmpty(friend.Avatar?.Url))
             {
-                avatarUrl = await filesSigningService.GetSignedUrlAsync(friend.Avatar.Url, cancellationToken);
+                avatarUrl = await filesSigningService.GetSignedUrlForObjectAsync(friend.Avatar.Url, friend.Avatar.BucketName ?? "neva-avatars", cancellationToken);
             }
 
             friendRequestDtos.Add(new FriendRequestsDto(

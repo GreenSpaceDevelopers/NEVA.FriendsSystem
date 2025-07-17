@@ -71,7 +71,7 @@ public class GetPostCommentsQueryHandler(IBlogRepository blogRepository, IChatUs
             : null;
             
         var authorAvatarUrl = comment.Author.Avatar?.Url != null 
-            ? await filesSigningService.GetSignedUrlAsync(comment.Author.Avatar.Url, cancellationToken) 
+            ? await filesSigningService.GetSignedUrlForObjectAsync(comment.Author.Avatar.Url, comment.Author.Avatar.BucketName ?? "neva-avatars", cancellationToken) 
             : null;
 
         var replies = new List<CommentDto>();

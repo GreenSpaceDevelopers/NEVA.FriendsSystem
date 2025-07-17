@@ -18,7 +18,7 @@ public static class BlackList
         string? avatarUrl = null;
         if (!string.IsNullOrEmpty(chat.Avatar?.Url))
         {
-            avatarUrl = await filesSigningService.GetSignedUrlAsync(chat.Avatar.Url, cancellationToken);
+            avatarUrl = await filesSigningService.GetSignedUrlForObjectAsync(chat.Avatar.Url, chat.Avatar.BucketName ?? "neva-avatars", cancellationToken);
         }
 
         var userId2 = chat.AspNetUser?.Id ?? chat.Id;

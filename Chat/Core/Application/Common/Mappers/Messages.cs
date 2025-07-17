@@ -30,7 +30,7 @@ public static class Messages
         string? avatarUrl = null;
         if (!string.IsNullOrEmpty(message.Sender.Avatar?.Url))
         {
-            avatarUrl = await filesSigningService.GetSignedUrlAsync(message.Sender.Avatar.Url, cancellationToken);
+            avatarUrl = await filesSigningService.GetSignedUrlForObjectAsync(message.Sender.Avatar.Url, message.Sender.Avatar.BucketName ?? "neva-avatars", cancellationToken);
         }
 
         string? attachmentUrl = null;

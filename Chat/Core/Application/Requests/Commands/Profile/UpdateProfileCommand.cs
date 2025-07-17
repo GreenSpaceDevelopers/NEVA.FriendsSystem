@@ -28,9 +28,11 @@ public record UpdateProfileRequest(
 public class UpdateProfileRequestHandler(
     IChatUsersRepository chatUsersRepository,
     IFilesStorage filesStorage,
+    IAvatarStorage avatarStorage,
     IFilesValidator filesValidator,
     IAttachmentsRepository attachments,
-    INevaBackendService nevaBackendService) : IRequestHandler<UpdateProfileRequest>
+    INevaBackendService nevaBackendService,
+    IFilesSigningService filesSigningService) : IRequestHandler<UpdateProfileRequest>
 {
     public async Task<IOperationResult> HandleAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default)
     {
@@ -59,6 +61,11 @@ public class UpdateProfileRequestHandler(
             }
         }
 
+        var oldAvatarObjectName = user.Avatar?.Url;
+        var oldAvatarBucket = user.Avatar?.BucketName;
+        var oldCoverObjectName = user.Cover?.Url;
+        var oldCoverBucket = user.Cover?.BucketName;
+
         if (request.Avatar is not null)
         {
             using var avatarStream = new MemoryStream();
@@ -69,19 +76,21 @@ public class UpdateProfileRequestHandler(
                 return ResultsHelper.BadRequest("Invalid avatar file");
             }
 
-            var avatarUploadResult = await filesStorage.UploadAsync(avatarStream, request.Avatar.FileName, cancellationToken);
+            var avatarUploadResult = await avatarStorage.UploadAvatarAsync(avatarStream, request.Avatar.FileName, cancellationToken);
 
             if (!avatarUploadResult.IsSuccess)
             {
-                return ResultsHelper.BadRequest("file upload failed");
+                return ResultsHelper.BadRequest("Avatar upload failed");
             }
 
+            var avatarObjectName = avatarUploadResult.GetValue<string>();
             var avatarType = await attachments.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
 
             var avatarAttachment = new Attachment
             {
                 Id = Guid.NewGuid(),
-                Url = avatarUploadResult.GetValue<string>(),
+                Url = avatarObjectName,
+                BucketName = "neva-avatars",
                 Type = avatarType,
                 TypeId = avatarType.Id,
             };
@@ -101,18 +110,19 @@ public class UpdateProfileRequestHandler(
             }
 
             var coverUploadResult = await filesStorage.UploadAsync(coverStream, request.Cover.FileName, cancellationToken);
-
             if (!coverUploadResult.IsSuccess)
             {
-                return ResultsHelper.BadRequest(coverUploadResult.GetValue<string>());
+                return ResultsHelper.BadRequest("Cover upload failed");
             }
 
+            var coverObjectName = coverUploadResult.GetValue<string>();
             var coverType = await attachments.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
 
             var coverAttachment = new Attachment
             {
                 Id = Guid.NewGuid(),
-                Url = coverUploadResult.GetValue<string>(),
+                Url = coverObjectName,
+                BucketName = "chat-files",
                 Type = coverType,
                 TypeId = coverType.Id,
             };
@@ -141,12 +151,42 @@ public class UpdateProfileRequestHandler(
 
         await chatUsersRepository.SaveChangesAsync(cancellationToken);
 
+        if (request.Avatar is not null && !string.IsNullOrEmpty(oldAvatarObjectName) && !string.IsNullOrEmpty(oldAvatarBucket))
+        {
+            try
+            {
+                await filesStorage.DeleteFileAsync(oldAvatarObjectName, oldAvatarBucket, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to delete old avatar: {ex.Message}");
+            }
+        }
+
+        if (request.Cover is not null && !string.IsNullOrEmpty(oldCoverObjectName) && !string.IsNullOrEmpty(oldCoverBucket))
+        {
+            try
+            {
+                await filesStorage.DeleteFileAsync(oldCoverObjectName, oldCoverBucket, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to delete old cover: {ex.Message}");
+            }
+        }
+
         if (usernameChanged || avatarChanged)
         {
+            var avatarFullUrl = user.Avatar != null 
+                ? (string.IsNullOrEmpty(user.Avatar.BucketName) 
+                    ? user.Avatar.Url
+                    : filesSigningService.BuildFullUrl(user.Avatar.Url, user.Avatar.BucketName))
+                : null;
+
             var updateResult = await nevaBackendService.UpdatePlayerAsync(
                 request.UserId, 
                 usernameChanged ? request.Username : null,
-                avatarChanged ? user.Avatar?.Url : null,
+                avatarChanged ? avatarFullUrl : null,
                 cancellationToken);
                 
             if (!updateResult)

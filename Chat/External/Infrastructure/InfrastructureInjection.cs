@@ -42,6 +42,7 @@ public static class InfrastructureInjection
         services.AddScoped<IReactionsTypesRepository, ReactionsTypesRepository>();
         services.AddScoped<IMessagesRepository, MessagesRepository>();
         services.AddScoped<IFilesStorage, FilesStorage>();
+        services.AddScoped<IAvatarStorage, FilesStorage>();
         services.AddScoped<IFilesValidator, FilesValidator>();
         services.AddScoped<IFilesSigningService, FilesSigningService>();
         services.AddScoped<IChatNotificationService, SignalRChatNotificationService>();

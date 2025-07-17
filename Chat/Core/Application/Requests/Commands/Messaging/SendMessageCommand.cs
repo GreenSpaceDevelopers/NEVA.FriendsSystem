@@ -77,6 +77,7 @@ public class SendMessageCommandHandler(
                 Id = Guid.NewGuid(),
                 Url = uploadResult.GetValue<string>(),
                 Type = attachmentType,
+                BucketName = "chat-files",
                 TypeId = attachmentType.Id
             };
 

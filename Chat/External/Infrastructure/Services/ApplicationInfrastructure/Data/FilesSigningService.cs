@@ -26,68 +26,43 @@ public class FilesSigningService : IFilesSigningService
 
     public async Task<string> GetSignedUrlAsync(string urlOrObjectName, CancellationToken cancellationToken = default)
     {
-        if (urlOrObjectName.Contains("avatars.steamstatic.com", StringComparison.OrdinalIgnoreCase))
+        if (urlOrObjectName.Contains("avatars.steamstatic.com", StringComparison.OrdinalIgnoreCase) ||
+            urlOrObjectName.StartsWith("http://") || 
+            urlOrObjectName.StartsWith("https://"))
         {
             return urlOrObjectName;
         }
 
+        return await GetSignedUrlForObjectAsync(urlOrObjectName, _config.BucketName, cancellationToken);
+    }
+
+    public async Task<string> GetSignedUrlForObjectAsync(string objectName, string bucketName, CancellationToken cancellationToken = default)
+    {
         try
         {
-            var objectName = ExtractObjectNameFromUrl(urlOrObjectName);
-            
             if (string.IsNullOrEmpty(objectName))
             {
                 return string.Empty;
             }
 
             var presignedGetObjectArgs = new PresignedGetObjectArgs()
-                .WithBucket(_config.BucketName)
+                .WithBucket(bucketName)
                 .WithObject(objectName)
                 .WithExpiry(60 * 60 * 24);
 
             var signedUrl = await _minioClient.PresignedGetObjectAsync(presignedGetObjectArgs);
             return signedUrl;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Console.WriteLine($"Error generating signed URL for {objectName} in {bucketName}: {ex.Message}");
             return string.Empty;
         }
     }
 
-    private string ExtractObjectNameFromUrl(string urlOrObjectName)
+    public string BuildFullUrl(string objectName, string bucketName)
     {
-        if (!urlOrObjectName.StartsWith("http://") && !urlOrObjectName.StartsWith("https://"))
-        {
-            return urlOrObjectName;
-        }
-
-        try
-        {
-            var schemeIndex = urlOrObjectName.IndexOf("://");
-            if (schemeIndex == -1) return urlOrObjectName;
-            
-            var urlWithoutScheme = urlOrObjectName[(schemeIndex + 3)..];
-            
-            var firstSlashIndex = urlWithoutScheme.IndexOf('/');
-            if (firstSlashIndex == -1) return string.Empty;
-            
-            var pathPart = urlWithoutScheme[firstSlashIndex..];
-            
-            var bucketPrefix = $"/{_config.BucketName}/";
-            var bucketIndex = pathPart.IndexOf(bucketPrefix, StringComparison.OrdinalIgnoreCase);
-            
-            if (bucketIndex == -1)
-            {
-                return pathPart.TrimStart('/');
-            }
-
-            var objectName = pathPart[(bucketIndex + bucketPrefix.Length)..];
-            
-            return Uri.UnescapeDataString(objectName);
-        }
-        catch
-        {
-            return urlOrObjectName;
-        }
+        var endpoint = _config.PublicEndpoint;
+        return $"{(_config.UseSSL ? "https" : "http")}://{endpoint}/{bucketName}/{objectName}";
     }
 }

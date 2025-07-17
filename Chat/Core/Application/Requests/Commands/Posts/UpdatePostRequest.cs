@@ -57,6 +57,7 @@ public class UpdatePostRequestHandler(
                 Id = Guid.NewGuid(),
                 Url = uploadResult.GetValue<string>(),
                 Type = type,
+                BucketName = "chat-files",
                 TypeId = type.Id,
             };
             await attachmentsRepository.AddAsync(attachment, cancellationToken);

@@ -27,7 +27,7 @@ public class SearchUsersQueryHandler(IChatUsersRepository chatUsersRepository, I
             string? avatarUrl = null;
             if (!string.IsNullOrEmpty(userInfo.User.Avatar?.Url))
             {
-                avatarUrl = await filesSigningService.GetSignedUrlAsync(userInfo.User.Avatar.Url, cancellationToken);
+                avatarUrl = await filesSigningService.GetSignedUrlForObjectAsync(userInfo.User.Avatar.Url, userInfo.User.Avatar.BucketName ?? "neva-avatars", cancellationToken);
             }
 
             var userDto = new UserSearchDto(

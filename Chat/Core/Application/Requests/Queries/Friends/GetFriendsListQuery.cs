@@ -57,7 +57,7 @@ public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository
             string? avatarUrl = null;
             if (!string.IsNullOrEmpty(friendInfo.User.Avatar?.Url))
             {
-                avatarUrl = await filesSigningService.GetSignedUrlAsync(friendInfo.User.Avatar.Url, cancellationToken);
+                avatarUrl = await filesSigningService.GetSignedUrlForObjectAsync(friendInfo.User.Avatar.Url, friendInfo.User.Avatar.BucketName ?? "neva-avatars", cancellationToken);
             }
             
             var friendDto = new FriendDto(

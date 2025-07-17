@@ -13,7 +13,8 @@ public record CreateProfileCommand(AspNetUser AspNetUser, string? ImageLink = nu
 
 public class CreateProfileCommandHandler(
     IChatUsersRepository chatUsersRepository,
-    IAttachmentsRepository attachmentsRepository) : IRequestHandler<CreateProfileCommand>
+    IAttachmentsRepository attachmentsRepository)
+    : IRequestHandler<CreateProfileCommand>
 {
     public async Task<IOperationResult> HandleAsync(CreateProfileCommand request, CancellationToken cancellationToken = default)
     {
@@ -24,10 +25,25 @@ public class CreateProfileCommandHandler(
         {
             var avatarType = await attachmentsRepository.GetAttachmentTypeAsync(AttachmentTypes.Image, cancellationToken);
             
+            string avatarUrl;
+            string? bucketName;
+            
+            if (request.ImageLink.Contains("avatars.steamstatic.com", StringComparison.OrdinalIgnoreCase))
+            {
+                avatarUrl = request.ImageLink;
+                bucketName = null;
+            }
+            else
+            {
+                avatarUrl = request.ImageLink;
+                bucketName = "neva-avatars";
+            }
+            
             var avatarAttachment = new Attachment
             {
                 Id = Guid.NewGuid(),
-                Url = request.ImageLink,
+                Url = avatarUrl,
+                BucketName = bucketName,
                 Type = avatarType,
                 TypeId = avatarType.Id,
             };

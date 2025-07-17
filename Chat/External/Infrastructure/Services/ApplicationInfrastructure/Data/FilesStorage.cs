@@ -8,7 +8,7 @@ using Minio.Exceptions;
 
 namespace Infrastructure.Services.ApplicationInfrastructure.Data;
 
-public class FilesStorage : IFilesStorage
+public class FilesStorage : IFilesStorage, IAvatarStorage
 {
     private readonly IMinioClient _minioClient;
     private readonly Infrastructure.Configs.MinioConfig _config;
@@ -45,6 +45,16 @@ public class FilesStorage : IFilesStorage
 
     public async Task<IOperationResult> UploadAsync(Stream stream, string fileName, CancellationToken cancellationToken = default)
     {
+        return await UploadToBucketAsync(stream, fileName, _config.BucketName, cancellationToken);
+    }
+
+    public async Task<IOperationResult> UploadAvatarAsync(Stream stream, string fileName, CancellationToken cancellationToken = default)
+    {
+        return await UploadToBucketAsync(stream, fileName, _config.AvatarBucketName, cancellationToken);
+    }
+
+    public async Task<IOperationResult> UploadToBucketAsync(Stream stream, string fileName, string bucketName, CancellationToken cancellationToken = default)
+    {
         var objectName = GetUniqueFileName(fileName);
         
         try
@@ -54,14 +64,14 @@ public class FilesStorage : IFilesStorage
                 stream.Position = 0;
             }
             
-            var found = await _minioClient!.BucketExistsAsync(new BucketExistsArgs().WithBucket(_config.BucketName), cancellationToken);
+            var found = await _minioClient!.BucketExistsAsync(new BucketExistsArgs().WithBucket(bucketName), cancellationToken);
             if (!found)
             {
-                await _minioClient.MakeBucketAsync(new MakeBucketArgs().WithBucket(_config.BucketName), cancellationToken);
+                await _minioClient.MakeBucketAsync(new MakeBucketArgs().WithBucket(bucketName), cancellationToken);
             }
 
             var putObjectArgs = new PutObjectArgs()
-                .WithBucket(_config.BucketName)
+                .WithBucket(bucketName)
                 .WithObject(objectName)
                 .WithStreamData(stream)
                 .WithObjectSize(stream.Length)
@@ -69,9 +79,7 @@ public class FilesStorage : IFilesStorage
             
             await _minioClient.PutObjectAsync(putObjectArgs, cancellationToken);
             
-            var publicEndpoint = !string.IsNullOrEmpty(_config.PublicEndpoint) ? _config.PublicEndpoint : _config.Endpoint;
-            var url = $"{(_config.UseSSL ? "https" : "http")}://{publicEndpoint}/{_config.BucketName}/{objectName}";
-            return ResultsHelper.Ok(url);
+            return ResultsHelper.Ok(objectName);
         }
         catch (MinioException ex)
         {
@@ -82,22 +90,26 @@ public class FilesStorage : IFilesStorage
             return ResultsHelper.BadRequest($"File upload failed: {ex.Message}");
         }
     }
+
+    public async Task DeleteFileAsync(string fileName, string? bucketName = null, CancellationToken cancellationToken = default)
+    {
+        var bucket = string.IsNullOrEmpty(bucketName) ? _config.BucketName : bucketName;
+        
+        try
+        {
+            await _minioClient!.RemoveObjectAsync(new RemoveObjectArgs()
+                .WithBucket(bucket)
+                .WithObject(fileName), cancellationToken);
+        }
+        catch (MinioException ex)
+        {
+            Console.WriteLine($"Minio error deleting {fileName} from {bucket}: {ex.Message}");
+            throw;
+        }
+    }
     
     private static string GetUniqueFileName(string fileName)
     {
         return $"{Guid.NewGuid()}{Path.GetExtension(fileName)}";
-    }
-
-    private static string GetContentType(string fileName)
-    {
-        var extension = Path.GetExtension(fileName).ToLowerInvariant();
-        return extension switch
-        {
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".png" => "image/png",
-            ".gif" => "image/gif",
-            ".webp" => "image/webp",
-            _ => "application/octet-stream"
-        };
     }
 }

@@ -30,7 +30,7 @@ public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository, IUserC
             string? avatarUrl = null;
             if (!string.IsNullOrEmpty(user.Avatar?.Url))
             {
-                avatarUrl = await filesSigningService.GetSignedUrlAsync(user.Avatar.Url, cancellationToken);
+                avatarUrl = await filesSigningService.GetSignedUrlForObjectAsync(user.Avatar.Url, user.Avatar.BucketName ?? "neva-avatars", cancellationToken);
             }
 
             participants.Add(new ChatParticipantDto(user.Id, user.Username, user.PersonalLink, avatarUrl));

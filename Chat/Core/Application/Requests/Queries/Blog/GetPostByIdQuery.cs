@@ -34,7 +34,7 @@ public class GetPostByIdQueryHandler(IBlogRepository blogRepository, IChatUsersR
             : null;
             
         var authorAvatarUrl = post.Author.Avatar?.Url != null 
-            ? await filesSigningService.GetSignedUrlAsync(post.Author.Avatar.Url, cancellationToken) 
+            ? await filesSigningService.GetSignedUrlForObjectAsync(post.Author.Avatar.Url, post.Author.Avatar.BucketName ?? "neva-avatars", cancellationToken) 
             : null;
 
         var currentUserId = request.CurrentUserId;

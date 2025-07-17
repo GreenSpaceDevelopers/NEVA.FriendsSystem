@@ -28,21 +28,31 @@ public class MinioInitializer : IHostedService
     {
         try
         {
-            var bucketExists = await _minioClient.BucketExistsAsync(
+            var mainBucketExists = await _minioClient.BucketExistsAsync(
                 new BucketExistsArgs().WithBucket(_config.BucketName),
                 cancellationToken);
 
-            if (!bucketExists)
+            if (!mainBucketExists)
             {
                 await _minioClient.MakeBucketAsync(
                     new MakeBucketArgs().WithBucket(_config.BucketName),
                     cancellationToken);
             }
+
+            var avatarBucketExists = await _minioClient.BucketExistsAsync(
+                new BucketExistsArgs().WithBucket(_config.AvatarBucketName),
+                cancellationToken);
+
+            if (!avatarBucketExists)
+            {
+                await _minioClient.MakeBucketAsync(
+                    new MakeBucketArgs().WithBucket(_config.AvatarBucketName),
+                    cancellationToken);
+            }
         }
         catch (Exception ex)
         {
-            // Log error but don't fail startup
-            Console.WriteLine($"Failed to initialize MinIO bucket: {ex.Message}");
+            Console.WriteLine($"Failed to initialize MinIO buckets: {ex.Message}");
         }
     }
 
