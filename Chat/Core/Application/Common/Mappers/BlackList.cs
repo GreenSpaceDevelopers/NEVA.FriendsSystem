@@ -20,6 +20,10 @@ public static class BlackList
         {
             avatarUrl = await filesSigningService.GetSignedUrlForObjectAsync(chat.Avatar.Url, chat.Avatar.BucketName ?? "neva-avatars", cancellationToken);
         }
+        else
+        {
+            avatarUrl = "https://minio.greenspacegg.ru:9000/testpics/UserAvatar1.png";
+        }
 
         var userId2 = chat.AspNetUser?.Id ?? chat.Id;
         var email2 = chat.AspNetUser?.Email ?? string.Empty;

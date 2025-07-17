@@ -29,11 +29,17 @@ public class SearchUsersQueryHandler(IChatUsersRepository chatUsersRepository, I
             {
                 avatarUrl = await filesSigningService.GetSignedUrlForObjectAsync(userInfo.User.Avatar.Url, userInfo.User.Avatar.BucketName ?? "neva-avatars", cancellationToken);
             }
+            else
+            {
+                avatarUrl = "https://minio.greenspacegg.ru:9000/testpics/UserAvatar1.png";
+            }
+
+            var personalLink = string.IsNullOrEmpty(userInfo.User.PersonalLink) ? null : userInfo.User.PersonalLink;
 
             var userDto = new UserSearchDto(
                 userInfo.User.Id,
                 userInfo.User.Username,
-                userInfo.User.PersonalLink,
+                personalLink,
                 avatarUrl,
                 userInfo.IsBlockedByMe,
                 userInfo.HasBlockedMe,

@@ -59,6 +59,10 @@ public class GetFriendsListQueryHandler(IChatUsersRepository chatUsersRepository
             {
                 avatarUrl = await filesSigningService.GetSignedUrlForObjectAsync(friendInfo.User.Avatar.Url, friendInfo.User.Avatar.BucketName ?? "neva-avatars", cancellationToken);
             }
+            else
+            {
+                avatarUrl = "https://minio.greenspacegg.ru:9000/testpics/UserAvatar1.png";
+            }
             
             var friendDto = new FriendDto(
                 friendInfo.User.Id,

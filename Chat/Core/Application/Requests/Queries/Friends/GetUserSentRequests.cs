@@ -37,6 +37,10 @@ public class GetUserSentRequestsQueryHandler(IChatUsersRepository chatUsersRepos
             {
                 avatarUrl = await filesSigningService.GetSignedUrlForObjectAsync(friend.Avatar.Url, friend.Avatar.BucketName ?? "neva-avatars", cancellationToken);
             }
+            else
+            {
+                avatarUrl = "https://minio.greenspacegg.ru:9000/testpics/UserAvatar1.png";
+            }
 
             friendRequestDtos.Add(new FriendRequestsDto(
                 user.Id,
@@ -79,6 +83,10 @@ public class GetUserPendingRequestsQueryHandler(IChatUsersRepository chatUsersRe
             if (!string.IsNullOrEmpty(friend.Avatar?.Url))
             {
                 avatarUrl = await filesSigningService.GetSignedUrlForObjectAsync(friend.Avatar.Url, friend.Avatar.BucketName ?? "neva-avatars", cancellationToken);
+            }
+            else
+            {
+                avatarUrl = "https://minio.greenspacegg.ru:9000/testpics/UserAvatar1.png";
             }
 
             friendRequestDtos.Add(new FriendRequestsDto(
