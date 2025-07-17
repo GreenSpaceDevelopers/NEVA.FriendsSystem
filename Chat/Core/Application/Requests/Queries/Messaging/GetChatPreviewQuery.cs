@@ -40,22 +40,26 @@ public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository, IUserC
         string displayName;
         Guid? friendId = null;
         
+        string? chatImageUrl = null;
         if (!isGroup && chat.Users.Count == 2)
         {
             var interlocutor = chat.Users.First(u => u.Id != request.UserId);
             displayName = interlocutor.Username;
             friendId = interlocutor.Id;
+            if (!string.IsNullOrEmpty(interlocutor.Avatar?.Url))
+            {
+                chatImageUrl = await filesSigningService.GetSignedUrlForObjectAsync(interlocutor.Avatar.Url, "neva-avatars", cancellationToken);
+            }
         }
         else
         {
             displayName = chat.Name;
+            if (!string.IsNullOrEmpty(chat.ChatPicture?.Url))
+            {
+                chatImageUrl = await filesSigningService.GetSignedUrlAsync(chat.ChatPicture.Url, cancellationToken);
+            }
         }
-
-        string? chatImageUrl = null;
-        if (!string.IsNullOrEmpty(chat.ChatPicture?.Url))
-        {
-            chatImageUrl = await filesSigningService.GetSignedUrlAsync(chat.ChatPicture.Url, cancellationToken);
-        }
+        
 
         var lastMessage = chat.Messages.FirstOrDefault();
         var lastMsgPreview = new LastChatMessagePreview(lastMessage?.Sender.Username ?? string.Empty,
