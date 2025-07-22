@@ -63,7 +63,7 @@ jobs:
           username: ${{ env.SSH_USER }}
           password: ${{ env.SSH_PASSWORD }}
           script: |
-            
+            export KUBECONFIG=/home/gsdev/.kube/config
             # Pull latest image
             docker pull ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_REPOSITORY }}/${{ env.IMAGE_NAME }}:latest
             
