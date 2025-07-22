@@ -55,16 +55,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Copy manifests to remote server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ env.SSH_HOST }}
-          port: ${{ env.SSH_PORT }}
-          username: ${{ env.SSH_USER }}
-          password: ${{ env.SSH_PASSWORD }}
-          source: "manifests/"
-          target: "~/"
-
       - name: Deploy to Kubernetes via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -77,8 +67,10 @@ jobs:
             # Pull latest image
             docker pull ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_REPOSITORY }}/${{ env.IMAGE_NAME }}:latest
             
+            # Go to manifests directory
+            cd neva-friends/chats/mainfests
             # Apply Kubernetes deployment
-            kubectl apply -f ~/manifests/deployment.yaml -n ${{ env.KUBE_NAMESPACE }}
+            kubectl apply -f /deployment.yaml -n ${{ env.KUBE_NAMESPACE }}
             
             # Restart deployment to ensure new image is used
             kubectl rollout restart deployment/chat-webapi -n ${{ env.KUBE_NAMESPACE }}
