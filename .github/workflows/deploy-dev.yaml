@@ -28,23 +28,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y jq curl
 
-      - name: Set up Docker auth for Yandex Container Registry
+      - name: Auth to Yandex Container Registry
         run: |
-          echo "${{ secrets.YC_SA_KEY_JSON }}" > key.json
-          
-          export IAM_TOKEN=$(curl -sf -X POST \
-          -H "Content-Type: application/json" \
-          -d @/key.json \
+          echo '${{ secrets.YC_SA_KEY_JSON }}' > key.json
+          IAM_TOKEN=$(curl -sf -X POST \
+          -H 'Content-Type: application/json' \
+          -d @key.json \
           https://iam.api.cloud.yandex.net/iam/v1/tokens | jq -r .iamToken)
-  
-          if [[ -z "$IAM_TOKEN" || "$IAM_TOKEN" == "null" ]]; then
-          echo "ERROR: Failed to obtain IAM_TOKEN"
-          exit 1
-          fi
-          
-          echo $IAM_TOKEN | docker login \
-          --username oauth \
-          --password-stdin cr.yandex
+          echo "$IAM_TOKEN" | docker login --username oauth --password-stdin cr.yandex
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
