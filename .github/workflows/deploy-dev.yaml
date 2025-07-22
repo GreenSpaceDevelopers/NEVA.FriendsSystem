@@ -34,7 +34,7 @@ jobs:
           
           export IAM_TOKEN=$(curl -sf -X POST \
           -H "Content-Type: application/json" \
-          -d @~/key.json \
+          -d @/key.json \
           https://iam.api.cloud.yandex.net/iam/v1/tokens | jq -r .iamToken)
   
           if [[ -z "$IAM_TOKEN" || "$IAM_TOKEN" == "null" ]]; then
