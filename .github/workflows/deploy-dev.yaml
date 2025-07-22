@@ -30,17 +30,12 @@ jobs:
 
       - name: Auth to Yandex Container Registry
         run: |
-          echo "${{ secrets.YC_SA_KEY_JSON }}" > key.json
+  
           IAM_TOKEN=$(curl -sf -X POST \
           -H 'Content-Type: application/json' \
-          -d @key.json \
+          -d ${{ secrets.YC_SA_KEY_JSON }} \
           https://iam.api.cloud.yandex.net/iam/v1/tokens | jq -r .iamToken)
-          
-          if [[ -z "$IAM_TOKEN" || "$IAM_TOKEN" == "null" ]]; then
-          echo "$IAM_TOKEN"
-          echo "ERROR: Failed to obtain IAM_TOKEN"
-          exit 1
-          fi
+        
           
           echo "$IAM_TOKEN" | docker login --username oauth --password-stdin cr.yandex
 
