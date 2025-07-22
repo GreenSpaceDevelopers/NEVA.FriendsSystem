@@ -33,9 +33,8 @@ jobs:
   
           IAM_TOKEN=$(curl -sf -X POST \
           -H 'Content-Type: application/json' \
-          -d ${{ secrets.YC_SA_KEY_JSON }} \
+          -d "${{ secrets.YC_SA_KEY_JSON }}" \
           https://iam.api.cloud.yandex.net/iam/v1/tokens | jq -r .iamToken)
-        
           
           echo "$IAM_TOKEN" | docker login --username oauth --password-stdin cr.yandex
 
