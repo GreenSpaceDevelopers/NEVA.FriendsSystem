@@ -32,10 +32,15 @@ jobs:
         run: |
           echo "${{ secrets.YC_SA_KEY_JSON }}" > key.json
           
-          export IAM_TOKEN=$(curl -s -X POST \
+          export IAM_TOKEN=$(curl -sf -X POST \
           -H "Content-Type: application/json" \
-          -d @"key.json" \
+          -d @~/key.json \
           https://iam.api.cloud.yandex.net/iam/v1/tokens | jq -r .iamToken)
+  
+          if [[ -z "$IAM_TOKEN" || "$IAM_TOKEN" == "null" ]]; then
+          echo "ERROR: Failed to obtain IAM_TOKEN"
+          exit 1
+          fi
           
           echo $IAM_TOKEN | docker login \
           --username oauth \
@@ -72,28 +77,6 @@ jobs:
           username: ${{ env.SSH_USER }}
           password: ${{ env.SSH_PASSWORD }}
           script: |
-            # Install jq if not available
-            if ! command -v jq &> /dev/null; then
-              echo "Installing jq..."
-              sudo apt-get update && sudo apt-get install -y jq
-            fi
-            
-            # Get IAM token on remote server
-            IAM_TOKEN=$(curl -s -X POST \
-            -H "Content-Type: application/json" \
-            -d @~/key.json \
-            https://iam.api.cloud.yandex.net/iam/v1/tokens | jq -r .iamToken)
-            
-            # Debug: Check if IAM token is available
-            if [ -z "$IAM_TOKEN" ]; then
-              echo "ERROR: Failed to get IAM_TOKEN"
-              exit 1
-            else
-              echo "IAM_TOKEN obtained successfully (length: ${#IAM_TOKEN})"
-            fi
-            
-            # Login to Yandex Container Registry
-            echo "$IAM_TOKEN" | docker login --username iam --password-stdin ${{ env.DOCKER_REGISTRY }}
             
             # Pull latest image
             docker pull ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_REPOSITORY }}/${{ env.IMAGE_NAME }}:latest
@@ -110,11 +93,3 @@ jobs:
             # Verify deployment
             kubectl get pods -n ${{ env.KUBE_NAMESPACE }} -l app=chat-webapi
             kubectl get services -n ${{ env.KUBE_NAMESPACE }} -l app=chat-webapi
-
-      - name: Health check
-        run: |
-          echo "Waiting for deployment to be ready..."
-          sleep 30
-          
-          # Basic health check
-          curl -f http://${{ env.SSH_HOST }}/health || echo "Health check failed, but deployment might still be starting up"
