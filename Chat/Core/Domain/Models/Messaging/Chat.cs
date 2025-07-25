@@ -12,6 +12,10 @@ public class Chat : Entity<Chat>
     public Guid AdminId { get; set; }
     public Guid? RelatedEventId { get; set; }
     public DateTime? LastMessageDate { get; set; }
+    
+    public bool IsGroup { get; set; }
+
+    public bool IsChatMatchReschedule { get; set; }
 
     public Event? RelatedEvent { get; set; }
     public Picture? ChatPicture { get; set; }

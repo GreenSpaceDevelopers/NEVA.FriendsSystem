@@ -27,10 +27,14 @@ public static class Chats
             );
         }
 
-        string? imageUrl = null;
+        string? imageUrl;
         if (!string.IsNullOrEmpty(chat.ChatPicture?.Url))
         {
             imageUrl = await filesSigningService.GetSignedUrlForObjectAsync(chat.ChatPicture.Url, "neva-avatars", cancellationToken);
+        }
+        else
+        {
+            imageUrl = "https://minio.greenspacegg.ru:9000/testpics/UserAvatar1.png";
         }
 
         var displayName = chat.Name;
@@ -43,6 +47,10 @@ public static class Chats
             {
                 imageUrl = await filesSigningService.GetSignedUrlForObjectAsync(interlocutor.Avatar.Url, "neva-avatars", cancellationToken);
             }
+            else
+            {
+                imageUrl = "https://minio.greenspacegg.ru:9000/testpics/UserAvatar1.png";
+            }
         }
 
         return new UserChatListItemDto(
@@ -53,7 +61,8 @@ public static class Chats
             lastMessagePreview,
             userRole,
             isGroup,
-            isMuted
+            isMuted,
+            chat.IsChatMatchReschedule
         );
     }
 }

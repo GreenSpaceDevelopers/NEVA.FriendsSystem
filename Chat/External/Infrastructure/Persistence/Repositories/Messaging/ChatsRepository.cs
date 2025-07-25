@@ -72,7 +72,7 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
             .ThenInclude(m => m.Sender)
             .Include(c => c.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
             .ThenInclude(m => m.Attachment)
-            .Where(c => c.Users.Any(u => u.Id == userId));
+            .Where(c => c.Users.Any(u => u.Id == userId) && c.IsChatMatchReschedule == false);
 
         if (!string.IsNullOrWhiteSpace(searchQuery))
         {

@@ -22,7 +22,9 @@ public record UserChatListItemDto(
     [SwaggerSchema(Description = "Является ли чат групповым")]
     bool IsGroup,
     [SwaggerSchema(Description = "Был ли чат замучен текущим пользователем")]
-    bool IsMuted);
+    bool IsMuted,
+    [SwaggerSchema(Description = "Этот чат переноса матча ?")]
+    bool IsChatMatchReschedule);
 
 public record UserChatListItem(Guid UserId, Guid ChatId, string ChatName, string? photoUrl, LastChatMessagePreview LastMessagePreview, bool IsGroup);
 

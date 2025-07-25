@@ -147,7 +147,7 @@ public static class Chats
                 context.GetUserId(),
                 form.Name,
                 form.Picture,
-                form.ParticipantIds,
+                form.Users,
                 form.NewAdminId);
             var result = await sender.SendAsync(command, cancellationToken);
             return result.ToResult();
@@ -229,7 +229,7 @@ public static class Chats
     {
         public string? Name { get; set; }
         public IFormFile? Picture { get; set; }
-        public List<Guid>? ParticipantIds { get; set; }
+        public List<Guid>? Users { get; set; }
         public Guid? NewAdminId { get; set; }
     }
     

@@ -44,6 +44,13 @@ public class FilesSigningService : IFilesSigningService
             {
                 return string.Empty;
             }
+            
+            if (objectName.Contains("avatars.steamstatic.com", StringComparison.OrdinalIgnoreCase) ||
+                objectName.StartsWith("http://") || 
+                objectName.StartsWith("https://"))
+            {
+                return objectName;
+            }
 
             var presignedGetObjectArgs = new PresignedGetObjectArgs()
                 .WithBucket(bucketName)
