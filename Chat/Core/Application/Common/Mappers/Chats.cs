@@ -13,7 +13,7 @@ public static class Chats
         var unreadCount = chatWithUnreadCount.UnreadCount;
 
         var lastMessage = chat.Messages.FirstOrDefault();
-        var isGroup = chat.Users.Count > 2;
+        var isGroup = chat.IsGroup;
         var userRole = chat.AdminId == userId ? "Creator" : "Member";
 
         LastChatMessagePreview? lastMessagePreview = null;
@@ -28,17 +28,9 @@ public static class Chats
         }
 
         string? imageUrl;
-        if (!string.IsNullOrEmpty(chat.ChatPicture?.Url))
-        {
-            imageUrl = await filesSigningService.GetSignedUrlForObjectAsync(chat.ChatPicture.Url, "neva-avatars", cancellationToken);
-        }
-        else
-        {
-            imageUrl = "https://minio.greenspacegg.ru:9000/testpics/UserAvatar1.png";
-        }
 
         var displayName = chat.Name;
-        if (!isGroup && chat.Users.Count == 2)
+        if (isGroup is false)
         {
             var interlocutor = chat.Users.First(u => u.Id != userId);
             displayName = interlocutor.Username;
@@ -46,6 +38,17 @@ public static class Chats
             if (!string.IsNullOrEmpty(interlocutor.Avatar?.Url))
             {
                 imageUrl = await filesSigningService.GetSignedUrlForObjectAsync(interlocutor.Avatar.Url, "neva-avatars", cancellationToken);
+            }
+            else
+            {
+                imageUrl = "https://minio.greenspacegg.ru:9000/testpics/UserAvatar1.png";
+            }
+        }
+        else
+        {
+            if (!string.IsNullOrEmpty(chat.ChatPicture?.Url))
+            {
+                imageUrl = await filesSigningService.GetSignedUrlForObjectAsync(chat.ChatPicture.Url, "neva-avatars", cancellationToken);
             }
             else
             {

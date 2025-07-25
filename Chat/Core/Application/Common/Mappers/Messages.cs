@@ -27,10 +27,14 @@ public static class Messages
 
     public static async Task<MessageDto> ToMessageDtoAsync(this Message message, IFilesSigningService filesSigningService, CancellationToken cancellationToken = default)
     {
-        string? avatarUrl = null;
+        string? avatarUrl;
         if (!string.IsNullOrEmpty(message.Sender.Avatar?.Url))
         {
             avatarUrl = await filesSigningService.GetSignedUrlForObjectAsync(message.Sender.Avatar.Url, message.Sender.Avatar.BucketName ?? "neva-avatars", cancellationToken);
+        }
+        else
+        {
+            avatarUrl = "https://minio.greenspacegg.ru:9000/testpics/UserAvatar1.png";
         }
 
         string? attachmentUrl = null;

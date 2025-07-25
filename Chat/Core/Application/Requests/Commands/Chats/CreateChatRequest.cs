@@ -17,7 +17,9 @@ public record CreateChatRequest(
     Guid CurrentUserId,
     Guid[] UserIds,
     string? ChatName = null,
-    IFormFile? ChatPicture = null) : IRequest;
+    IFormFile? ChatPicture = null,
+    bool IsGroup = false, 
+    bool IsChatMatchReschedule = false) : IRequest;
 
 public class CreateChatRequestValidator : AbstractValidator<CreateChatRequest>
 {
@@ -126,7 +128,9 @@ public class CreateChatRequestHandler(
             AdminId = adminId,
             Users = chatUsers.ToList(),
             ChatPicture = chatPicture,
-            ChatPictureId = chatPicture?.Id
+            ChatPictureId = chatPicture?.Id,
+            IsGroup = request.IsGroup || chatUsers.Count > 2,
+            IsChatMatchReschedule = request.IsChatMatchReschedule
         };
         
         await chatsRepository.AddAsync(chat, cancellationToken);

@@ -27,21 +27,24 @@ public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository, IUserC
         var participants = new List<ChatParticipantDto>();
         foreach (var user in chat.Users)
         {
-            string? avatarUrl = null;
+            string? avatarUrl;
             if (!string.IsNullOrEmpty(user.Avatar?.Url))
             {
                 avatarUrl = await filesSigningService.GetSignedUrlForObjectAsync(user.Avatar.Url, user.Avatar.BucketName ?? "neva-avatars", cancellationToken);
+            }
+            else
+            {
+                avatarUrl = "https://minio.greenspacegg.ru:9000/testpics/UserAvatar1.png";
             }
 
             participants.Add(new ChatParticipantDto(user.Id, user.Username, user.PersonalLink, avatarUrl));
         }
 
-        var isGroup = chat.Users.Count > 2;
         string displayName;
         Guid? friendId = null;
         
         string? chatImageUrl = null;
-        if (!isGroup && chat.Users.Count == 2)
+        if (chat is { IsGroup: false })
         {
             var interlocutor = chat.Users.First(u => u.Id != request.UserId);
             displayName = interlocutor.Username;
@@ -49,6 +52,10 @@ public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository, IUserC
             if (!string.IsNullOrEmpty(interlocutor.Avatar?.Url))
             {
                 chatImageUrl = await filesSigningService.GetSignedUrlForObjectAsync(interlocutor.Avatar.Url, "neva-avatars", cancellationToken);
+            }
+            else
+            {
+                chatImageUrl = "https://minio.greenspacegg.ru:9000/testpics/UserAvatar1.png";
             }
         }
         else
@@ -80,7 +87,7 @@ public class GetChatPreviewQueryHandler(IChatsRepository chatsRepository, IUserC
             }
         }
 
-        var dto = new ChatDetailsDto(chat.Id, displayName, chatImageUrl, isGroup, participants, lastMsgPreview, friendId, chat.AdminId, isMuted);
+        var dto = new ChatDetailsDto(chat.Id, displayName, chatImageUrl, chat.IsGroup, participants, lastMsgPreview, friendId, chat.AdminId, isMuted);
 
         return ResultsHelper.Ok(dto);
     }

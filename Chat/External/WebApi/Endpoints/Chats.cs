@@ -216,6 +216,23 @@ public static class Chats
         .Produces(400)
         .Produces(403)
         .Produces(404);
+
+        app.MapDelete("/chats/{chatId:guid}", async (
+            [FromRoute] Guid chatId,
+            [FromServices] ISender sender,
+            HttpContext context,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new DeleteChatCommand(chatId, context.GetUserId());
+            var result = await sender.SendAsync(command, cancellationToken);
+            return result.ToResult();
+        })
+        .WithName("DeleteChat")
+        .WithOpenApi()
+        .WithTags("Chats")
+        .Produces(200)
+        .Produces(403)
+        .Produces(404);
     }
 
     private class CreateChatForm
@@ -223,6 +240,8 @@ public static class Chats
         public Guid[] Users { get; set; } = [];
         public string? Name { get; set; }
         public IFormFile? Picture { get; set; }
+        public bool IsGroup { get; set; } = false;
+        public bool IsChatMatchReschedule { get; set; } = false;
     }
     
     private class UpdateChatForm
