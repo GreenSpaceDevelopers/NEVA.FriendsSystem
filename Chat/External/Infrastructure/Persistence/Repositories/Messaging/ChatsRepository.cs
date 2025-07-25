@@ -81,7 +81,7 @@ public class ChatsRepository(ChatsDbContext dbContext) : BaseRepository<Chat>(db
                 c.Users.Any(u => u.Username.Contains(searchQuery)));
         }
 
-        var orderedQuery = query.OrderByDescending(c => c.LastMessageDate ?? DateTime.MinValue);
+        var orderedQuery = query.OrderByDescending(c => (c.LastMessageDate ?? c.CreatedAt));
         var totalCount = await orderedQuery.CountAsync(cancellationToken);
 
         var chats = await orderedQuery

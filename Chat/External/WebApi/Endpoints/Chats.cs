@@ -42,7 +42,7 @@ public static class Chats
             ) =>
             {
                 var currentUserId = context.GetUserId();
-                var request = new CreateChatRequest(currentUserId, form.Users, form.Name, form.Picture);
+                var request = new CreateChatRequest(currentUserId, form.Users, form.Name, form.Picture, form.IsGroup, form.IsChatMatchReschedule);
                 var result = await sender.SendAsync(request, cancellationToken);
                 return result.ToResult();
             })

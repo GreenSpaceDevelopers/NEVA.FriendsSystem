@@ -12,6 +12,7 @@ public class Chat : Entity<Chat>
     public Guid AdminId { get; set; }
     public Guid? RelatedEventId { get; set; }
     public DateTime? LastMessageDate { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     public bool IsGroup { get; set; }
 
